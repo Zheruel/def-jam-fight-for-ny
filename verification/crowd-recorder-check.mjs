@@ -22,7 +22,7 @@ try {
     // The emulator thread: a frame every 16 ms; the first spectator's root height and the counter move with it.
     // Every tenth step skips a frame, every 17th writes the counter late (a torn copy).
     const found = [];
-    for (let at = 0x571000; at < 0x574000; at++) if (image[at] === 0x63 && String.fromCharCode(...image.subarray(at, at + 6)) === "crowd_") { found.push(view.getUint32(view.getUint32(at + 0x8c, true) + 0x14c, true)); at += 20; }
+    for (let at = 0x571000; at < 0x575000; at++) if (image[at] === 0x63 && String.fromCharCode(...image.subarray(at, at + 6)) === "crowd_") { found.push(view.getUint32(view.getUint32(at + 0x8c, true) + 0x14c, true)); at += 20; }
     let frame = view.getUint32(counter, true), n = 0;
     window.truth = [];
     setInterval(() => {

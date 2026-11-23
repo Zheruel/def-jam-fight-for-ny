@@ -24,7 +24,8 @@ class CrowdPoseTests(unittest.TestCase):
         scenery = json.loads((HERE / "foundation" / "scenery.json").read_text())
         placed = {p["name"] for p in scenery["nearCrowd"]}
         for frame, instances in FIXTURE["frames"].items():
-            self.assertEqual(len(instances), 26, frame)
+            # The one-on-one capture holds every near-crowd position (30); the four-player ones 26.
+            self.assertEqual(len(instances), 30 if frame.startswith("one-on-one") else 26, frame)
             self.assertLessEqual(set(instances), placed, frame)
             for name, pose in instances.items():
                 self.assertEqual(len(pose), 13)

@@ -30,7 +30,7 @@ from pathlib import Path
 
 BONES = ["root", "L_Leg1", "L_Leg2", "eff5", "R_Leg1", "R_Leg2", "eff4", "Chest", "Head", "R_Arm1", "R_Arm2", "L_Arm1", "L_Arm2"]
 PARENTS = [None, 0, 1, 0, 0, 4, 0, 0, 7, 7, 9, 7, 11]
-RECORDS = (0x571000, 0x574000)   # where the crowd_* instance records sit in the Foundation image
+RECORDS = (0x571000, 0x575000)   # where the crowd_* instance records sit in the Foundation image
 ENTRY = 48
 
 
@@ -53,7 +53,10 @@ def instances(ram: bytes) -> list[dict]:
             continue
         found.append({"name": match.group()[:-1].decode(), "record": record, "object": obj,
                       "current": current, "previous": previous, "reference": reference,
-                      "group": struct.unpack_from("<I", ram, record + 0x84)[0]})
+                      "group": struct.unpack_from("<I", ram, record + 0x84)[0],
+                      "scale": struct.unpack_from("<f", ram, record + 0x1B8)[0],
+                      "style": list(struct.unpack_from("<I", ram, record + 0x154)[:1] + struct.unpack_from("<I", ram, record + 0x158)[:1]
+                                    + struct.unpack_from("<I", ram, record + 0x164)[:1] + struct.unpack_from("<I", ram, record + 0x1A4)[:1])})
     # The three crowd classes (modular part sets) are told apart by address; their order is the class number.
     order = {group: k for k, group in enumerate(sorted({f["group"] for f in found}))}
     for each in found:
@@ -172,6 +175,10 @@ def export(ram: bytes) -> dict:
     trim = lambda pose: [[round(v, 6) for v in (*e[4:8], *e[8:11])] for e in pose]
     return {"bones": BONES, "parents": PARENTS, "bind": trim(reference),
             "classes": {each["name"]: each["class"] for each in found},
+            # Record words +0x154, +0x158, +0x164, +0x1a4 (clothing/palette picks; meanings unverified).
+            "styles": {each["name"]: each["style"] for each in found},
+            # Per-person height factor (record +0x1b8); a record that is not a person reads as garbage and is left out.
+            "scales": {each["name"]: round(each["scale"], 4) for each in found if 0.5 <= each["scale"] <= 1.5},
             "instances": {each["name"]: trim(read_pose(ram, each["current"])) for each in found}}
 
 

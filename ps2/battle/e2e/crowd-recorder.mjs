@@ -30,7 +30,7 @@ function install({ frames, counter }) {
   const u32 = at => view().getUint32(base + at, true);
   const heap = new Uint8Array(vm.HEAPU8.buffer);
   const found = [];
-  for (let at = 0x571000; at < 0x574000; at++) {
+  for (let at = 0x571000; at < 0x575000; at++) {
     if (heap[base + at] !== 0x63 || heap[base + at + 1] !== 0x72 || String.fromCharCode(...heap.subarray(base + at, base + at + 6)) !== "crowd_") continue;
     let end = at;
     while (heap[base + end]) end++;

@@ -10,6 +10,10 @@
 // the instanced crowd is vertex-animated (383 retail frames, idle and excited loops).
 import { fetchPacked } from "../viewer/scene.mjs";
 import { irradiance, irradianceGLSL, sampleIrradiance } from "./irradiance.mjs";
+import { bankPose, loadPeople, skinPalette, POSE_FLOATS } from "./people.mjs";
+
+// Venues whose near-crowd spectators are decoded and posed from the retail rig (see people.mjs).
+const PEOPLE_VENUES = new Set(["V2BG_02A"]);
 
 const U32 = 4;
 
@@ -78,7 +82,8 @@ export async function loadScenery(venue, { signal, base = new URL("./", import.m
   await Promise.all((manifest.cars ?? []).map(async car => {
     weapons.set(car.name, parseSkinned(await fetchPacked(new URL(car.file, dir), signal)));
   }));
-  return { manifest, props, crowd, weapons };
+  const people = PEOPLE_VENUES.has(venue) ? await loadPeople(dir, { signal, parseSkinned }) : null;
+  return { manifest, props, crowd, weapons, people };
 }
 
 // Euler placement from the stage XML: degrees, applied X then Y then Z (all retail Foundation
@@ -150,6 +155,15 @@ void main() {
   vec3 k = lit ? clamp(irradiance(normalize(world)) * lightScale, 0.0, 1.5) : vec3(1.0);
   color = vec4(texel.rgb * k, 1.0);
 }`;
+const PEOPLE_VERTEX = `#version 300 es
+in vec3 position; in vec3 normal; in vec2 uv; in uvec4 joints; in vec4 weights;
+uniform mat4 viewProjection; uniform mat4 model; uniform mat4 bones[13];
+out vec2 texcoord; out vec3 world;
+void main() {
+  mat4 skin = bones[joints.x] * weights.x + bones[joints.y] * weights.y + bones[joints.z] * weights.z + bones[joints.w] * weights.w;
+  texcoord = uv; world = mat3(model) * mat3(skin) * normal;
+  gl_Position = viewProjection * model * skin * vec4(position, 1.0);
+}`;
 const FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 texcoord; in vec3 tint;
@@ -196,8 +210,8 @@ async function texture(gl, png) {
  *                   false hides it (e.g. after the retail break animation removes it)
  *   crowd           false hides the instanced crowd; otherwise tick/excited drive its frame
  */
-export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map() }, { lighting = null, lightScale = 1 } = {}) {
-  const state = { props: null, crowd: null, weapons: null };
+export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null }, { lighting = null, lightScale = 1 } = {}) {
+  const state = { props: null, crowd: null, weapons: null, people: null };
   let drawWeapon = () => {};
   const identity = placementMatrix({translate:[0,0,0], rotate:[0,0,0]});
   const placements = new Map(manifest.props.map(p => [p.name, p.placement ? placementMatrix(p.placement) : identity]));
@@ -310,9 +324,42 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       }
     };
   }
+  if (people) {
+    const prog = program(gl, PEOPLE_VERTEX, WEAPON_FRAGMENT);
+    const classes = [];
+    for (const data of people.classes) {
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vbo = gl.createBuffer(), ibo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, data.vertices, gl.STATIC_DRAW);
+      for (const [key, size, type, offset] of [["position", 3, gl.FLOAT, 0], ["normal", 3, gl.FLOAT, 12], ["uv", 2, gl.FLOAT, 24], ["joints", 4, gl.UNSIGNED_BYTE, 32], ["weights", 4, gl.FLOAT, 36]]) {
+        const at = gl.getAttribLocation(prog, key);
+        gl.enableVertexAttribArray(at);
+        if (key === "joints") gl.vertexAttribIPointer(at, size, type, 52, offset);
+        else gl.vertexAttribPointer(at, size, type, false, 52, offset);
+      }
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.indices, gl.STATIC_DRAW);
+      classes.push({ vao, vbo, ibo, batches: data.mesh.batches, bones: data.mesh.bones });
+    }
+    const outfits = new Map();
+    for (const [key, png] of people.outfits) outfits.set(key, await texture(gl, png));
+    const uniform = uniforms(prog, ["viewProjection","model","bones","irradianceCoefficients","lit","lightScale","diffuse"]);
+    gl.useProgram(prog);
+    gl.uniform1i(uniform.lit, lighting ? 1 : 0);
+    gl.uniform1f(uniform.lightScale, lightScale);
+    gl.uniform1i(uniform.diffuse, 0);
+    const spectators = people.manifest.spectators.map(s => {
+      const matrix = placementMatrix(s);
+      for (let i = 0; i < 12; i++) matrix[i] *= s.scale;   // retail per-person height factor, about the feet
+      return { ...s, matrix, light: lighting ? sampleIrradiance(lighting, s.translate) : null };
+    });
+    state.people = { prog, classes, outfits, uniform, spectators, bank: people.bank, pose: new Float32Array(POSE_FLOATS), palette: new Float32Array(13 * 16) };
+  }
   gl.bindVertexArray(null);
 
-  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
+  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, people: showPeople = true, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
     if (state.props) {
       const { prog, vao, textures, uniform } = state.props;
       gl.useProgram(prog);
@@ -344,6 +391,25 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, atlas);
       gl.drawElementsInstanced(gl.TRIANGLES, crowd.mesh.indices, gl.UNSIGNED_SHORT, 0, count);
+    }
+    if (state.people && showPeople) {
+      const { prog, classes, outfits, uniform, spectators, bank, pose, palette } = state.people;
+      gl.useProgram(prog);
+      gl.uniformMatrix4fv(uniform.viewProjection, false, viewProjection);
+      gl.activeTexture(gl.TEXTURE0);
+      for (const spectator of spectators) {
+        const model = classes[spectator.class];
+        // A spectator plays the bank from its own offset so rows do not move in lockstep.
+        skinPalette(bankPose(bank, spectator.index, tick / bank.rate + spectator.index * 0.37, pose), model.bones, palette);
+        if (lighting) gl.uniform3fv(uniform.irradianceCoefficients, spectator.light);
+        gl.uniformMatrix4fv(uniform.model, false, spectator.matrix);
+        gl.uniformMatrix4fv(uniform.bones, false, palette);
+        gl.bindVertexArray(model.vao);
+        for (const { shape, first, count } of model.batches) {
+          gl.bindTexture(gl.TEXTURE_2D, outfits.get(spectator.outfit[shape]) ?? null);
+          gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, first * 2);
+        }
+      }
     }
     if (state.weapons) {
       const { prog, uniform } = state.weapons;
