@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -7,21 +8,46 @@ import { chromium } from 'playwright';
 import { WebSocket } from 'ws';
 import { attachNetplay } from '../server.mjs';
 
-async function startServer(t) {
-  const clientSource = await readFile(new URL('../client.mjs', import.meta.url));
+async function startServer(t, signaling = true) {
+  const filenames = ['client.mjs', 'peerjs.mjs', 'vendor/peerjs-1.5.5.min.js'];
+  const sources = new Map(await Promise.all(filenames.map(async (name) => [
+    `/${name}`, await readFile(new URL(`../${name}`, import.meta.url)),
+  ])));
   const server = createServer((request, response) => {
-    if (request.url === '/client.mjs') {
-      response.writeHead(200, { 'Content-Type': 'text/javascript' }).end(clientSource);
+    if (sources.has(request.url)) {
+      response.writeHead(200, { 'Content-Type': 'text/javascript' }).end(sources.get(request.url));
       return;
     }
     response.writeHead(200, { 'Content-Type': 'text/html' }).end(`<!doctype html>
       <title>WebRTC fixture</title><canvas width="160" height="120"></canvas><video></video>`);
   });
-  attachNetplay(server);
+  if (signaling) attachNetplay(server);
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   t.after(() => { server.close(); });
   return `http://127.0.0.1:${server.address().port}`;
+}
+
+async function startPeerServer(t) {
+  // PeerServer owns interval timers with no public disposal API, so run it in a child process.
+  const broker = spawn(process.execPath, ['--input-type=module', '--eval', `
+    import { PeerServer } from 'peer';
+    PeerServer({ host: '127.0.0.1', port: 0, path: '/relay' }, server => {
+      console.log(server.address().port);
+    });
+  `], { cwd: new URL('../', import.meta.url), stdio: ['ignore', 'pipe', 'inherit'] });
+  t.after(async () => {
+    if (broker.exitCode !== null || broker.signalCode !== null) return;
+    const exited = once(broker, 'exit');
+    broker.kill();
+    await exited;
+  });
+  const port = await Promise.race([
+    once(broker.stdout, 'data').then(([value]) => Number(value.toString().trim())),
+    once(broker, 'exit').then(([code]) => { throw new Error(`PeerServer stopped with status ${code}`); }),
+  ]);
+  assert.ok(port > 0);
+  return `http://127.0.0.1:${port}/relay`;
 }
 
 async function connect(t, baseUrl, options) {
@@ -90,8 +116,10 @@ test('signaling scopes traffic to one invited guest and supports a fresh round',
   assert.match(error.message, /403/);
 });
 
-test('two Chromium clients exchange live media and second-player controls', { timeout: 35_000 }, async (t) => {
-  const base = await startServer(t);
+async function testBrowserMatch(t, usePeerJS) {
+  const base = await startServer(t, !usePeerJS);
+  const entry = usePeerJS ? '/peerjs.mjs' : '/client.mjs';
+  const signalingUrl = usePeerJS ? await startPeerServer(t) : undefined;
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
     args: ['--autoplay-policy=no-user-gesture-required'],
@@ -102,8 +130,8 @@ test('two Chromium clients exchange live media and second-player controls', { ti
   host.setDefaultTimeout(10_000);
   guest.setDefaultTimeout(10_000);
   await Promise.all([host.goto(base), guest.goto(base)]);
-  const code = await host.evaluate(async () => {
-    const { hostMatch } = await import('/client.mjs');
+  const code = await host.evaluate(async ({ entry, signalingUrl }) => {
+    const { hostMatch } = await import(entry);
     const canvas = document.querySelector('canvas');
     const drawing = canvas.getContext('2d');
     let frame = 0;
@@ -122,29 +150,37 @@ test('two Chromium clients exchange live media and second-player controls', { ti
     window.hostStates = [];
     window.inputs = [];
     window.room = await hostMatch({
-      canvas, audioStream: destination.stream, iceServers: [],
+      canvas, audioStream: destination.stream, iceServers: [], signalingUrl,
       onInput: (input) => window.inputs.push(input),
       onState: (state) => window.hostStates.push(state),
     });
     window.hostAudioTrack = destination.stream.getAudioTracks()[0];
     return window.room.code;
-  });
+  }, { entry, signalingUrl });
 
   async function join() {
-    await guest.evaluate(async (roomCode) => {
-      const { joinMatch } = await import('/client.mjs');
+    await guest.evaluate(async ({ code, entry, signalingUrl }) => {
+      const { joinMatch } = await import(entry);
       window.guestStates = [];
       window.match = await joinMatch({
-        code: roomCode, video: document.querySelector('video'), iceServers: [],
+        code, video: document.querySelector('video'), iceServers: [], signalingUrl,
         onState: (state) => window.guestStates.push(state),
       });
-    }, code);
+    }, { code, entry, signalingUrl });
     await Promise.all([
       host.waitForFunction(() => window.hostStates.at(-1) === 'connected'),
       guest.waitForFunction(() => window.guestStates.at(-1) === 'connected'),
     ]);
   }
   await join();
+
+  if (usePeerJS) {
+    await assert.rejects(guest.evaluate(async ({ code, entry, signalingUrl }) => {
+      const { joinMatch } = await import(entry);
+      const unexpected = await joinMatch({ code, video: document.createElement('video'), iceServers: [], signalingUrl });
+      unexpected.close();
+    }, { code, entry, signalingUrl }), /already has a guest/);
+  }
 
   const media = await guest.evaluate(async () => {
     const video = document.querySelector('video');
@@ -196,4 +232,7 @@ test('two Chromium clients exchange live media and second-player controls', { ti
   await host.evaluate(() => window.room.close());
   await guest.waitForFunction(() => window.guestStates.at(-1) === 'closed');
   assert.equal(await guest.evaluate(() => document.querySelector('video').srcObject), null);
-});
+}
+
+test('two Chromium clients exchange live media and second-player controls', { timeout: 35_000 }, (t) => testBrowserMatch(t, false));
+test('two Chromium clients play through PeerJS signaling on a static host', { timeout: 40_000 }, (t) => testBrowserMatch(t, true));

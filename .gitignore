@@ -10,3 +10,6 @@ __pycache__/
 *.dtm
 *.dol
 .DS_Store
+
+/game-assets/*
+!/game-assets/manifest.json

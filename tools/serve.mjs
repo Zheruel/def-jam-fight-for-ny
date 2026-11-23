@@ -17,7 +17,7 @@ function byteRange(header, size) {
   return start <= end && Number.isSafeInteger(start) ? [start, end] : null;
 }
 
-export function gameServer(directory = root) {
+export function gameServer(directory = root, { reference = false } = {}) {
   return createServer(async (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
@@ -35,8 +35,8 @@ export function gameServer(directory = root) {
       return;
     }
     if (name === '/') name = '/web/index.html';
-    if (name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
-    else if (!/^\/(web\/|runtime\/play-build\/|netplay\/client\.mjs$|ps2\/battle\/(overlay\.mjs|battle-patch\.json)$|ps2\/content\/unlock-disc-patch\.json$)/.test(name)) return fail(404);
+    if (reference && name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
+    else if (!/^\/(game-assets\/(manifest\.json|blocks\/[0-9a-f]{64}\.gz)$|web\/|runtime\/play-build\/|netplay\/(client\.mjs|peerjs\.mjs|vendor\/[a-zA-Z0-9._-]+)$|ps2\/battle\/(overlay\.mjs|battle-patch\.json)$|ps2\/content\/unlock-disc-patch\.json$)/.test(name)) return fail(404);
     if (name.split('/').some(part => part.startsWith('.')) || /[\\\0]/.test(name)) return fail(404);
     let file;
     try {

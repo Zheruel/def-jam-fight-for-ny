@@ -139,450 +139,459 @@
     "GetGlobalVenueUnlockInfo": "0x0014C9A8",
     "GetVenueCostInfo": "0x0014C9B4",
     "GetVenueList": "0x0014C9C0",
-    "BuyVenue": "0x0014C9CC"
+    "BuyVenue": "0x0014C9CC",
+    "ResetFighterList": "0x0014C9D8",
+    "ResetVenueList": "0x0014C9E4",
+    "ResetVenueList (story)": "0x0014C9F0"
   },
   "patches": [
     {
       "address": "0x0014BFB0",
       "original": "0x27BDFFB0",
-      "value": "0x8C880D0C",
+      "value": "0x3C080040",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFB4",
       "original": "0x7FB00040",
-      "value": "0x11000046",
+      "value": "0x8D08DB00",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFB8",
       "original": "0xFFBF0030",
-      "value": "0x3C0FFF7F",
+      "value": "0x11000046",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFBC",
       "original": "0x0080802D",
-      "value": "0x8D080004",
+      "value": "0x3C0FFF7F",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFC0",
       "original": "0x0C0D215A",
-      "value": "0x11000043",
+      "value": "0x8D080004",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFC4",
       "original": "0x8CA40000",
-      "value": "0x35EFFFFF",
+      "value": "0x11000043",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFC8",
       "original": "0xAFA20000",
-      "value": "0x2509000C",
+      "value": "0x35EFFFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFCC",
       "original": "0x0200202D",
-      "value": "0x8D2B0000",
+      "value": "0x2509000C",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFD0",
       "original": "0xAFA00004",
-      "value": "0x296C0018",
+      "value": "0x8D2B0000",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFD4",
       "original": "0x6BA20007",
-      "value": "0x1580001D",
+      "value": "0x296C0018",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFD8",
       "original": "0x6FA20000",
-      "value": "0x8D2D0004",
+      "value": "0x1580001D",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFDC",
       "original": "0xB3A20017",
-      "value": "0x29AC0019",
+      "value": "0x8D2D0004",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFE0",
       "original": "0xB7A20010",
-      "value": "0x1180001A",
+      "value": "0x29AC0019",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFE4",
       "original": "0x0C052CE0",
-      "value": "0x8D2E000C",
+      "value": "0x1180001A",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFE8",
       "original": "0x27A50010",
-      "value": "0x11C00018",
+      "value": "0x8D2E000C",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFEC",
       "original": "0x8E030D0C",
-      "value": "0x3C0A1700",
+      "value": "0x11C00018",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFF0",
       "original": "0x3C07FF7F",
-      "value": "0x25ADFFFF",
+      "value": "0x3C0A1700",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFF4",
       "original": "0x34E7FFFF",
-      "value": "0x24180017",
+      "value": "0x25ADFFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFF8",
       "original": "0x8C660004",
-      "value": "0x01581025",
+      "value": "0x24180017",
       "what": "fill routine"
     },
     {
       "address": "0x0014BFFC",
       "original": "0x24C40004",
-      "value": "0x05A00008",
+      "value": "0x01581025",
       "what": "fill routine"
     },
     {
       "address": "0x0014C000",
       "original": "0x24C90020",
-      "value": "0x000D1880",
+      "value": "0x05A00008",
       "what": "fill routine"
     },
     {
       "address": "0x0014C004",
       "original": "0x8C83004C",
-      "value": "0x006E1821",
+      "value": "0x000D1880",
       "what": "fill routine"
     },
     {
       "address": "0x0014C008",
       "original": "0x00621823",
-      "value": "0x8C630000",
+      "value": "0x006E1821",
       "what": "fill routine"
     },
     {
       "address": "0x0014C00C",
       "original": "0xAC83004C",
-      "value": "0x006F0824",
+      "value": "0x8C630000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C010",
       "original": "0x8FA20000",
-      "value": "0x14220003",
+      "value": "0x006F0824",
       "what": "fill routine"
     },
     {
       "address": "0x0014C014",
       "original": "0xAFA20020",
-      "value": "0x00000000",
+      "value": "0x14220003",
       "what": "fill routine"
     },
     {
       "address": "0x0014C018",
       "original": "0x8CC80024",
-      "value": "0x00601025",
+      "value": "0x00000000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C01C",
       "original": "0x25020001",
-      "value": "0x25ADFFFF",
+      "value": "0x00601025",
       "what": "fill routine"
     },
     {
       "address": "0x0014C020",
       "original": "0x00082080",
-      "value": "0x00181880",
+      "value": "0x25ADFFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014C024",
       "original": "0xACC20024",
-      "value": "0x006E1821",
+      "value": "0x00181880",
       "what": "fill routine"
     },
     {
       "address": "0x0014C028",
       "original": "0x8D25000C",
-      "value": "0xAC620000",
+      "value": "0x006E1821",
       "what": "fill routine"
     },
     {
       "address": "0x0014C02C",
       "original": "0x8FA30020",
-      "value": "0x1F00FFF2",
+      "value": "0xAC620000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C030",
       "original": "0x00852021",
-      "value": "0x2718FFFF",
+      "value": "0x1F00FFF2",
       "what": "fill routine"
     },
     {
       "address": "0x0014C034",
       "original": "0x8C82FFFC",
-      "value": "0x24020018",
+      "value": "0x2718FFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014C038",
       "original": "0x00671824",
-      "value": "0xAD220004",
+      "value": "0x24020018",
       "what": "fill routine"
     },
     {
       "address": "0x0014C03C",
       "original": "0x00471024",
-      "value": "0x8D230008",
+      "value": "0xAD220004",
       "what": "fill routine"
     },
     {
       "address": "0x0014C040",
       "original": "0x0062182B",
-      "value": "0x10600002",
+      "value": "0x8D230008",
       "what": "fill routine"
     },
     {
       "address": "0x0014C044",
       "original": "0x10600017",
-      "value": "0x00000000",
+      "value": "0x10600002",
       "what": "fill routine"
     },
     {
       "address": "0x0014C048",
       "original": "0x27AA0020",
-      "value": "0xAC620000",
+      "value": "0x00000000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C04C",
       "original": "0x11000016",
-      "value": "0x25090020",
+      "value": "0xAC620000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C050",
       "original": "0x8D22000C",
-      "value": "0x8D2B0000",
+      "value": "0x25090020",
       "what": "fill routine"
     },
     {
       "address": "0x0014C054",
       "original": "0x3C06FF7F",
-      "value": "0x296C004B",
+      "value": "0x8D2B0000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C058",
       "original": "0x34C6FFFF",
-      "value": "0x1580001D",
+      "value": "0x296C004B",
       "what": "fill routine"
     },
     {
       "address": "0x0014C05C",
       "original": "0x00000000",
-      "value": "0x8D2D0004",
+      "value": "0x1580001D",
       "what": "fill routine"
     },
     {
       "address": "0x0014C060",
       "original": "0x00081880",
-      "value": "0x29AC004C",
+      "value": "0x8D2D0004",
       "what": "fill routine"
     },
     {
       "address": "0x0014C064",
       "original": "0x2508FFFF",
-      "value": "0x1180001A",
+      "value": "0x29AC004C",
       "what": "fill routine"
     },
     {
       "address": "0x0014C068",
       "original": "0x00621821",
-      "value": "0x8D2E000C",
+      "value": "0x1180001A",
       "what": "fill routine"
     },
     {
       "address": "0x0014C06C",
       "original": "0x00082080",
-      "value": "0x11C00018",
+      "value": "0x8D2E000C",
       "what": "fill routine"
     },
     {
       "address": "0x0014C070",
       "original": "0x8C62FFFC",
-      "value": "0x3C0A0700",
+      "value": "0x11C00018",
       "what": "fill routine"
     },
     {
       "address": "0x0014C074",
       "original": "0xAC620000",
-      "value": "0x25ADFFFF",
+      "value": "0x3C0A0700",
       "what": "fill routine"
     },
     {
       "address": "0x0014C078",
       "original": "0x8D25000C",
-      "value": "0x2418004A",
+      "value": "0x25ADFFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014C07C",
       "original": "0x8D430000",
-      "value": "0x01581025",
+      "value": "0x2418004A",
       "what": "fill routine"
     },
     {
       "address": "0x0014C080",
       "original": "0x00852021",
-      "value": "0x05A00008",
+      "value": "0x01581025",
       "what": "fill routine"
     },
     {
       "address": "0x0014C084",
       "original": "0x8C82FFFC",
-      "value": "0x000D1880",
+      "value": "0x05A00008",
       "what": "fill routine"
     },
     {
       "address": "0x0014C088",
       "original": "0x00661824",
-      "value": "0x006E1821",
+      "value": "0x000D1880",
       "what": "fill routine"
     },
     {
       "address": "0x0014C08C",
       "original": "0x00461024",
-      "value": "0x8C630000",
+      "value": "0x006E1821",
       "what": "fill routine"
     },
     {
       "address": "0x0014C090",
       "original": "0x0062182B",
-      "value": "0x006F0824",
+      "value": "0x8C630000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C094",
       "original": "0x50600004",
-      "value": "0x14220003",
+      "value": "0x006F0824",
       "what": "fill routine"
     },
     {
       "address": "0x0014C098",
       "original": "0x8D22000C",
-      "value": "0x00000000",
+      "value": "0x14220003",
       "what": "fill routine"
     },
     {
       "address": "0x0014C09C",
       "original": "0x5500FFF0",
-      "value": "0x00601025",
+      "value": "0x00000000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0A0",
       "original": "0x8D22000C",
-      "value": "0x25ADFFFF",
+      "value": "0x00601025",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0A4",
       "original": "0x8D22000C",
-      "value": "0x00181880",
+      "value": "0x25ADFFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0A8",
       "original": "0x00081880",
-      "value": "0x006E1821",
+      "value": "0x00181880",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0AC",
       "original": "0x8D440000",
-      "value": "0xAC620000",
+      "value": "0x006E1821",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0B0",
       "original": "0x00621821",
-      "value": "0x1F00FFF2",
+      "value": "0xAC620000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0B4",
       "original": "0xAC640000",
-      "value": "0x2718FFFF",
+      "value": "0x1F00FFF2",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0B8",
       "original": "0x8D230008",
-      "value": "0x2402004B",
+      "value": "0x2718FFFF",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0BC",
       "original": "0x50600004",
-      "value": "0xAD220004",
+      "value": "0x2402004B",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0C0",
       "original": "0x8E040D0C",
-      "value": "0x8D230008",
+      "value": "0xAD220004",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0C4",
       "original": "0x8D220004",
-      "value": "0x10600002",
+      "value": "0x8D230008",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0C8",
       "original": "0xAC620000",
-      "value": "0x00000000",
+      "value": "0x10600002",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0CC",
       "original": "0x8E040D0C",
-      "value": "0xAC620000",
+      "value": "0x00000000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0D0",
       "original": "0x0C0440D2",
-      "value": "0x03200008",
+      "value": "0xAC620000",
       "what": "fill routine"
     },
     {
       "address": "0x0014C0D4",
       "original": "0x24050001",
+      "value": "0x03200008",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0D8",
+      "original": "0x7BB00040",
       "value": "0x00000000",
       "what": "fill routine"
     },
@@ -743,6 +752,60 @@
       "what": "binding wrappers"
     },
     {
+      "address": "0x0014C9D8",
+      "original": "0x8CC80010",
+      "value": "0x3C190013",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9DC",
+      "original": "0x25020001",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9E0",
+      "original": "0x00082080",
+      "value": "0x27396330",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9E4",
+      "original": "0xACC20010",
+      "value": "0x3C190013",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9E8",
+      "original": "0x8D25000C",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9EC",
+      "original": "0x8FA30020",
+      "value": "0x27396398",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9F0",
+      "original": "0x00852021",
+      "value": "0x3C190016",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9F4",
+      "original": "0x8C82FFFC",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9F8",
+      "original": "0x00671824",
+      "value": "0x2739A898",
+      "what": "binding wrappers"
+    },
+    {
       "address": "0x003B7AF4",
       "original": "0x0014ABA0",
       "value": "0x0014C978",
@@ -789,6 +852,24 @@
       "original": "0x0014C970",
       "value": "0x0014C9CC",
       "what": "BuyVenue -> wrapper"
+    },
+    {
+      "address": "0x003B3DBC",
+      "original": "0x00136330",
+      "value": "0x0014C9D8",
+      "what": "ResetFighterList -> wrapper"
+    },
+    {
+      "address": "0x003B3E24",
+      "original": "0x00136398",
+      "value": "0x0014C9E4",
+      "what": "ResetVenueList -> wrapper"
+    },
+    {
+      "address": "0x003BB61C",
+      "original": "0x0015A898",
+      "value": "0x0014C9F0",
+      "what": "ResetVenueList (story) -> wrapper"
     }
   ]
 }

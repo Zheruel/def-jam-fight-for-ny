@@ -46,9 +46,10 @@ function decodeInput(buffer) {
 
 function openRoom(role, {
   code, media, video, signalingUrl, iceServers = DEFAULT_ICE_SERVERS,
+  connectSignaling = (url) => new WebSocket(websocketUrl(url)), roomTimeout = 10_000,
   onInput = () => {}, onState = () => {}, onPlaybackBlocked = () => {}, onClose = () => {},
 }) {
-  const socket = new WebSocket(websocketUrl(signalingUrl));
+  const socket = connectSignaling(signalingUrl);
   let peer;
   let state;
   let roomCode;
@@ -304,7 +305,7 @@ function openRoom(role, {
     }
   }
 
-  const roomDeadline = setTimeout(() => close(new Error('Signaling server did not respond.')), 10_000);
+  const roomDeadline = setTimeout(() => close(new Error('Signaling server did not respond.')), roomTimeout);
   socket.addEventListener('open', () => send({ type: role === 'host' ? 'host' : 'join', code }));
   socket.addEventListener('message', ({ data }) => {
     handleMessage = handleMessage.then(async () => {

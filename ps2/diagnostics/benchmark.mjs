@@ -15,7 +15,7 @@ const run = promisify(execFile);
 await mkdir(output, { recursive: true });
 const pageSource = await readFile(new URL('./benchmark.html', import.meta.url));
 const playAssets = new Map(await Promise.all(['Play.js', 'Play.wasm'].map(async name => [name, await readFile(join(build, name))])));
-const server = gameServer();
+const server = gameServer(undefined, { reference: true });
 const [serveGame] = server.listeners('request');
 server.removeListener('request', serveGame);
 server.on('request', (request, response) => {

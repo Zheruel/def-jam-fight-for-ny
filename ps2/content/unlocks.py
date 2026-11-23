@@ -22,8 +22,10 @@ Get*List binary-search the sets.
 The patch
 ---------
 The script binder copies each handler's pointer-to-member from .rodata when the screen class is
-registered. The patch points the eight unlock bindings at three-word wrappers that load the real
-handler into $t9 and jump to one shared fill routine. The fill routine merges every SOD handle
+registered. The patch points the unlock bindings (the shop/unlock screen's eight, plus the battle
+setup screen's ResetFighterList/ResetVenueList and the story venue list) at three-word wrappers
+that load the real handler into $t9 and jump to one shared fill routine. The routine reads the
+profile from registry slot 0x18 directly, so it works from any screen class. The fill routine merges every SOD handle
 of the fighter and venue classes into the two sets (keeping any existing entry and its flag bit),
 updates the count and its mirror, and tail-jumps to $t9 with every argument register intact.
 Bounds are checked against the live capacity words, so a profile that does not look like the
@@ -63,7 +65,6 @@ ELF_FILE_OFFSET, ELF_VADDR = 0x1000, 0x00100000
 
 PROFILE_REGISTRY = 0x003FDAA0
 PROFILE_SLOT = 0x18
-BINDING_PROFILE = 0xD0C  # this+0xD0C caches registry[PROFILE_SLOT]
 VENUE_SET, FIGHTER_SET = 0x0C, 0x20  # offsets in R; set = {capacity, count, &mirror, data}
 VENUE_CAPACITY, FIGHTER_CAPACITY = 30, 80
 
@@ -77,6 +78,11 @@ BINDINGS = {
     "GetVenueCostInfo": (0x003B7BC8, 0x0014C300),
     "GetVenueList": (0x003B7BE0, 0x0014C590),
     "BuyVenue": (0x003B7BF8, 0x0014C970),
+    # Battle setup screen (character and venue select) builds its own lists from the sets.
+    "ResetFighterList": (0x003B3DB8, 0x00136330),
+    "ResetVenueList": (0x003B3E20, 0x00136398),
+    # Story-mode venue list (same name, different screen class).
+    "ResetVenueList (story)": (0x003BB618, 0x0015A898),
 }
 FILL_AT, FILL_WORDS = 0x0014BFB0, 80  # BuyCharacter body
 WRAP_AT, WRAP_WORDS = 0x0014C970, 80  # BuyVenue body
@@ -178,8 +184,10 @@ def hi_lo(value):
 def assemble(fighter_class, fighter_count, venue_class, venue_count):
     """Returns (fill words, wrapper words, {binding: wrapper address})."""
     a = Asm(FILL_AT)
-    # $a0 = binding object, $t9 = real handler. Uses only caller-saved temporaries.
-    a.lw("t0", BINDING_PROFILE, "a0")
+    # $t9 = real handler; $a0-$a3 untouched. Uses only caller-saved temporaries.
+    hi, lo = hi_lo(PROFILE_REGISTRY + 4 * PROFILE_SLOT)
+    a.lui("t0", hi)
+    a.lw("t0", lo, "t0")                   # profile object = registry[0x18]
     a.beq("t0", "zero", "done")
     a.lui("t7", HANDLE_MASK >> 16)         # delay slot, harmless
     a.lw("t0", 4, "t0")                    # R = profile body
@@ -237,7 +245,7 @@ def assemble(fighter_class, fighter_count, venue_class, venue_count):
     w.or_("v0", "zero", "zero")
     wrappers = {}
     for name, (_, handler) in BINDINGS.items():
-        target = WRAP_AT if name.startswith("Buy") else handler
+        target = WRAP_AT if name.startswith("Buy") else handler  # Buy* become "fill, return 0"
         hi, lo = hi_lo(target)
         wrappers[name] = w.pc
         w.lui("t9", hi)

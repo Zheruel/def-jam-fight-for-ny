@@ -14,10 +14,15 @@ import { gameServer } from '../tools/serve.mjs';
 
 const run = promisify(execFile);
 const root = fileURLToPath(new URL('../', import.meta.url));
-const discSha256 = '676ec0c5a313184b0cd476fc2d322cb0b02d6a7cec7d883743a92f3ffbdeca46';
 const artifactRoot = join(root, 'private/verification/ps2-match');
-const buttons = { cross: 1, circle: 2, square: 4, triangle: 8, start: 512, down: 8192, right: 32768 };
+const assetManifestPath = '/game-assets/manifest.json';
+const buttons = { cross: 1, circle: 2, square: 4, triangle: 8, start: 512, down: 8192, left: 16384, right: 32768 };
 const neutralAxes = [0, 0, 0, 0];
+const fighterNameRegions = [[0.17, 0.67, 0.32, 0.15], [0.55, 0.68, 0.38, 0.14]];
+const fighterName = text => text.normalize('NFKD').toUpperCase().replace(/[^A-Z0-9]/gu, '');
+const isBlaze = text => /B[LI]AZE|METHODMAN/u.test(fighterName(text));
+const isDoc = text => /D[O0]C|REDMAN/u.test(fighterName(text));
+const isMatchCard = text => isBlaze(text) && isDoc(text) && /FOUN[DU][A-Z]{0,5}[O0]N/u.test(fighterName(text));
 
 async function hash(file) {
   const digest = createHash('sha256');
@@ -43,7 +48,7 @@ async function rtcStats(page) {
   });
 }
 
-async function openStandardBattle({ input, waitScreen }) {
+async function openStandardBattle({ input, waitScreen, retailMenus, report }) {
   const matchType = /CHOOSE MATCH TYPE|NO EXCUSES/iu;
   const opening = await waitScreen('opening', /AUTOSAVE WARNING|MAIN MENU|CHOOSE MATCH TYPE|NO EXCUSES/iu, { timeout: 120_000 });
   if (/AUTOSAVE WARNING/iu.test(opening.text)) {
@@ -54,15 +59,16 @@ async function openStandardBattle({ input, waitScreen }) {
     await input(1, 'cross');
   }
 
-  if (!matchType.test(opening.text)) {
-    const main = await waitScreen('main-menu', /FIGHT FOR MONEY|CHOOSE MATCH TYPE|NO EXCUSES/iu, {
-      timeout: 120_000, between: () => input(1, 'start', { after: 35 }),
-    });
-    if (!matchType.test(main.text)) {
-      await input(1, 'right');
-      await waitScreen('battle-highlighted', /BRING YOUR CREW|UP TO 4 PLAYERS/iu);
-      await input(1, 'cross');
-    }
+  const menu = matchType.test(opening.text) ? opening : await waitScreen(
+    'post-title-menu', /FIGHT FOR MONEY|CHOOSE MATCH TYPE|NO EXCUSES/iu,
+    { timeout: 120_000, between: () => input(1, 'start', { after: 35 }) },
+  );
+  report.titleDestination = matchType.test(menu.text) ? 'battle' : 'main-menu';
+  if (report.titleDestination === 'main-menu') {
+    assert.ok(retailMenus, 'The launcher must open Battle directly from the title screen');
+    await input(1, 'right');
+    await waitScreen('battle-highlighted', /BRING YOUR CREW|UP TO 4 PLAYERS/iu);
+    await input(1, 'cross');
   }
 
   await waitScreen('one-on-one', /NO EXCUSES/iu);
@@ -87,19 +93,44 @@ async function joinControllers({ input, waitScreen }) {
   await input(1, 'cross');
 }
 
-async function selectFightersAndVenue({ input, waitScreen }) {
-  await waitScreen('fighter-selection', /CHOOSE FIGHTER.*WRESTLING/iu);
+async function findFighter({ input, sample, capture, waitVblanks, report }, port, name, recognizes) {
+  // Each portrait row is six columns. Sweep successive rows with the same controller.
+  const visited = [];
+  for (let index = 0; index < 75; index++) {
+    const region = fighterNameRegions[port - 1];
+    let image = await sample('host', region);
+    if (!recognizes(image.text)) {
+      await waitVblanks(8);
+      image = await sample('host', region);
+    }
+    visited.push(image.text);
+    if (recognizes(image.text)) {
+      report.fighterSearch ??= {};
+      report.fighterSearch[name] = visited;
+      await capture(`${port === 1 ? 'host' : 'guest'}-fighter-${name.toLowerCase()}`, 'host', image);
+      return;
+    }
+    const row = Math.floor(index / 6);
+    const direction = index % 6 === 5 ? 'down' : row % 2 ? 'left' : 'right';
+    await input(port, direction, { after: 24 });
+  }
+  throw new Error(`Could not identify ${name} on port ${port}. Read ${visited.join(' | ')}`);
+}
+
+async function selectFightersAndVenue(controls) {
+  const { input, waitScreen } = controls;
+  await waitScreen('fighter-selection', /CHOOSE FIGHTER.*(?:WRESTLING|MARTIAL ARTS|STREETFIGHTING)/iu);
+  await findFighter(controls, 1, 'Blaze', isBlaze);
   await input(1, 'cross', { after: 35 });
   await input(1, 'cross');
-  await waitScreen('host-fighter-blaze', /CHOOSE FIGHTER.*READY/iu);
-  await input(2, 'right');
-  await waitScreen('guest-fighter-doc', /CHOOSE FIGHTER.*MARTIAL ARTS/iu);
+  await waitScreen('host-fighter-ready', /CHOOSE FIGHTER.*READY/iu);
+  await findFighter(controls, 2, 'Doc', isDoc);
   await input(2, 'cross');
   await waitScreen('two-fighters-ready', /READY!?.*READY/iu);
   await input(2, 'cross');
   await waitScreen('venue-foundation', /CHOOSE VENUE.*FOUNDATION/iu);
   await input(1, 'cross');
-  await waitScreen('match-card', /ONE ON ONE.*LOADING|AS B[LI]AZE.*AS ?DOC/iu);
+  await waitScreen('match-card', isMatchCard);
 }
 
 async function playBattle(controls) {
@@ -109,16 +140,20 @@ async function playBattle(controls) {
   const venueStart = performance.now();
   await selectFightersAndVenue(controls);
   report.match = { type: 'One on One', rules: 'Standard', venue: 'Foundation', host: 'Blaze', guest: 'Doc' };
-  await waitScreen('guest-match-card', /ONE ON ONE.*LOADING|(?:AS B[LI]AZE.*AS ?DOC|AS ?DOC.*AS B[LI]AZE)/iu, { side: 'guest' });
+  await waitScreen('guest-match-card', isMatchCard, { side: 'guest' });
 
   const card = /ONE ON ONE|AS B[LI]AZE|LOADING/iu;
   const activeFight = text => !card.test(text) && /B[LI]AZE/iu.test(text) && /\bDOC\b/iu.test(text) &&
     /\b\d{2}:\d{2}\b/u.test(text);
   await waitScreen('fight-ready', activeFight, {
     timeout: 480_000, interval: 850,
-    between: text => {
+    between: async (text, image) => {
+      if (/PRESS START BUTTON.*(?:ELECTRONIC ARTS|AKI CORPORATION)/iu.test(text)) {
+        await capture('unexpected-title', 'host', image);
+        throw new Error('The game returned to the title screen after the match card');
+      }
       // Cross skips a fighter introduction and dismisses the optional tutorial.
-      if (!card.test(text)) return input(1, 'cross', { after: 32 });
+      if (!card.test(text)) await input(1, 'cross', { after: 32 });
     },
   });
   const firstGuestFrame = await waitScreen('guest-fight-ready', activeFight, { side: 'guest', timeout: 45_000 });
@@ -161,23 +196,26 @@ async function playBattle(controls) {
 
 async function main() {
   const { values } = parseArgs({ options: { 'retail-menus': { type: 'boolean', default: false } } });
-  const disc = join(root, 'private/ps2/reference.iso');
+  const manifest = await readFile(join(root, assetManifestPath));
+  const assetsManifestSha256 = createHash('sha256').update(manifest).digest('hex');
+  assert.equal(JSON.parse(manifest).serial, 'SLUS-21004', 'The package must be the USA PS2 game');
   const wasm = join(root, 'runtime/play-build/Play.wasm');
-  const [actualDisc, wasmSha256] = await Promise.all([hash(disc), hash(wasm)]);
-  assert.equal(actualDisc, discSha256, 'The installed disc must be the USA retail SLUS-21004 ISO');
+  const wasmSha256 = await hash(wasm);
   await mkdir(artifactRoot, { recursive: true, mode: 0o700 });
   const out = await mkdtemp(join(artifactRoot, 'run-'));
   const recognizeText = join(out, 'recognize-text');
+  await run('xcode-select', ['-p']);
   await run('swiftc', ['-O', fileURLToPath(new URL('recognize-text.swift', import.meta.url)), '-o', recognizeText]);
   console.log('Captures in', out);
 
-  const server = gameServer();
+  const server = gameServer(root, { reference: false });
   attachNetplay(server);
   server.listen(0, '127.0.0.1');
   await once(server, 'listening');
   let browser;
-  const report = { discId: 'SLUS-21004', discSha256, wasmSha256,
+  const report = { gameId: 'SLUS-21004', assetsManifestSha256, wasmSha256,
     menuMode: values['retail-menus'] ? 'retail' : 'launcher', captures: [], inputs: [] };
+  const browserMessages = [];
   try {
     browser = await chromium.launch({ channel: 'chrome', headless: true, args: [
       '--autoplay-policy=no-user-gesture-required',
@@ -190,8 +228,26 @@ async function main() {
     const guest = await browser.newPage(context);
     const origin = `http://127.0.0.1:${server.address().port}`;
     const errors = [];
+    const boot = report.boot = {
+      host: { automatic: true, packageRequests: 0 },
+      guest: { mode: 'join', packageRequests: 0 },
+      isoRequests: [], fileChoosers: [], dialogs: [],
+    };
     for (const [name, page] of [['host', host], ['guest', guest]]) {
       page.on('pageerror', error => errors.push(`${name}: ${error.message}`));
+      page.on('request', request => {
+        if (new URL(request.url()).pathname.startsWith('/game-assets/')) boot[name].packageRequests++;
+      });
+      page.on('filechooser', () => boot.fileChoosers.push(name));
+      page.on('dialog', async dialog => {
+        boot.dialogs.push({ page: name, type: dialog.type() });
+        await dialog.dismiss();
+      });
+      page.on('console', message => {
+        if (!['error', 'warning'].includes(message.type())) return;
+        browserMessages.push({ page: name, type: message.type(), text: message.text() });
+        if (browserMessages.length > 120) browserMessages.shift();
+      });
       await page.addInitScript(() => {
         const Peer = RTCPeerConnection;
         window.matchVerificationPeers = [];
@@ -203,7 +259,10 @@ async function main() {
           }
         };
       });
-      await page.goto(origin);
+      await page.route(url => /(?:^\/disc(?:\/|$)|\.iso(?:$|\/))/iu.test(decodeURIComponent(url.pathname)), route => {
+        boot.isoRequests.push({ page: name, url: route.request().url() });
+        return route.abort();
+      });
     }
 
     if (values['retail-menus']) {
@@ -216,7 +275,16 @@ async function main() {
       report.unlockManifestSha256 = await hash(join(root, 'ps2/content/unlock-disc-patch.json'));
     }
 
-    await host.getByRole('button', { name: 'Play', exact: true }).click();
+    const assetResponse = host.waitForResponse(response => new URL(response.url()).pathname === assetManifestPath);
+    await Promise.all([host.goto(`${origin}/`), guest.goto(`${origin}/?join=1`)]);
+    const servedManifest = await assetResponse;
+    assert.ok(servedManifest.ok(), 'The host must load the package manifest automatically');
+    assert.equal(createHash('sha256').update(await servedManifest.body()).digest('hex'), assetsManifestSha256);
+    await host.waitForFunction(() => window.defJam?.diagnostics().discId === 'SLUS-21004' &&
+      window.defJam.diagnostics().vblanks > 0, null, { timeout: 90_000 });
+    assert.ok(boot.host.packageRequests > 1, 'The host must load game blocks from the package');
+    assert.equal(await host.locator('input[type="file"]').count(), 0, 'The host must have no file picker');
+    assert.equal(await guest.locator('input[type="file"]').count(), 0, 'The guest must have no file picker');
     await host.getByRole('button', { name: 'Host a match' }).click({ timeout: 90_000 });
     await host.locator('#room').waitFor({ state: 'visible' });
     const code = await host.locator('#room-code').textContent();
@@ -267,12 +335,13 @@ async function main() {
     }
 
     const surfaces = { host: host.locator('#outputCanvas'), guest: guest.locator('#remote') };
-    async function sample(side) {
+    async function sample(side, region) {
       const file = join(out, `current-${side}.png`);
       const before = await diagnostics();
       await surfaces[side].screenshot({ path: file, timeout: 10_000 });
       const after = await diagnostics();
-      const { stdout } = await run(recognizeText, [file], { timeout: 10_000 });
+      const args = region ? ['--region', ...region.map(String), file] : [file];
+      const { stdout } = await run(recognizeText, args, { timeout: 10_000 });
       return { file, text: JSON.parse(stdout).join(' '),
         emulatedVblankRange: [before.vblanks, after.vblanks], gsFrameCountSample: after.coreFrame };
     }
@@ -295,15 +364,19 @@ async function main() {
           await capture(name, side, image);
           return image;
         }
-        if (between) await between(image.text);
+        if (between) await between(image.text, image);
         await delay(interval);
       } while (performance.now() < deadline);
       await capture(`failed-${name}`, side, image);
       throw new Error(`Timed out waiting for ${name}. Last screen text: ${image.text}`);
     }
 
-    await playBattle({ input, capture, waitScreen, waitVblanks, diagnostics,
+    await playBattle({ input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
       rtc: () => rtcStats(guest), report });
+    assert.equal(boot.guest.packageRequests, 0, 'The guest must receive the stream without fetching game data');
+    assert.deepEqual(boot.isoRequests, [], 'Neither player may request an ISO');
+    assert.deepEqual(boot.fileChoosers, [], 'Neither player may open a file chooser');
+    assert.deepEqual(boot.dialogs, [], 'The launcher must not open a dialog');
     assert.deepEqual(errors, [], 'Unexpected page errors');
     report.complete = true;
   } catch (error) {
@@ -314,6 +387,7 @@ async function main() {
       await browser?.close();
     } finally {
       await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+      if (browserMessages.length) report.browserMessages = browserMessages;
       await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     }
   }

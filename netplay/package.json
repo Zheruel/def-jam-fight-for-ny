@@ -13,6 +13,7 @@
     "ws": "^8.23.0"
   },
   "devDependencies": {
+    "peer": "1.0.2",
     "playwright": "^1.65.1"
   }
 }

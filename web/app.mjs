@@ -1,5 +1,5 @@
 import { CONTROL_KEYS, NEUTRAL_INPUT, readControls } from "./controls.mjs";
-import { isDiscInstalled, makeRuntime } from "./runtime.mjs";
+import { makeRuntime } from "./runtime.mjs";
 
 const get = (id) => document.getElementById(id);
 const canvas = get("outputCanvas");
@@ -8,9 +8,11 @@ const screen = get("screen");
 const startPanel = get("start-panel");
 const screenTitle = get("screen-title");
 const screenMessage = get("screen-message");
-const chooseDisc = get("choose-disc");
-const installed = get("play-installed");
-const discInput = get("disc-input");
+const retry = get("retry");
+const pageUrl = new URL(location.href);
+const guestEntry = pageUrl.searchParams.has("join");
+const staticHost = location.hostname.endsWith(".github.io");
+const transport = staticHost ? "../netplay/peerjs.mjs" : "../netplay/client.mjs";
 const status = get("status");
 
 const audioButton = get("audio");
@@ -26,7 +28,7 @@ let playing = false;
 let loading = false;
 
 let muted = false;
-let installedAvailable = false;
+
 let match;
 let role;
 let roomGeneration = 0;
@@ -40,8 +42,6 @@ const runtime = makeRuntime({
   }
 });
 window.defJam = Object.freeze({
-  bootInstalled: () => startGame(runtime.bootInstalled),
-  boot: (file) => startGame(() => runtime.boot(file)),
   setPad(port, input) {
     if (input) manualPads.set(port, input);
     else manualPads.delete(port);
@@ -63,20 +63,18 @@ function showStart(title, message) {
   startPanel.hidden = false;
   screenTitle.textContent = title;
   screenMessage.textContent = message;
-  const canStart = !loading && !playing && role !== "guest";
-  chooseDisc.hidden = !canStart || installedAvailable;
-  installed.hidden = !canStart || !installedAvailable;
+  retry.hidden = true;
   streamButton.hidden = true;
 }
 
-async function startGame(boot) {
+async function startGame() {
   if (loading || playing || role === "guest") return;
   loading = true;
-  showStart("Starting game", "Loading the PlayStation 2 emulator and disc.");
+  showStart("Starting game", "Loading Battle mode.");
   status.textContent = "Starting Play!";
   void runtime.prepareAudio().catch(() => {});
   try {
-    const disc = await boot();
+    const disc = await runtime.boot();
     playing = true;
     startPanel.hidden = true;
     status.textContent = "PlayStation 2 · " + disc.gameId;
@@ -97,8 +95,9 @@ async function startGame(boot) {
     return disc;
   } catch (error) {
     loading = false;
-    status.textContent = "Disc unavailable";
+    status.textContent = "Game unavailable";
     showStart("Couldn’t start the game", error.message);
+    retry.hidden = false;
   } finally {
     loading = false;
   }
@@ -115,36 +114,7 @@ async function startAudio() {
   await runtime.setMuted(muted);
 }
 
-isDiscInstalled().then((available) => {
-  installedAvailable = available;
-  if (available && !loading && !playing && !role) {
-    status.textContent = "Ready · PlayStation 2";
-    showStart("Ready to play", "Def Jam: Fight for NY is installed on this machine.");
-  }
-}).catch(() => {});
-
-installed.addEventListener("click", () => void window.defJam.bootInstalled());
-chooseDisc.addEventListener("click", () => {
-  void runtime.prepareAudio().catch(() => {});
-  discInput.click();
-});
-discInput.addEventListener("change", () => {
-  const file = discInput.files[0];
-  discInput.value = "";
-  if (file) void window.defJam.boot(file);
-});
-screen.addEventListener("dragover", (event) => {
-  if (playing || loading || role === "guest" || !event.dataTransfer.types.includes("Files")) return;
-  event.preventDefault();
-  document.body.classList.add("dragging");
-});
-screen.addEventListener("dragleave", () => document.body.classList.remove("dragging"));
-screen.addEventListener("drop", (event) => {
-  event.preventDefault();
-  document.body.classList.remove("dragging");
-  const file = event.dataTransfer.files[0];
-  if (file) void window.defJam.boot(file);
-});
+retry.addEventListener("click", () => location.reload());
 
 audioButton.addEventListener("click", () => void startAudio().catch((error) => {
   status.textContent = error.message;
@@ -213,7 +183,8 @@ function setRoomState(state, error) {
 }
 
 async function peerOptions() {
-  const response = await fetch('/netplay/config', {cache: 'no-store'});
+  if (staticHost) return {};
+  const response = await fetch(new URL("../netplay/config", import.meta.url), {cache: "no-store"});
   if (!response.ok) throw new Error('Room connection settings are unavailable.');
   return response.json();
 }
@@ -242,12 +213,9 @@ function leaveRoom() {
   joinForm.hidden = false;
   hostButton.hidden = false;
   audioButton.disabled = !playing;
-  if (!playing) {
-    if (installedAvailable) showStart("Ready to play", "Def Jam: Fight for NY is installed on this machine.");
-    else showStart("Load a disc", "Choose a PlayStation 2 disc image to start.");
-  }
-  status.textContent = playing ? "PlayStation 2 · " + runtime.diagnostics().discId : "Waiting for a disc";
-  netStatus.textContent = playing ? "Room closed" : "Load the disc to host. Guests can join with a code.";
+  if (!playing) showStart("Join a match", "Enter a room code to play as player two.");
+  status.textContent = playing ? "PlayStation 2 · " + runtime.diagnostics().discId : "Waiting for room code";
+  netStatus.textContent = playing ? "Room closed" : "Enter a room code to join.";
 }
 
 hostButton.addEventListener("click", async () => {
@@ -255,7 +223,7 @@ hostButton.addEventListener("click", async () => {
   role = "host";
   const generation = ++roomGeneration;
   try {
-    const { hostMatch } = await import("/netplay/client.mjs");
+    const { hostMatch } = await import(transport);
     const hosted = await hostMatch({
       ...await peerOptions(),
       canvas,
@@ -285,12 +253,17 @@ hostButton.addEventListener("click", async () => {
 
 joinForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (role || loading) return;
-  if (playing) {
-    netStatus.textContent = "Open the player in another tab to join as a guest.";
+  if (role) return;
+  const code = joinCode.value.trim().toUpperCase();
+  if (!/^[A-HJ-NP-Z2-9]{8}$/.test(code)) {
+    netStatus.textContent = "Enter the eight-character room code.";
     return;
   }
-  const code = joinCode.value.trim().toUpperCase();
+  if (!guestEntry) {
+    pageUrl.searchParams.set("join", code);
+    location.assign(pageUrl);
+    return;
+  }
   role = "guest";
   const generation = ++roomGeneration;
   muted = false;
@@ -304,7 +277,7 @@ joinForm.addEventListener("submit", async (event) => {
   status.textContent = "Online · Player 2";
   audioButton.disabled = false;
   try {
-    const { joinMatch } = await import("/netplay/client.mjs");
+    const { joinMatch } = await import(transport);
     const joined = await joinMatch({
       ...await peerOptions(),
       code,
@@ -348,8 +321,10 @@ streamButton.addEventListener("click", async () => {
 get("leave-room").addEventListener("click", leaveRoom);
 get("copy-room").addEventListener("click", async () => {
   try {
-    await navigator.clipboard.writeText(roomCode.value);
-    netStatus.textContent = "Room code copied";
+    const invite = new URL(location.href);
+    invite.searchParams.set("join", roomCode.value);
+    await navigator.clipboard.writeText(invite.href);
+    netStatus.textContent = "Invite link copied";
   } catch {
     netStatus.textContent = "Select the room code to copy it.";
   }
@@ -358,3 +333,18 @@ window.addEventListener("pagehide", () => {
   match?.close();
   runtime.close();
 });
+
+
+if (guestEntry) {
+  hostButton.hidden = true;
+  get("local-play").hidden = false;
+  status.textContent = "Waiting for room code";
+  showStart("Join a match", "Enter a room code to play as player two.");
+  const invite = pageUrl.searchParams.get("join").toUpperCase();
+  if (/^[A-HJ-NP-Z2-9]{8}$/.test(invite)) {
+    joinCode.value = invite;
+    joinForm.requestSubmit();
+  }
+} else {
+  void startGame();
+}

@@ -9,7 +9,7 @@ test('local disc supports HEAD and bounded random reads, other private data stay
   const root = await mkdtemp(join(tmpdir(), 'def-jam-'));
   await mkdir(join(root, 'private/ps2'), { recursive: true });
   await writeFile(join(root, 'private/ps2/reference.iso'), 'ABCDEF');
-  const server = gameServer(root);
+  const server = gameServer(root, { reference: true });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => {
     await new Promise(resolve => server.close(resolve));

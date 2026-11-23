@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unlock patch e2e</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="outputCanvas" width="640" height="480" tabindex="0"></canvas>
+<script type="module">
+// Boots the retail disc headless in Play!, optionally through the read-time unlock overlay
+// (?unlocks=1 applies ps2/content/unlock-disc-patch.json), and exposes EE RAM reads so the
+// harness can inspect the profile unlock sets.
+import Play from '/runtime/play/Play.js';
+import { withUnlocks } from '/content/overlay.mjs';
+
+const params = new URLSearchParams(location.search);
+const state = window.e2e = { frames: 0, status: 'loading', error: '', patchedReads: 0, ranges: 0 };
+
+// Byte-range disc reader with a small block cache.
+async function httpDisc(url, blockSize = 512 * 1024, maxBlocks = 64) {
+  const size = Number((await fetch(url, { method: 'HEAD' })).headers.get('content-length'));
+  const blocks = new Map();
+  async function block(index) {
+    if (blocks.has(index)) { const hit = blocks.get(index); blocks.delete(index); blocks.set(index, hit); return hit; }
+    const start = index * blockSize, end = Math.min(size, start + blockSize) - 1;
+    const bytes = new Uint8Array(await (await fetch(url, { headers: { Range: `bytes=${start}-${end}` } })).arrayBuffer());
+    if (bytes.length !== end - start + 1) throw new Error('incomplete disc read');
+    if (blocks.size >= maxBlocks) blocks.delete(blocks.keys().next().value);
+    blocks.set(index, bytes);
+    return bytes;
+  }
+  return { size, async read(offset, length) {
+    const out = new Uint8Array(length);
+    for (let done = 0; done < length;) {
+      const pos = offset + done, data = await block(Math.floor(pos / blockSize)), start = pos % blockSize;
+      const count = Math.min(length - done, data.length - start);
+      out.set(data.subarray(start, start + count), done);
+      done += count;
+    }
+    return out;
+  } };
+}
+
+// EE RAM is one 32 MiB allocation in the wasm heap. Find it by a retail code run the patch
+// never touches (the handle-key helper at 0x00360990) and confirm with the ELF entry stub.
+const KEY = [0x8c830000, 0x3c02ff7f, 0x3442ffff, 0x03e00008];
+function findRam(module) {
+  const heap = new Uint32Array(module.HEAPU8.buffer);
+  const found = [];
+  for (let i = 0; i + 4 < heap.length; i++) {
+    if (heap[i] !== KEY[0] || heap[i + 1] !== KEY[1] || heap[i + 2] !== KEY[2] || heap[i + 3] !== KEY[3]) continue;
+    const base = i * 4 - 0x00360990;
+    if (base >= 0 && base + 0x02000000 <= module.HEAPU8.length) found.push(base);
+  }
+  return found;
+}
+
+try {
+  let source = await httpDisc('/disc.iso');
+  if (params.get('unlocks') === '1') {
+    const manifest = await (await fetch('/content/unlock-disc-patch.json')).json();
+    state.ranges = manifest.patches.length;
+    source = await withUnlocks(source, manifest, { onPatchedRead: () => { state.patchedReads++; } });
+  }
+  const canvas = document.getElementById('outputCanvas');
+  const module = await Play({
+    canvas,
+    mainScriptUrlOrBlob: new URL('/runtime/play/Play.js', location.href).href,
+    locateFile: name => new URL('/runtime/play/' + name, location.href).href,
+    onAbort: message => { state.error = String(message); state.status = 'aborted'; }
+  });
+  module.FS.mkdir('/work');
+  let done = true;
+  module.discImageDevice = {
+    getFileSize: () => source.size,
+    isDone: () => done,
+    read(dst, offset, size) {
+      done = false;
+      source.read(offset, size).then(data => {
+        if (data.length !== size) throw new Error('short disc read');
+        module.HEAPU8.set(data, dst);
+      }).catch(error => {
+        state.error = error.message;
+        module.HEAPU8.fill(0, dst, dst + size);
+      }).finally(() => { done = true; });
+    }
+  };
+  module.ccall('initVm', '', [], []);
+  module.bootDiscImage('reference.iso');
+  let bases = [];
+  const view = () => new DataView(module.HEAPU8.buffer);
+  state.pad = (buttons, port = 0) => module._setPad(port, buttons, 0, 0, 0, 0);
+  state.ram = () => (bases = findRam(module));
+  // Reads 32-bit words from every EE RAM candidate (the loader's ELF buffer can match too).
+  state.read32 = (address, count = 1) => bases.map(base =>
+    Array.from({ length: count }, (_, i) => view().getUint32(base + address + 4 * i, true)));
+  state.status = 'running';
+  setInterval(() => { state.frames += module.getFrames(); module.clearStats(); }, 250);
+} catch (error) {
+  state.status = 'failed';
+  state.error = error.stack || String(error);
+}
+</script>
+</body>
+</html>

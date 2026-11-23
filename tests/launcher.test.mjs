@@ -9,6 +9,7 @@ test('the launcher serves compatible Battle and unlock patches for the same disc
   t.after(() => new Promise(resolve => server.close(resolve)));
   await once(server, 'listening');
   const url = 'http://127.0.0.1:' + server.address().port;
+  assert.equal((await fetch(url + '/disc/reference.iso', { method: 'HEAD' })).status, 404);
   const paths = ['/ps2/battle/battle-patch.json', '/ps2/content/unlock-disc-patch.json'];
   const [battle, unlock] = await Promise.all(paths.map(async path => {
     const response = await fetch(url + path);

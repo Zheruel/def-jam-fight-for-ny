@@ -23,6 +23,14 @@ attachNetplay(server);
 
 For remote games, serve the game over HTTPS and route `/netplay` through the same hostname with WebSocket upgrades enabled. If the game and signaling use different hostnames, add the game page origin to `NETPLAY_ALLOWED_ORIGINS` and use an explicit `wss:` URL. The signaling server relays connection setup messages. The browser peers exchange media and controller states directly when a route is available. Configure appropriate STUN and TURN servers on both clients for networks where a direct connection cannot be established. Use short-lived TURN credentials for a public deployment.
 
+## Static sites
+
+Import `hostMatch` and `joinMatch` from `netplay/peerjs.mjs` on static hosts such as GitHub Pages. Include `client.mjs` and `vendor/` along with the adapter. The default configuration uses PeerJS Cloud and the same Cloudflare and Google STUN servers as Crash Bash. Browser peers exchange the room signals over a PeerJS connection and use the same WebRTC audio, video, and controller implementation as the Node signaling option. [PeerJS documentation](https://peerjs.com/client/getting-started)
+
+Pass `signalingUrl` as the HTTP(S) or WS(S) URL of a self-hosted PeerServer, including its mount path, or pass `peerOptions` for broker-specific settings. Supply `iceServers` to use the same ICE configuration for both PeerJS and the game connection. A deployment can supply short-lived TURN credentials for restrictive networks.
+
+The included bundle is the upstream PeerJS 1.5.5 browser distribution under the MIT license. Its SHA-256 is `7604d8c31bec4f134b0d15c2d80b1d095ea18af005354f439f14291fcd7b4168`. [PeerJS 1.5.5 package](https://www.npmjs.com/package/peerjs/v/1.5.5)
+
 ## Browser integration
 
 ```js
@@ -67,4 +75,4 @@ npx playwright install chromium
 npm test
 ```
 
-The tests cover private-room signaling, rejecting an extra guest, decoded video and audio, host input, neutral input on disconnect or guest blur, rejoining and room closure. The media test uses an animated canvas and oscillator in two Chromium browser contexts. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to use an existing Chromium binary.
+The tests cover private-room signaling, rejecting an extra guest, decoded video and audio, host input, neutral input on disconnect or guest blur, rejoining and room closure. The media tests use an animated canvas and oscillator in two Chromium browser contexts. The static-host test uses the standalone PeerServer package on loopback. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to use an existing Chromium binary.

@@ -1,8 +1,7 @@
-import { withBattlePatch } from '/ps2/battle/overlay.mjs';
-import { fileDisc, localDisc, verifyTitle } from './disc.mjs';
+import { withBattlePatch } from '../ps2/battle/overlay.mjs';
+import { openGameAssets } from './game-assets.mjs';
 
-const runtimeUrl = '/runtime/play-build/Play.js';
-export const isDiscInstalled = async () => (await fetch('/disc/reference.iso', { method: 'HEAD' })).ok;
+const runtimeUrl = new URL('../runtime/play-build/Play.js', import.meta.url);
 
 export function makeRuntime({ canvas, onStatus }) {
   let vm;
@@ -15,22 +14,21 @@ export function makeRuntime({ canvas, onStatus }) {
   let failure = '';
   const pads = [null, null];
   async function start(source) {
-    await verifyTitle(source);
-    const paths = ['/ps2/battle/battle-patch.json', '/ps2/content/unlock-disc-patch.json'];
+    const paths = ['../ps2/battle/battle-patch.json', '../ps2/content/unlock-disc-patch.json'];
     const [battle, unlock] = await Promise.all(paths.map(async path => {
-      const response = await fetch(path);
+      const response = await fetch(new URL(path, import.meta.url));
       if (!response.ok) throw new Error('The PS2 Battle patch is missing. Check the project installation.');
       return response.json();
     }));
     source = await withBattlePatch(source, { ...battle, patches: [...battle.patches, ...unlock.patches] });
-    if (!crossOriginIsolated) throw new Error('Start the game using the included development server.');
+    if (!crossOriginIsolated) throw new Error('The game requires an isolated browser context. Reload this page.');
     if (vm) throw new Error('Reload the page to restart the emulator.');
     onStatus('Initializing the PS2');
-    const { default: Play } = await import(runtimeUrl);
+    const { default: Play } = await import(runtimeUrl.href);
     const module = await Play({
       canvas,
-      mainScriptUrlOrBlob: new URL(runtimeUrl, location.href).href,
-      locateFile: name => new URL('/runtime/play-build/' + name, location.href).href,
+      mainScriptUrlOrBlob: runtimeUrl.href,
+      locateFile: name => new URL(name, runtimeUrl).href,
       onAbort: message => { failure = String(message); onStatus('Emulation stopped: ' + failure); }
     });
     vm = module;
@@ -48,7 +46,7 @@ export function makeRuntime({ canvas, onStatus }) {
           module.HEAPU8.set(data, dst);
         }).catch(error => {
           failure = error.message;
-          onStatus('Disc read failed. Reload to retry. ' + failure);
+          onStatus('Game data could not be read. Reload to retry. ' + failure);
         }).finally(() => { done = !failure; });
       }
     };
@@ -69,8 +67,7 @@ export function makeRuntime({ canvas, onStatus }) {
   }
   const audio = () => vm?.getPlayAudioStream?.() ?? null;
   return {
-    boot: file => start(fileDisc(file)),
-    bootInstalled: async () => start(await localDisc()),
+    boot: async () => start(await openGameAssets()),
     prepareAudio: async () => vm?.resumePlayAudio?.(),
     getAudioStream: audio,
     async setMuted(muted) {

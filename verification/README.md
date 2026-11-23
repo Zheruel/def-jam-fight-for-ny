@@ -1,13 +1,11 @@
-# PlayStation 2 retail reference
+# Headless two-player match verification
 
-Run `sh verification/check-ps2-reference.sh` on macOS to validate the staged disc, firmware, signed emulator, and isolated profile without opening any windows.
+Run `npm run setup` and `node verification/ps2-match.mjs` on a Mac with Chrome, Xcode command-line tools, and the packaged `game-assets/` directory. The harness starts its own loopback server and two headless Chrome contexts. The host opens the game automatically, and the guest opens the room form at `/?join=1`. The harness checks the package manifest hash and rejects ISO requests, file pickers, and browser dialogs.
 
-The USA retail ISO is `private/ps2/reference.iso`. The native boot used ARMSX2 build `c9b6e89f34`, a PCSX2 fork with an Apple Silicon recompiler, and the USA v2.00 BIOS. The boot log identifies `SLUS-21004`, game ELF CRC `4538436F`, and 59.9 FPS. Both memory card slots, cheats, widescreen patches, deinterlacing patches, and texture replacements are disabled in the isolated profile. [ARMSX2 build](https://github.com/ARMSX2/ARMSX2/releases/tag/nightly-20261122) · [PCSX2 game record](https://wiki.pcsx2.net/SLPM-66463)
+The default run requires the title to open Battle directly. Use `--retail-menus` to follow the original menu flow with the runtime overlays disabled. The harness assigns both humans, reads the fighter cards to select Blaze and Doc, and verifies Foundation before starting a standard One on One match. It waits for both player names and the live clock before sending movement and attacks.
 
-The boot log and startup screenshot are in `private/verification/ps2/`. The screenshot shows the original game’s memory card prompt. Battle footage and a `.p2m2` replay were pending when native GUI capture was stopped.
+Screen captures and the JSON report are stored under `private/verification/ps2-match/`. The report gives separate counts for emulated VBlanks, sampled GS frames, and frames decoded by the WebRTC guest. Input readback times include the harness polling delay.
 
-## Headless two-player match
+## Native retail reference
 
-Run `npm run setup` and `node verification/ps2-match.mjs` on a Mac with Chrome, Xcode command-line tools, and the verified disc installed. Add `--retail-menus` to run the original menus with the launcher’s disc overlays omitted for that test. The harness starts its own loopback server and two headless Chrome contexts. It saves screenshots and `report.json` under `private/verification/ps2-match/`.
-
-The harness assigns both human players, selects Blaze and Doc, and starts a standard One on One match at Foundation. It waits for both player names and the live match clock before sending movement and attacks. The report separates Play!'s emulated VBlank counter, its sampled GS frame counter, and the guest's WebRTC `framesDecoded`. Input readback times include the harness polling delay.
+The optional `sh verification/check-ps2-reference.sh` checks the archived PS2 ISO, firmware, signed ARMSX2 build, and its isolated profile without opening a window. The prior native boot reached the game’s memory card prompt at 59.9 FPS and identified `SLUS-21004`, game ELF CRC `4538436F`, and the USA v2.00 BIOS. Its log and screenshot are in `private/verification/ps2/`. [ARMSX2 build](https://github.com/ARMSX2/ARMSX2/releases/tag/nightly-20261122) · [PCSX2 game record](https://wiki.pcsx2.net/SLPM-66463)

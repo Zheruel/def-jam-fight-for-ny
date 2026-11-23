@@ -1,6 +1,6 @@
 """Battle-only patch for Def Jam: Fight for NY, US PS2 (SLUS-21004).
 
-Nothing from the disc is stored in this repository. Patches are either hand-written bytes
+Patches are either hand-written bytes
 placed at a fixed offset (BytesPatch), or same-size string edits inside RefPack-compressed
 front-end screens (VivStringPatch), which are computed from the retail disc when a manifest
 or an image is built. Retail bytes are only ever recorded as SHA-256 hashes.
@@ -9,7 +9,7 @@ or an image is built. Retail bytes are only ever recorded as SHA-256 hashes.
     python3 ps2/battle/battle_patch.py manifest private/ps2/reference.iso
     python3 ps2/battle/battle_patch.py build    private/ps2/reference.iso private/ps2-battle/battle.iso
 
-`manifest` writes private/ps2-battle/battle-patch.json: absolute ISO byte ranges with the
+`manifest` writes ps2/battle/battle-patch.json: absolute ISO byte ranges with the
 retail hash and the patched bytes, which overlay.mjs applies to disc reads in the browser.
 `build` clones the ISO (an APFS copy-on-write clone where available, so it costs almost no
 space), writes the same ranges into the clone and verifies it. The retail ISO is never
@@ -38,7 +38,7 @@ VERSION = 2
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
 DEFAULT_ISO = REPO / "private/ps2/reference.iso"
-DEFAULT_MANIFEST = REPO / "private/ps2-battle/battle-patch.json"
+DEFAULT_MANIFEST = HERE / "battle-patch.json"  # shipped with the web player
 
 # Retail US disc (Redump-verified; see private/ps2/reference.json).
 SERIAL = "SLUS-21004"
@@ -86,6 +86,12 @@ def words(*values: int) -> bytes:
     return struct.pack("<%dI" % len(values), *values)
 
 
+def jal(target: int) -> int:
+    if target & 3 or target >> 28:
+        raise ValueError(f"bad jal target {target:#x}")
+    return 0x0C000000 | (target >> 2)
+
+
 def xml_transition(to: str, between: str, userdata: int, kind: int, length: int) -> bytes:
     """A FEFLOW <transition> body, padded with spaces to exactly `length` bytes."""
     body = (f"<to>{to}</to>\r\n\t\t\t\t<between>{between}</between>\r\n\t\t\t\t"
@@ -124,6 +130,46 @@ PATCHES: list[BytesPatch | VivStringPatch] = [
         original_sha256="62ee3b5a5162b7fa1f7d39036f98e7a3d69db09bc9e110f18901d10c28c1a004",
         replacement=xml_transition("battle/cmtype", "trans/t1", 2514, 2, 998 - 867),
         description="FEFLOW: the title screen's transition leads to Battle > match type.",
+    ),
+    # Game.StartBattleMode (native 0x135A48) is what the main menu's Battle tile calls before
+    # opening battle/cmtype: it sets the game mode (game+0x350 = 1) and queues the battle run
+    # module (game+0x398). Without it the match load falls back to the title screen.
+    # Game.ResetMatchTypeList (0x1380C8), which battle/cmtype calls as it opens, looks up the
+    # same profile object twice (0x101EF8 with 0x3FDAA0, 0x18). The first lookup becomes a
+    # call to StartBattleMode; the second one, unchanged, then feeds both fields.
+    #   retail                          patched
+    #   jal  0x101EF8                   jal  0x135A48        ; Game.StartBattleMode
+    #   move s1, zero                   move s1, zero
+    #   lw   s4, 4(v0)                  move a0, s0          ; 0x3FDAA0
+    #   move a0, s0                     jal  0x101EF8
+    #   jal  0x101EF8                   li   a1, 0x18
+    #   li   a1, 0x18                   lw   s4, 4(v0)
+    # StartBattleMode preserves s0-s7 and ignores its arguments.
+    BytesPatch(
+        id="match-types-start-battle-mode",
+        file=ELF_PATH,
+        offset=elf_offset(0x138108),
+        original_sha256="af443bae50ef8b9611a85356e9f362a9be23d35c864ec44d7435a3aaf0766960",
+        replacement=words(jal(0x135A48), 0x0000882D, 0x0200202D, jal(0x101EF8), 0x24050018, 0x8C540004),
+        description="Opening Battle > match type runs the retail Game.StartBattleMode first.",
+    ),
+    # Back (Triangle) on match type: transitionStart("intMain/mainMenu.swf") -> the title.
+    VivStringPatch(
+        id="match-type-back-to-title",
+        file=SCREENS_PATH,
+        entry="screens/battle/cmtype.big",
+        entry_sha256="8e77928e7c46b997261f21012a6766c53eb4d87b7bbf304f773f787b7334342f",
+        edits=((b"intMain/mainMenu.swf", b"intMain/preStart.swf"),),
+        patched_entry_sha256="5a943349cfa7e54388772d75722c5b1aba49effba8c0caa8ba2550bd3ef12755",
+        description="Back on Battle > match type returns to the title screen, not the main menu.",
+    ),
+    BytesPatch(
+        id="feflow-match-type-back-to-title",
+        file=FEFLOW_PATH,
+        offset=3471,  # battle/cmtype transition 3 (-> intMain/mainMenu)
+        original_sha256="0358b4150630c941de5a4693ecee0c619dd9ff2a38dbe2d242974505c66a4b51",
+        replacement=xml_transition("intMain/preStart", "trans/empty", 0, 0, 3602 - 3471),
+        description="FEFLOW: match type's back transition leads to the title screen.",
     ),
 ]
 
