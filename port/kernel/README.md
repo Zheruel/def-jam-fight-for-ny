@@ -46,3 +46,6 @@ npm run test:native-four
 node verification/native-ffa-browser.mjs
 node verification/native-voice-browser.mjs
 ```
+
+
+Three-player Free For All uses the first active frame of its own Foundation match. To regenerate `three-start.gz` on macOS, run `node verification/capture-four.mjs private/ps2/reference.iso private/verification/three --three`, then `node verification/native-four.mjs --three --seed private/verification/three/fight-start.bin TRACKED_WASM port/kernel/three-start.gz`. The verifier checks three independent pads, a knockout from full health, a drawn time limit, and spawn positions in each of the 21 compatible venues. Run `npm run test:native-three` on the published data without a disc.

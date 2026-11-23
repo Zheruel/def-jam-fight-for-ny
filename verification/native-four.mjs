@@ -1,5 +1,5 @@
-// Exercise the same four-character match loader and sampler used by the browser.
-// --seed FIRST_FIGHT_FRAME TRACKED_WASM OUTPUT rebuilds the native match start.
+// Exercise the browser Free For All logic with a retail three- or four-player start.
+// [--three] --seed FIRST_FIGHT_FRAME TRACKED_WASM OUTPUT rebuilds the native match start.
 import assert from "node:assert/strict";
 import {readFileSync,writeFileSync} from "node:fs";
 import {gunzipSync,gzipSync} from "node:zlib";
@@ -13,7 +13,11 @@ import lineups from "../port/battle/lineups.json" with {type:"json"};
 
 const unpack=name=>Uint8Array.from(gunzipSync(readFileSync(new URL("../port/"+name,import.meta.url)))).buffer;
 const actor=slot=>0x4bc170+slot*0x12f8;
-const make=process.argv[2]==="--seed";
+const args=process.argv.slice(2);
+const count=args[0]==="--three" ? 3 : 4;
+if(count===3) args.shift();
+const formation="FREE FOR ALL "+count;
+const make=args[0]==="--seed";
 let seed,original;
 function records(bytes,pages) {
   const records=[];
@@ -23,23 +27,23 @@ function records(bytes,pages) {
   return Uint8Array.from(Buffer.concat(records)).buffer;
 }
 if(make) {
-  original=readFileSync(process.argv[3]);
+  original=readFileSync(args[1]);
   assert.equal(original.length,0x2000000);
-  assert.equal(original.readUInt32LE(0x4bbd2c),0x80007);
+  assert.equal(original.readUInt32LE(0x4bbd2c),count===3 ? 0x40007 : 0x80007);
   assert.equal(original.readUInt32LE(0x4bbf98),1);
   assert.equal(original.readUInt32LE(0x4bc14c),2);
   assert.equal(original.readUInt32LE(0x4bc13c),0);
-  for(let slot=0;slot<4;slot++) {
+  for(let slot=0;slot<count;slot++) {
     assert.equal(original.readUInt32LE(actor(slot)+0x28),slot);
     // Player type 0 is human. Retail 0x2eda64 mirrors CPU type into actor flag bit 0.
     original.writeUInt32LE(0,0x4bbd38+slot*4);
     original[actor(slot)+0x937]&=0xfe;
   }
   seed=records(original);
-} else seed=unpack("kernel/four-start.gz");
-const wasm=await WebAssembly.compile(make?readFileSync(process.argv[4]):unpack("kernel/battle.wasm.gz"));
+} else seed=unpack(count===3 ? "kernel/three-start.gz" : "kernel/four-start.gz");
+const wasm=await WebAssembly.compile(make?readFileSync(args[2]):unpack("kernel/battle.wasm.gz"));
 const sampler=await WebAssembly.compile(unpack("animation/sampler.wasm.gz"));
-const ids=[5,10,11,16],rules=unpack("kernel/match-rules.gz");
+const ids=[5,10,11,16].slice(0,count),rules=unpack("kernel/match-rules.gz");
 const fighters=ids.map(id=>{
   const record=inventory.fighters.find(f=>f.fighterXml.coreID===id);
   const binary=unpack("render/fighters/"+record.model+".skin.gz");
@@ -49,7 +53,7 @@ const fighters=ids.map(id=>{
 });
 const animation=await createMatchAnimation(sampler,unpack("animation/four-shared.gz"),ids.map(id=>unpack("animation/banks/wres"+String(id).padStart(3,"0")+".gz")));
 const fight=await createFoundationFight(fighters,wasm,seed,null,rules,animation);
-animation.setSignatures(new Map(signatureClipIds(fight.memory,4).map(id=>[id,unpack("animation/banks/special"+id+".gz")])));
+animation.setSignatures(new Map(signatureClipIds(fight.memory,count).map(id=>[id,unpack("animation/banks/special"+id+".gz")])));
 const voiceIndex=JSON.parse(readFileSync(new URL("../port/audio/voice/index.json",import.meta.url)));
 const mix=JSON.parse(readFileSync(new URL("../port/audio/mix.json",import.meta.url)));
 const played=[];
@@ -57,8 +61,8 @@ fight.setVoicePlayer(createVoicePlayer(voiceIndex,mix,{async track(file,options)
 const camera=battleCamera(fight.kernel,"V2BG_02A");
 const pads=()=>fighters.map(()=>({buttons:0,x:0,z:0}));
 const start=fight.diagnostics().actors.map(a=>[a.position[0],a.position[2]]);
-assert.deepEqual(start,lineups.V2BG_02A["FREE FOR ALL 4"]);
-for(let i=0;i<4;i++){
+assert.deepEqual(start,lineups.V2BG_02A[formation]);
+for(let i=0;i<count;i++){
   fight.restart();
   const input=pads();input[i].x=0.8;
   for(let j=0;j<30;j++)fight.tick(input);
@@ -81,16 +85,16 @@ for(let t=0;t<18000;t++) {
     if(a.score)touched.add(i);
     assert.ok(a.position.every(Number.isFinite));
   });
-  try {fight.tick(inputs);camera.step()} catch(error) {throw new Error("Four-way tick "+t,{cause:error})}
+  try {fight.tick(inputs);camera.step()} catch(error) {throw new Error(formation+" tick "+t,{cause:error})}
   if(fight.outcome().over)break;
-  if(played.length && touched.size===4)break;
+  if(played.length && touched.size===count)break;
 }
 assert.ok(camera.matrix().every(Number.isFinite));
-assert.equal(touched.size,4,"All four fighters scored");
+assert.equal(touched.size,count,"Each fighter scored");
 assert.ok(played.length>0,"Retail SND requested a playable voice line");
 assert.ok(played.every(({file,options})=>file.startsWith("voice/") && options.duration>0 && Number.isFinite(options.gain)));
 console.log("Speech requests",played.length,fight.diagnostics().voice.last);
-console.log("Four independent controllers, four scoring fighters, and a finite retail camera.");
+console.log(formation,"independent controllers, scoring fighters, and a finite retail camera.");
 fight.rematch();
 const strikes=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
 let random=17, held=pads().map(()=>0);
@@ -112,7 +116,7 @@ for(let tick=0;tick<36000 && !fight.outcome().over;tick++) {
       x:d>7?dx/d:0,z:d>7?-dz/d:0};
   }));
 }
-assert.equal(fight.outcome().method,"ko","Full-health four-way match reaches a knockout");
+assert.equal(fight.outcome().method,"ko","Full-health match reaches a knockout");
 assert.ok(fight.outcome().winner!==null);
 console.log("Full-health Free For All",fight.outcome(),fight.diagnostics().actors.map(a=>[a.score,a.health]));
 fight.rematch();
@@ -120,9 +124,9 @@ fight.memory.setUint32(0x4bbd30,9,true);
 for(let t=0;t<900&&!fight.outcome().result;t++)fight.tick(pads());
 assert.equal(fight.outcome().method,"time");
 assert.equal(fight.outcome().draw,true);
-console.log("Four-way time limit reached a draw and all four fighters restarted.");
+console.log(formation,"time limit reached a draw and all fighters restarted.");
 for(const venue of inventory.venues) {
-  const positions=lineups[venue.file]["FREE FOR ALL 4"];
+  const positions=lineups[venue.file][formation];
   if(!positions)continue;
   fight.restart();
   const file=readFileSync(new URL("../port/collision/venues/"+venue.file+".cli",import.meta.url));
@@ -135,5 +139,5 @@ for(const venue of inventory.venues) {
 if(make){
   const pages=fight.observedPages,common=new DataView(unpack("kernel/foundation-start.gz"));
   for(let off=0;off<common.byteLength;off+=4100) pages[common.getUint32(off,true)]=1;
-  writeFileSync(process.argv[5],gzipSync(new Uint8Array(records(original,pages)),{level:9}));
+  writeFileSync(args[3],gzipSync(new Uint8Array(records(original,pages)),{level:9}));
 }

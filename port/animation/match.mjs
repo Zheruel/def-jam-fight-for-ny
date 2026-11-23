@@ -7,7 +7,7 @@ export async function loadMatchAnimation(fighters) {
   const load = path=>fetchPacked(new URL(path,import.meta.url));
   const ids=fighters.map(f=>f.record.fighterXml.coreID);
   const requests=new Map([...new Set(ids)].map(id=>[id,load(`./banks/wres${String(id).padStart(3,"0")}.gz`)]));
-  const [source,shared,banks]=await Promise.all([load("./sampler.wasm.gz"),load(fighters.length===4 ? "./four-shared.gz" : "./shared.gz"),Promise.all(ids.map(id=>requests.get(id)))]);
+  const [source,shared,banks]=await Promise.all([load("./sampler.wasm.gz"),load(fighters.length>2 ? "./four-shared.gz" : "./shared.gz"),Promise.all(ids.map(id=>requests.get(id)))]);
   return createMatchAnimation(source,shared,banks);
 }
 export async function createMatchAnimation(source,shared,banks) {
