@@ -3,7 +3,8 @@
     python3 port/hud/screens/extract.py private/ps2/reference.iso [--output port/hud/screens]
 
 Each screen `<name>` becomes `<name>.json` (640x480 draw list, see port/hud/apt.py) and `<name>-<n>.png` pictures.
-Picture <-> image-shape pairing is by size (apt.pair_pictures); the JSON records which picture each image uses.
+Each image shape's picture is the SHPS texture tagged with the image character before it (apt.pair_pictures); shapes
+without one are exported as `slot` rectangles for the page to fill (portraits, bars).
 """
 import argparse
 import json
@@ -20,7 +21,7 @@ from refpack import decompress  # noqa: E402
 from ssh import textures  # noqa: E402
 import apt  # noqa: E402
 
-SCREENS = {"rematch": "screens/battle/rematch.big", "matchSm2": "screens/battle/matchSm2.big"}
+SCREENS = {"rematch": "screens/battle/rematch.big"}
 
 
 def members(big: bytes):
@@ -47,35 +48,32 @@ def export(iso: str, output: Path):
             raw = disc.read(archive, *disc.viv_entry(archive, member))
             parts = members(decompress(raw) if raw[:2] == bytes.fromhex("10fb") else raw)
             movie = apt.Apt.parse(parts[f"{name}.apt"])
-            ssh = parts[f"{name}.ssh"]
-            count = struct.unpack_from("<I", ssh, 8)[0]
-            directory = bytearray(ssh)
-            for i in range(count):
-                directory[16 + i * 8:20 + i * 8] = f"{i:04x}".encode()
-            art = textures(directory)
-            keys = sorted(art)
-            sizes = [png_size(art[k]) for k in keys]
-            pairing = apt.pair_pictures(movie, sizes)
-            for i, k in enumerate(keys):
-                (output / f"{name}-{i}.png").write_bytes(art[k])
+            art = {k.strip(): v for k, v in textures(parts[f"{name}.ssh"]).items()}
+            pairing = apt.pair_pictures(movie, list(art))
             elements = []
             for e in movie.flatten(0, 0):
-                e = {k: v for k, v in e.items() if k not in ("depth",)}
+                e = {k: v for k, v in e.items() if k != "depth"}
                 if e["kind"] == "image":
-                    if e["character"] not in pairing:
-                        continue
-                    e["picture"] = pairing[e["character"]]
+                    # a shape with no image before it is a plain fill or a picture the script loads at run time
+                    e["kind"] = "image" if e["character"] in pairing else "slot"
+                    if e["kind"] == "image":
+                        e["picture"] = pairing[e["character"]]
                 else:
-                    e["rect"] = [round(v, 2) for v in e["rect"]]
                     e["size"] = round(e["size"], 2)
                 e["rect"] = [round(v, 2) for v in e["rect"]]
                 del e["character"]
                 elements.append(e)
+            used = sorted({e["picture"] for e in elements if e["kind"] == "image"}, key=int)
+            for tag in used:
+                (output / f"{name}-{tag}.png").write_bytes(art[tag])
+            for e in elements:
+                if e["kind"] == "image":
+                    e["picture"] = used.index(e["picture"])
             (output / f"{name}.json").write_text(json.dumps({
                 "screen": member, "size": list(movie.size),
-                "pictures": [{"file": f"{name}-{i}.png", "size": list(sizes[i])} for i in range(len(keys))],
+                "pictures": [{"file": f"{name}-{tag}.png", "size": list(png_size(art[tag]))} for tag in used],
                 "elements": elements}, indent=1) + "\n")
-            print(f"{name}: {len(elements)} elements, {len(keys)} pictures")
+            print(f"{name}: {len(elements)} elements, {len(used)} pictures")
     finally:
         disc.close()
 

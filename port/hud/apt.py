@@ -134,19 +134,9 @@ def transform_rect(m, bounds):
     return [min(xs), min(ys), max(xs), max(ys)]
 
 
-def pair_pictures(apt: Apt, pictures: list):
-    """Which SSH picture each image character shows. `pictures` is [(width, height)] in SSH order.
-
-    An image character's shape is the textured quad (bounds ~ picture size), so match by size, nearest first, each
-    picture used once; equal sizes keep SSH order."""
-    shapes = [n for n in range(len(apt.characters)) if apt.kind(n) == SHAPE]
-    free = list(range(len(pictures)))
-    result = {}
-    for n in shapes:
-        l, t, r, b = apt.bounds(n)
-        w, h = r - l, b - t
-        if not free: break
-        best = min(free, key=lambda i: abs(pictures[i][0] - w) + abs(pictures[i][1] - h))
-        result[n] = best
-        free.remove(best)
-    return result
+def pair_pictures(apt: Apt, tags: list):
+    """Which SSH picture each image shape shows. `tags` are the SHPS directory names, which are the image character
+    numbers: image character n is followed by its textured quad, shape n + 1. Shapes with no image before them are plain
+    fills or pictures the script loads at run time, so they have no entry."""
+    have = {int(t) for t in tags if t.strip().isdigit()}
+    return {n: str(n - 1) for n in range(len(apt.characters)) if apt.kind(n) == SHAPE and (n - 1) in have}
