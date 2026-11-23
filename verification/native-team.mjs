@@ -158,9 +158,10 @@ console.log("Full-health Team match: winning team", full.result.winners, "losers
   [0, 1, 2, 3].map(s => half(actor(s) + 0x932).toString(16)).join(","));
 
 // Weakened teams make a quick match from each side; the survivors retarget the remaining opponent.
-for (const [seed, weak] of [[17, [2, 3]], [3, [0, 1]], [5, [2, 3]]]) {
+// Seed 3 first knocks Doc out, then Magic finishes Blaze in a submission hold (states 65/66).
+for (const [seed, weak, method] of [[17, [2, 3], "ko"], [3, [0, 1], "submission"], [5, [2, 3], "ko"]]) {
   const { result, retargeted } = play(seed, weak);
-  assert.equal(result.method, "ko");
+  assert.equal(result.method, method);
   assert.ok(retargeted, `seed ${seed}: survivors retarget after a knockout`);
   assert.deepEqual(result.winners, weak[0] === 2 ? [0, 1] : [2, 3], `seed ${seed}: the stronger team wins`);
   assert.deepEqual(result.losers, weak);

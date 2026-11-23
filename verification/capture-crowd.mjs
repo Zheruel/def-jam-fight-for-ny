@@ -65,6 +65,7 @@ try {
       if(words[i]!==signature[0] || !signature.every((n,j)=>words[i+j]===n))continue;
       const base=i*4-0x360990;
       if(base<0 || base+0x2000000>heap.length || words[(base+0x471230)/4]!==0x445330)continue;
+      window.battleReferenceBase = base;
       return {venue:words[(base+0x4bbd34)/4],phase:words[(base+0x4bbf98)/4], rules:words[(base+0x4bbd2c)/4], timer:words[(base+0x4bbd30)/4], config:Array.from(words.slice((base+0x4bbcf0)/4,(base+0x4bbd48)/4))};
     }
     return null;
@@ -92,6 +93,24 @@ try {
     console.log("recorded",recording.counters.length,"frames; torn",recording.torn,"gaps",recording.gaps.length);
     writeFileSync(path.join(outDir,"crowd-recording.bin.gz"),gzipSync(packCrowdRecording(recording),{level:9}));
     await run.shot("recording-end");
+  }
+  if (rule === "votes") {
+    // Keep the original five-minute limit. Advance only the clock and the scores in this reference experiment.
+    await run.page.evaluate(() => {
+      const view = new DataView(window.referenceVm.HEAPU8.buffer), base = window.battleReferenceBase;
+      for (const clock of [0x4bbf90+0x1a4, 0x4bbf90+0x1b4]) view.setFloat32(base+clock, 299*60, true);
+      view.setUint32(base+0x4bc170+0x480, 300, true);
+      view.setUint32(base+0x4bd468+0x480, 100, true);
+    });
+    await run.waitFrames(140);
+    const finish = await run.page.evaluate(() => {
+      const view = new DataView(window.referenceVm.HEAPU8.buffer), base = window.battleReferenceBase;
+      return { phase:view.getUint32(base+0x4bbf98,true), flags:view.getUint32(base+0x4bbd2c,true),
+        winner:view.getInt32(base+0x4bbfa4,true), marks:[0x4bc170,0x4bd468].map(a=>view.getUint16(base+a+0x932,true)) };
+    });
+    if (finish.phase !== 3) throw Error("The PS2 referee did not reach its result screen");
+    writeFileSync(path.join(outDir,"votes-finish.json"),JSON.stringify(finish)+"\n");
+    await run.shot("votes-time-up");
   }
   console.log("DONE");
 } finally {await run.close();}

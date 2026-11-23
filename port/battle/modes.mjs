@@ -15,13 +15,17 @@
 // the HUD labels differ); any pN that is missing, unknown or repeats an earlier fighter is replaced by the
 // next unused one.
 
+import { SPECIAL } from "./special.mjs";
 import lineups from "./lineups.json" with { type: "json" };
 
 export const MODES = Object.freeze({
   "1v1": Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "One on one" }),
   ffa3: Object.freeze({ formation: "FREE FOR ALL 3", fighters: 3, start: "three-start.gz", label: "Free For All · 3 fighters" }),
   ffa: Object.freeze({ formation: "FREE FOR ALL 4", fighters: 4, start: "four-start.gz", label: "Free For All · 4 fighters" }),
-  subway: Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "Subway Match", venues: ["V2BG_04A"] }),
+  ...Object.fromEntries(["subway", "cage", "inferno"].map(mode => [mode, Object.freeze({
+    formation: "SINGLE", fighters: 2, start: "foundation-start.gz",
+    label: SPECIAL[mode].name + " Match", venues: [SPECIAL[mode].file],
+  })])),
   team: Object.freeze({ formation: "2 vs 2 TAG", fighters: 4, start: "team-start.gz", label: "Team Match" }),
 });
 export const DEFAULT_FIGHTERS = ["0x07000030", "0x07000025", "0x0700000A", "0x07000011"];

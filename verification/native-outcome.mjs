@@ -50,6 +50,38 @@ match.rematch();
 const ACTOR=[0x4bc170,0x4bd468], buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
 const word=a=>match.memory.getUint32(a,true), scalar=a=>match.memory.getFloat32(a,true);
 
+// Enter the last animation beat of a hold with one depleted limb. The retail victim and
+// attacker handlers (0x316e78 and 0x316b40) decide whether it ends the match.
+for (const rule of ["standard", "no-submissions"]) {
+  const bout = await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),
+    null,packed("kernel/match-rules.gz"),animation,rule);
+  const m = bout.memory, [attacker, victim] = ACTOR;
+  for (const actor of ACTOR) {
+    m.setUint32(actor + 0x34, 1, true);
+    m.setUint8(actor + 0x937, m.getUint8(actor + 0x937) | 2);
+  }
+  m.setUint32(attacker + 0xfa0, 0x80, true);
+  m.setUint8(attacker + 0xf7b, 0);
+  m.setFloat32(victim + 0x820, 0, true);
+  m.setFloat32(victim + 0x390, 50, true);
+  m.setFloat32(attacker + 0xa0, 0, true);
+  bout.kernel.call(0x316e78, victim);
+  bout.kernel.call(0x316b40, attacker);
+  const idle = ACTOR.map(() => ({buttons:0, x:0, z:0}));
+  for (let i = 0; i < 100; i++) bout.tick(idle);
+  const outcome = bout.outcome();
+  if (rule === "standard") {
+    assert.ok(outcome.result);
+    assert.deepEqual([outcome.winner, outcome.loser, outcome.method], [0, 1, "submission"]);
+    assert.equal(resultLines(outcome, ["Blaze", "Doc"])[0].text, "SUBMISSION");
+  } else {
+    assert.equal(outcome.over, false);
+    const limit = Math.fround(m.getFloat32(victim + 0x354, true) * 0.1);
+    assert.equal(m.getFloat32(victim + 0x350, true), limit);
+    assert.equal(m.getFloat32(victim + 0x358, true), limit);
+  }
+}
+
 // Both fighters brawl on a fixed input script. The victim either starts nearly spent (a hard knockdown ends the match
 // quickly) or, with spent=false, plays the whole match from full health on retail's own rules.
 function play(victim,seed,{spent=true,limit=12000}={}) {
@@ -138,7 +170,7 @@ const timed=[[[300,100],true,0],[[100,300],true,1],[[100,300],false,null]].map((
   assert.equal(r.outcome.draw,winner===null);
   assert.deepEqual(r.outcome.clock,{minutes:0,seconds:10},"retail clock stops at the limit");
   const lines=resultLines(r.outcome,r.names);
-  assert.equal(lines[0].text,"TIME");
+  assert.equal(lines[0].text,"TIME OVER");
   assert.ok(lines.some(l=>l.text===(winner===null?"DRAW":`${r.names[winner].toUpperCase()} WINS`)));
   return {...r,winner,ranked};
 });

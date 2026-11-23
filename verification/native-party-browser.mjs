@@ -1,7 +1,7 @@
 // Party continuity in isolated browsers: a hosted room keeps its invite, seats and connections through two matches with a
 // different lineup and venue (Quit from the pause menu returns to the selector in the same page), and nothing of a finished
 // match lingers: one render loop, one simulation clock, one live audio graph and one picture capture.
-//   node verification/native-party-browser.mjs
+//   node verification/native-party-browser.mjs [url]
 import assert from "node:assert/strict";
 import {once} from "node:events";
 import {chromium} from "../netplay/node_modules/playwright/index.mjs";
@@ -29,7 +29,7 @@ async function chooseType(page,type) {
 try {
   server.listen(0,"127.0.0.1");
   await once(server,"listening");
-  const origin="http://127.0.0.1:"+server.address().port+"/";
+  const origin=process.argv[2] ?? "http://127.0.0.1:"+server.address().port+"/";
   browser=await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});
   const errors=[];
   async function open(url,label) {

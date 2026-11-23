@@ -16,7 +16,6 @@ export function createOutcome(kernel, actors) {
   const { memory } = kernel;
   const word = address => memory.getUint32(address, true);
   const half = address => memory.getUint16(address, true);
-  const scalar = address => memory.getFloat32(address, true);
   let overFor = 0, effects = [], speed = 1;
 
   // One retail frame of the referee. Returns the state after it ran.
@@ -36,6 +35,18 @@ export function createOutcome(kernel, actors) {
     return actors.map((_, slot) => mates(slot)).filter((group, i, all) => all.findIndex(g => g[0] === group[0]) === i);
   }
 
+  // Each call to retail 0x2e67c8 appends a 16-byte referee event; +14 records the reason.
+  // An earlier elimination may have a different cause in a team match or Free For All.
+  function finishMethod() {
+    const count = word(0x4c1c50);
+    if (!count) return null;
+    const flags = half(0x4c1c58 + (count - 1) * 16 + 14);
+    if (flags & 0x40) return "time";
+    if (flags & 0x08) return "submission";
+    if ((flags & 0x100) && (word(G + 448) & TRAIN)) return "hazard";
+    return "ko";
+  }
+
   function read() {
     const phase = word(G + 8), over = phase >= PHASE.ending;
     const marks = actors.map(a => half(a + 0x932));
@@ -53,9 +64,7 @@ export function createOutcome(kernel, actors) {
       phase, over, result: phase >= PHASE.result, winner, loser, draw: over && winner === null,
       // The teams, and the slots of the winning and losing team (empty for a draw): [2, 3] wins when slot 3 is flagged.
       teams: groups, winners: teamOf(winner), losers: teamOf(loser),
-      // "hazard": the round ended with the loser's health left and the subway train bit (0x20) set in the match flags G+448.
-      method: !over ? null : loser !== null && scalar(actors[loser] + 0x350) <= 0 ? "ko"
-        : loser !== null && word(G + 448) & TRAIN ? "hazard" : "time",
+      method: over ? finishMethod() : null,
       // Retail match clock (G+0x1a8 minutes, G+0x1ac seconds); it advances while the referee runs.
       clock: { minutes: word(G + 0x1a8), seconds: word(G + 0x1ac) },
       ticksSinceOver: overFor,
