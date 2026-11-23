@@ -12,4 +12,7 @@ export const audioCues = ["cues.json", "combat.json", "music.json", "animtags.js
   ...Object.values(cues.banks).filter(bank => bank.file).map(bank => bank.file)].map(name => name.startsWith("port/") ? name : "port/audio/" + name);
 const music = read("music.json");
 export const audioMusic = Object.values(music.tracks).map(track => "port/audio/" + track.file);
-export const audioFiles = [...audioCore, ...audioBeds, ...audioCues, ...audioMusic];
+const voices = read("voice/index.json");
+export const audioVoices = ["port/audio/voice.mjs", "port/audio/voice/index.json",
+  ...new Set(Object.values(voices).map(bank => "port/audio/voice/" + bank.file))];
+export const audioFiles = [...audioCore, ...audioBeds, ...audioCues, ...audioMusic, ...audioVoices];

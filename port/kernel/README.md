@@ -31,3 +31,18 @@ python3 port/motion/extract.py private/ps2/reference.iso --check
 ```
 
 The extended combat check exercises 24,000 ticks of directional movement, strikes and grapples. It checks both fighters’ scores, finite actor positions, appearance damage and restart. Run `node verification/native-roster.mjs --endurance`.
+
+## Four-player Free For All
+
+The four-player starting state comes from the first active frame of a retail Foundation Free For All. The native loader preserves four actor records, their starting targets, the referee and four independent character rigs. All four seats receive controllers. The original sound engine can request a speech set by name and byte offset. Web Audio plays the corresponding PS2 line through the host and guest mix.
+
+The following commands rebuild the compact assets with the reference ISO, Play! reference build and tracked Battle WASM described above. The capture uses Chrome headless and macOS Vision OCR. The shipped assets can be tested with just Node.
+
+```sh
+node verification/capture-four.mjs private/ps2/reference.iso private/verification/four-way
+node verification/prepare-four-motion.mjs private/verification/four-way/fight-start.bin port/animation/four-shared.gz
+node verification/native-four.mjs --seed private/verification/four-way/fight-start.bin private/native-kernel/tracked/battle.wasm port/kernel/four-start.gz
+npm run test:native-four
+node verification/native-ffa-browser.mjs
+node verification/native-voice-browser.mjs
+```

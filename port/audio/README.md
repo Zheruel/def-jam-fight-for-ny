@@ -115,3 +115,14 @@ Stage XML `<sound hit|break>` and `<weaponsound hit|break>` commands reach `crea
 - Speech: `speech.json` indexes the 535 speech sets (`SPEECH1–3.VIV`); lines are SCHl streams (`--speech SET` exports a set). Announcer selection logic beyond the venue record's speech id is not decoded.
 - Which sample inside a player plays (random, compiled in the ABKC banks), tag words after the first two, which floor/weapon module a venue bank's repeated `Feet`/`Falls`/`Weapon_*` event uses (the first stands in), crowd banks (their modules carry no event names; the crowd reactions are posted by game code, not tags), and events with no bank (`Rope`, `Rail_Hit`, `Burn_Yell`).
 - The ambient banks' mono one-shots (`--shots`) and the random scheduler.
+
+### Battle speech streams
+
+The compiled PS2 sound event handler selects the announcer or fighter line. At stream start (`0x10cfa0`) it passes the resource name, byte offset of an SCHl stream and playback channel to Web Audio. The native player maps that pair to a sample interval in a per-set Opus file. The playback query (`0x10d110`) uses the original sample count and simulation clock. Up to four decoded sets are retained for repeated lines.
+
+`voice/index.json` covers 11,435 line offsets across 447 announcer, character, taunt, environment and heckle sets. Only requested audio sets are fetched. At tick 2222 in the four-player fixture the original dispatcher asks for offset 29696 of ANN_Special_Meter_E1. The browser check confirms that Web Audio starts the corresponding 1.678-second interval and that it contains signal.
+
+```sh
+python3 port/audio/extract_voice.py private/ps2/reference.iso --decoder vgmstream-cli
+node verification/native-voice-browser.mjs
+```

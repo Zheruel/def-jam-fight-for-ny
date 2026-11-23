@@ -41,6 +41,7 @@ export function venueAudio(file, {
   let active = true, requested = false, muted = false;
   const banks = new Map(), playing = new Set(), tracks = new Set();
   let generation = 0;
+  const voiceBuffers=new Map();
 
   const hidden = () => doc?.hidden === true;
   const label = () => { if (button) button.textContent = muted ? "Unmute" : "Mute"; };
@@ -61,6 +62,18 @@ export function venueAudio(file, {
     const response = await fetcher(new URL(path, files));
     if (!response.ok) throw Error(`Unable to load ${path}`);
     return context.decodeAudioData(await response.arrayBuffer());
+  }
+
+  function voiceBuffer(path) {
+    const cached=voiceBuffers.get(path);
+    if(cached){voiceBuffers.delete(path);voiceBuffers.set(path,cached);return cached;}
+    const pending=decode(path).catch(error=>{
+      if(voiceBuffers.get(path)===pending)voiceBuffers.delete(path);
+      throw error;
+    });
+    voiceBuffers.set(path,pending);
+    if(voiceBuffers.size>4)voiceBuffers.delete(voiceBuffers.keys().next().value);
+    return pending;
   }
 
   async function loadBed() {
@@ -180,11 +193,12 @@ export function venueAudio(file, {
     },
     // Stream a music file into the host mix (so WebRTC guests hear it): `loopStart` seconds into the file the
     // track loops to its end when `loop`; otherwise it plays once and `onEnded` fires. Returns {stop()}.
-    async track(path, {gain = 1, loop = false, loopStart = 0, onEnded} = {}) {
+    async track(path, {gain = 1, loop = false, loopStart = 0, offset = 0, duration, current, onEnded} = {}) {
       if (!requested) start();
       graph();
-      const buffer = await decode(path);
+      const buffer = duration===undefined ? await decode(path) : await voiceBuffer(path);
       await context.resume();
+      if(current && !current()) return;
       const node = context.createBufferSource(), volume = context.createGain();
       const handle = { node, stop() { if (!tracks.delete(handle)) return; node.onended = null; try { node.stop(); } catch {} node.disconnect(); volume.disconnect(); } };
       tracks.add(handle);
@@ -193,11 +207,13 @@ export function venueAudio(file, {
       node.onended = () => { if (!tracks.delete(handle)) return; node.disconnect(); volume.disconnect(); onEnded?.(); };
       volume.gain.value = gain;
       node.connect(volume); volume.connect(bus);
-      node.start();
+      if(duration===undefined) node.start(0,offset);
+      else node.start(0,offset,duration);
       return handle;
     },
     dispose() {
       generation++;
+      voiceBuffers.clear();
       for (const handle of [...tracks]) handle.stop();
       active = false;
       win?.removeEventListener("pointerdown", unlock);

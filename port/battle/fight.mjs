@@ -7,19 +7,19 @@ import { poseIndex } from "../motion/pose-bank.mjs";
 import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
 
-const ACTOR = [0x4bc170,0x4bd468];
+const actorAddress = slot => 0x4bc170 + slot * 0x12f8;
 const rad = Math.PI / 180;
 
 export async function loadFoundationFight(fighters,venue) {
   const [source,seed,arena,rules,animation]=await Promise.all([
     fetchPacked(new URL("../kernel/battle.wasm.gz",import.meta.url)),
-    fetchPacked(new URL("../kernel/foundation-start.gz",import.meta.url)),
+    fetchPacked(new URL(fighters.length===4 ? "../kernel/four-start.gz" : "../kernel/foundation-start.gz",import.meta.url)),
     venue.file==="V2BG_02A" ? null : loadArena(venue),
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
     loadMatchAnimation(fighters),
   ]);
   const fight=await createFoundationFight(fighters,source,seed,arena,rules,animation);
-  const clips=signatureClipIds(fight.memory);
+  const clips=signatureClipIds(fight.memory,fighters.length);
   animation.setSignatures(new Map(await Promise.all(clips.map(async clip=>[
     clip,await fetchPacked(new URL(`../animation/banks/special${clip}.gz`,import.meta.url))
   ]))));
@@ -28,9 +28,10 @@ export async function loadFoundationFight(fighters,venue) {
 
 // The WPAR parser writes the four right-stick assignments to the fighter profile.
 // Retail 0x30a580 converts the assignment to a pair of BASE00 clip numbers.
-export function signatureClipIds(memory) {
+export function signatureClipIds(memory,count=2) {
   const ids=new Set();
-  for(const actor of ACTOR) for(let direction=0;direction<4;direction++) {
+  for(let slot=0;slot<count;slot++) for(let direction=0;direction<4;direction++) {
+    const actor=actorAddress(slot);
     const move=memory.getUint32(actor+0xbb8+4*direction,true);
     if(move>=82) throw RangeError("Invalid signature move in fighter profile");
     ids.add(709+2*move);
@@ -40,7 +41,9 @@ export function signatureClipIds(memory) {
 }
 
 export async function createFoundationFight(fighters,source,seed,arena,rules,animation) {
-  let memory, outcome;
+  if(fighters.length<2 || fighters.length>4) throw RangeError("Battle requires two to four fighters");
+  const actors=fighters.map((_,slot)=>actorAddress(slot));
+  let memory, outcome, voice;
   const word = address => memory.getUint32(address,true);
   const scalar = address => memory.getFloat32(address,true);
   const readVector = address => [scalar(address),scalar(address+4),scalar(address+8)];
@@ -50,7 +53,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     const action = bank === 0 ? 10000 + local : local;
     // BASE00 is the shared action bank. Both body rigs have identical body
     // bind matrices; their facial control binds differ. Prefer a slot capture.
-    const match = states[slot].bank.clips[action] ?? (bank === 0 && states[1-slot].bank.clips[action]);
+    const match = states[slot].bank.clips[action] ?? (bank === 0 && states.find(state=>state.bank?.clips[action])?.bank.clips[action]);
     if (!match) throw new Error(`Motion ${action} is still being recovered for ${states[slot].model}.`);
     return match;
   }
@@ -68,6 +71,8 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   }
   const engine = {
     sample, place,
+    playSpeech: (name,offset,channel) => voice?.play(name,offset,channel,ticks),
+    speaking: channel => voice?.playing(channel,ticks),
     duration(slot,bank,index) { return animation ? animation.duration(slot,bank,index) : clip(slot,bank,index).end; },
     rootYaw(slot) { return states[slot].root[3]; },
     damage(slot,level) { states[slot].damage = level; },
@@ -107,7 +112,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   };
   const kernel = await instantiateBattle(source,engine);
   memory = kernel.memory;
-  outcome = createOutcome(kernel,ACTOR);
+  outcome = createOutcome(kernel,actors);
   const bytes = new Uint8Array(memory.buffer,memory.byteOffset,memory.byteLength);
   const file = new DataView(seed);
   if (!file.byteLength || file.byteLength % 4100) throw new Error("Invalid Foundation start data");
@@ -123,11 +128,11 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     animation?.reset();
     if(animation) fighters.forEach((f,slot)=>{
       initializeFighterProfile(kernel,slot,f.record);
-      const idle=kernel.call(0x2ff908,ACTOR[slot],1,0,0);
-      kernel.call(0x2e4808,ACTOR[slot],idle,0,0);
+      const idle=kernel.call(0x2ff908,actors[slot],1,0,0);
+      kernel.call(0x2e4808,actors[slot],idle,0,0);
     });
-    if(arena) installArena(kernel,arena,ACTOR);
-    ACTOR.forEach((a,i) => {
+    if(arena) installArena(kernel,arena,actors);
+    actors.forEach((a,i) => {
       place(i,a+0xc4,a+0xd0);
       sample(i,word(a+0x84),word(a+0x88),scalar(a+0x9c));
       pads[i] = 0x4bbfb0 + word(0x4bbd48+i*4)*32;
@@ -138,6 +143,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       states[i].pending = null;
       states[i].final = null;
     });
+    voice?.reset();
     outcome.reset();
     ticks = 0;
   }
@@ -157,15 +163,15 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     });
     kernel.tick();
     states.forEach((state,slot) => {
-      state.actorPosition = readVector(ACTOR[slot]+0x44);
+      state.actorPosition = readVector(actors[slot]+0x44);
       animation?.finish(state,slot);
     });
     ticks++;
   }
   function diagnostics() {
-    return {ticks,actors: ACTOR.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
+    return {ticks,voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
       score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
   }
-  return { states, tick, restart, rematch: restart, outcome: () => outcome.read(), diagnostics, observedPages:kernel.observedPages, memory, kernel };
+  return { states, tick, restart, setVoicePlayer(player) {voice=player;}, rematch: restart, outcome: () => outcome.read(), diagnostics, observedPages:kernel.observedPages, memory, kernel };
 }

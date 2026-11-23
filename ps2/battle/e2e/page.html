@@ -29,6 +29,7 @@ try {
     locateFile: name => new URL('/runtime/play/' + name, location.href).href,
     onAbort: message => { state.error = String(message); state.status = 'aborted'; }
   });
+  window.referenceVm = module; // Headless reference harness only, for reading match snapshots.
   module.FS.mkdir('/work');
   let done = true;
   module.discImageDevice = {

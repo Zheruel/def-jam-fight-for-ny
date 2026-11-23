@@ -11,7 +11,7 @@ export function loadMatchRules(kernel,bytes) {
 }
 export function initializeFighterProfile(kernel,slot,record) {
   const id=record.fighterXml.coreID-1;
-  if(![0,1].includes(slot) || !Number.isInteger(id) || id<0 || id>=141) throw RangeError("Unknown Battle participant");
+  if(!Number.isInteger(slot) || slot<0 || slot>3 || !Number.isInteger(id) || id<0 || id>=141) throw RangeError("Unknown Battle participant");
   const actor=ACTOR_BASE+slot*ACTOR_BYTES, memory=kernel.memory;
   memory.setUint32(0x4bbd68+slot*4,id,true);
   memory.setUint32(actor+0x28,slot,true);

@@ -2,6 +2,7 @@
 // and other engine callbacks as those boundaries are recovered.
 export async function instantiateBattle(source, engine) {
   let core, memory, registers;
+  const text=new TextDecoder();
   const hex = address => "0x" + (address >>> 0).toString(16);
   const arg = i => registers.getUint32(i * 16, true);
   const float = i => registers.getFloat32(512 + i * 4, true);
@@ -23,7 +24,20 @@ export async function instantiateBattle(source, engine) {
         // The host owns this audio context on a single JS thread. Both native
         // audio lock wrappers return zero after acquiring/releasing the lock.
         case 0x2577a8:
-        case 0x257808: return result(0);
+        case 0x257808:
+        // The retail heap uses a recursive EE mutex. Only this synchronous WASM instance accesses its arena.
+        case 0x331508:
+        case 0x3315f0: return result(0);
+        // The retail stream player receives an archive member, byte offset and output channel.
+        case 0x10cfa0: {
+          const at=arg(4);
+          const bytes=new Uint8Array(memory.buffer,memory.byteOffset+at,Math.min(512,memory.byteLength-at));
+          const end=bytes.indexOf(0);
+          if(end<0) throw Error("Unterminated speech resource name");
+          const resource=text.decode(bytes.subarray(0,end));
+          return result(engine.playSpeech?.(resource,arg(5),arg(6)|0) ? 0 : -1);
+        }
+        case 0x10d110: return result(engine.speaking?.(arg(4)|0) ? 1 : 0);
         case 0x346b54: {
           const address = arg(4), count = arg(6);
           new Uint8Array(memory.buffer,memory.byteOffset+address,count).fill(arg(5)&255);
