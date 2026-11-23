@@ -14,6 +14,7 @@ jobs:
       - run: python3 -m unittest discover -s ps2/content/tests
       - run: python3 -m unittest discover -s port/assets
       - run: python3 -m unittest discover -s port/geometry
+      - run: npm run test:native-four
       - run: npm run test:native-animation
       - run: node verification/native-roster.mjs --endurance
       - run: node verification/native-camera.mjs
@@ -24,6 +25,7 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium
         working-directory: netplay
+      - run: npm run test:native-menu
       - run: node verification/native-refresh.mjs
       - run: npm run test:native-damage
       - run: npm run test:native-venue
