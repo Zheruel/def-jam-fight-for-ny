@@ -1,25 +1,38 @@
 // Drawing of the retail "Choose Fighter" and "Choose Venue" screens on a 640x480 canvas. Positions are the front-end
 // movies' own (SCREENS.VIV chooseF2 / chsVenue, see port/hud/screens/extract.py); art is lazy (art.mjs).
 import { have, fighterPictures } from "./art.mjs";
-import { COLUMNS, ROWS } from "./state.mjs";
+import { ROWS } from "./state.mjs";
 
 export const SIZE = Object.freeze({ width: 640, height: 480 });
 const FONT = "BattleNames";
 
-// Per-seat geometry of chooseF2 (two players): player 1 left card, player 2 right card.
-const SEATS = [
-  { sticker: [54, 80], window: [61, 134, 249, 278], name: [112, 64], stats: [194, 161], bars: [247, 165], style: [193, 278], box: [60, 304], tint: 1 },
-  { sticker: [319, 75], window: [331, 131, 249, 278], name: [386, 61], stats: [464, 157], bars: [517, 161], style: [462, 274], box: [329, 300], tint: 2 },
-];
-const BAR = { width: 53, pitch: 18.6, height: 11 };
-const STAT_KEYS = ["upperPower", "lowerPower", "speed", "toughness", "health", "charisma"];
-const CELL = { x: 14, y: 8, w: 42, h: 38, size: 36 };   // thumbnail pitch inside the paper box
-
-export const thumbRect = (seat, slot) => {
-  const [bx, by] = SEATS[seat].box;
-  return [bx + CELL.x + (slot % COLUMNS) * CELL.w, by + CELL.y + Math.floor(slot / COLUMNS) * CELL.h, CELL.size, CELL.size];
+// Geometry of the two retail screens (chooseF2: two cards, chooseF4: four cards), from their front-end movies.
+const TWO = {
+  bg: ["select-bg-0.png", "select-bg-1.png"], paper: ["thumb-paper.png", 256, 128], ready: ["ready.png", 240, 108], name: [208, 100, 1],
+  bar: { width: 53, pitch: 18.6, height: 11 }, labels: [50, 113, 50, 113], cell: { x: 14, y: 8, w: 42, h: 38, size: 36 }, scroller: [238, 8, 4, 112],
+  seats: [
+    { sticker: [54, 80], window: [61, 134, 249, 278], name: [112, 64], stats: [194, 161], bars: [247, 165], style: [193, 278], box: [60, 304] },
+    { sticker: [319, 75], window: [331, 131, 249, 278], name: [386, 61], stats: [464, 157], bars: [517, 161], style: [462, 274], box: [329, 300] },
+  ],
 };
-export const seatAt = x => x < 320 ? 0 : 1;
+const FOUR = {
+  bg: ["select4-bg-0.png", "select4-bg-1.png"], paper: ["thumb-paper4.png", 136, 128], ready: ["ready4.png", 152, 76], name: [208, 100, 0.6],
+  bar: { width: 37, pitch: 16.6, height: 10 }, labels: [48, 112, 45, 102], cell: { x: 8, y: 6, w: 38, h: 38, size: 34 }, scroller: [122, 6, 4, 112],
+  seats: [
+    { sticker: [38, 76], window: [53, 136, 124, 176], name: [46, 82], stats: [89, 173], bars: [136, 179], style: [79, 277], box: [48, 311] },
+    { sticker: [171, 79], window: [189, 140, 124, 176], name: [199, 87], stats: [225, 178], bars: [272, 184], style: [216, 282], box: [184, 316] },
+    { sticker: [312, 72], window: [325, 130, 124, 176], name: [337, 78], stats: [362, 167], bars: [409, 173], style: [352, 271], box: [320, 308] },
+    { sticker: [446, 77], window: [459, 135, 124, 176], name: [461, 75], stats: [496, 173], bars: [543, 179], style: [486, 277], box: [455, 311] },
+  ],
+};
+const layoutOf = selection => selection.state.seats.length > 2 ? FOUR : TWO;
+const STAT_KEYS = ["upperPower", "lowerPower", "speed", "toughness", "health", "charisma"];
+
+export const thumbRect = (selection, seat, slot) => {
+  const L = layoutOf(selection), { columns } = selection.state, [bx, by] = L.seats[seat].box;
+  return [bx + L.cell.x + (slot % columns) * L.cell.w, by + L.cell.y + Math.floor(slot / columns) * L.cell.h, L.cell.size, L.cell.size];
+};
+export const seatAt = (selection, x) => Math.min(selection.state.seats.length - 1, Math.floor(x / (SIZE.width / selection.state.seats.length)));
 
 function outlined(ctx, text, x, y, size, { align = "left", fill = "#e6dfd0", stroke = "#2b241b", width = 3 } = {}) {
   ctx.font = `${size}px ${FONT}`;
@@ -46,19 +59,18 @@ function title(ctx, text, hints) {
 }
 
 export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
-  const { seats, roster } = selection.state;
+  const { seats, roster, columns } = selection.state, L = layoutOf(selection);
   ctx.clearRect(0, 0, SIZE.width, SIZE.height);
-  const [left, right] = [have("select-bg-0.png"), have("select-bg-1.png")];
+  const [left, right] = L.bg.map(have);
   ctx.fillStyle = "#3a4742"; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
   if (left) ctx.drawImage(left, 0, 0);
   if (right) ctx.drawImage(right, 512, 0);
-  title(ctx, "CHOOSE FIGHTER", [["✕", "SELECT"], ["△", "BACK"]]);
+  title(ctx, selection.state.mode === "ffa" ? "CHOOSE FIGHTERS" : "CHOOSE FIGHTER", [["\u2715", "SELECT"], ["\u25b3", "BACK"]]);
 
   const thumbs = have("thumbs.png");
   seats.forEach((seat, i) => {
-    const g = SEATS[i], fighter = roster[seat.cursor];
-    // sticker
-    const sticker = have(`sticker-${g.tint}.png`);
+    const g = L.seats[i], fighter = roster[seat.cursor];
+    const sticker = have(`sticker-${i + 1}.png`);
     if (sticker) ctx.drawImage(sticker, g.sticker[0], g.sticker[1], 50, 38);
     outlined(ctx, `P${i + 1}`, g.sticker[0] + 25, g.sticker[1] + 6, 17, { align: "center", width: 2 });
     // portrait: the head piece over the chest piece, clipped to the card's window
@@ -68,51 +80,77 @@ export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
     ctx.beginPath(); ctx.rect(wx, wy, ww, wh); ctx.clip();
     if (head) { const k = ww / 256; ctx.drawImage(head, wx, wy, ww, 256 * k); if (chest) ctx.drawImage(chest, wx, wy + 256 * k, ww, 80 * k); }
     ctx.restore();
-    if (name) ctx.drawImage(name, g.name[0], g.name[1], 208, 100);
+    if (name) ctx.drawImage(name, g.name[0], g.name[1], L.name[0] * L.name[2], L.name[1] * L.name[2]);
     // stats and fighting style
     const labels = have("stat-labels.png");
-    if (labels) ctx.drawImage(labels, 0, 0, 50, 113, g.stats[0], g.stats[1], 50, 113);
+    if (labels) ctx.drawImage(labels, 0, 0, L.labels[0], L.labels[1], g.stats[0], g.stats[1], L.labels[2], L.labels[3]);
     STAT_KEYS.forEach((key, row) => {
-      const value = Math.max(0, Math.min(1, (fighter.stats?.[key] ?? 0) / 50)), y = g.bars[1] + row * BAR.pitch;
-      ctx.fillStyle = "rgba(10,12,10,.78)"; ctx.fillRect(g.bars[0] - 1, y - 1, BAR.width + 2, BAR.height + 2);
-      ctx.fillStyle = barColour(value); ctx.fillRect(g.bars[0], y, BAR.width * value, BAR.height);
-      ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.fillRect(g.bars[0], y, BAR.width * value, 3);
+      const value = Math.max(0, Math.min(1, (fighter.stats?.[key] ?? 0) / 50)), y = g.bars[1] + row * L.bar.pitch;
+      ctx.fillStyle = "rgba(10,12,10,.78)"; ctx.fillRect(g.bars[0] - 1, y - 1, L.bar.width + 2, L.bar.height + 2);
+      ctx.fillStyle = barColour(value); ctx.fillRect(g.bars[0], y, L.bar.width * value, L.bar.height);
+      ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.fillRect(g.bars[0], y, L.bar.width * value, 3);
     });
     const style = have(`style-${fighter.styles[0] ?? "kickboxing"}.png`);
     if (style) ctx.drawImage(style, g.style[0], g.style[1]);
     if (seat.ready) {
-      const ready = have("ready.png"), pop = Math.min(1, (tick - (seat.readyAt ?? tick)) / 8 + 0.4);
+      const ready = have(L.ready[0]), pop = Math.min(1, (tick - (seat.readyAt ?? tick)) / 8 + 0.4);
       if (ready) {
         ctx.save();
         ctx.translate(wx + ww / 2, wy + wh - 60); ctx.rotate(-0.06); ctx.scale(pop, pop);
-        ctx.drawImage(ready, -120, -54);
+        ctx.drawImage(ready, -L.ready[1] / 2, -L.ready[2] / 2);
         ctx.restore();
       }
       return;
     }
     // face box (hidden once the fighter is locked in, as on the retail screen)
-    const paper = have("thumb-paper.png");
-    if (paper) ctx.drawImage(paper, g.box[0], g.box[1], 256, 128);
-    const first = selection.scroll(i) * COLUMNS;
+    const paper = have(L.paper[0]);
+    if (paper) ctx.drawImage(paper, g.box[0], g.box[1], L.paper[1], L.paper[2]);
+    const first = selection.scroll(i) * columns;
     ctx.save();
-    ctx.beginPath(); ctx.rect(g.box[0] + 8, g.box[1] + 4, 236, 118); ctx.clip();
-    for (let slot = 0; slot < ROWS * COLUMNS; slot++) {
+    ctx.beginPath(); ctx.rect(g.box[0] + 4, g.box[1] + 4, L.paper[1] - 14, L.paper[2] - 10); ctx.clip();
+    for (let slot = 0; slot < ROWS * columns; slot++) {
       const index = first + slot;
       if (index >= roster.length) break;
-      const [x, y, w, h] = thumbRect(i, slot);
+      const [x, y, w, h] = thumbRect(selection, i, slot);
       if (thumbs) ctx.drawImage(thumbs, (index % 8) * 40, Math.floor(index / 8) * 40, 40, 40, x, y, w, h);
       if (index === seat.cursor) {
         const pulse = 0.65 + 0.35 * Math.sin(time / 120);
-        ctx.lineWidth = 3; ctx.strokeStyle = i ? `rgba(230,60,50,${pulse})` : `rgba(70,120,230,${pulse})`;
+        ctx.lineWidth = 3; ctx.strokeStyle = `rgba(${["70,120,230", "230,60,50", "70,190,80", "170,90,210"][i]},${pulse})`;
         ctx.strokeRect(x - 1.5, y - 1.5, w + 3, h + 3);
       }
     }
     ctx.restore();
     // scroller
-    const rows = Math.ceil(roster.length / COLUMNS), span = 112;
-    ctx.fillStyle = "rgba(20,18,14,.55)"; ctx.fillRect(g.box[0] + 238, g.box[1] + 8, 4, span);
+    const rows = Math.ceil(roster.length / columns), [sx, sy, sw, span] = L.scroller;
+    ctx.fillStyle = "rgba(20,18,14,.55)"; ctx.fillRect(g.box[0] + sx, g.box[1] + sy, sw, span);
     ctx.fillStyle = "rgba(235,225,190,.9)";
-    ctx.fillRect(g.box[0] + 238, g.box[1] + 8 + span * (selection.scroll(i) / rows), 4, span * ROWS / rows);
+    ctx.fillRect(g.box[0] + sx, g.box[1] + sy + span * (selection.scroll(i) / rows), sw, span * ROWS / rows);
+  });
+}
+
+// -- match type screen --------------------------------------------------------------------------------------------------
+const TYPE_ART = { "1v1": ["type-1v1.png", "ONE ON ONE"], ffa: ["type-ffa.png", "FREE FOR ALL"] };
+export const typeRect = (count, slot) => { const width = 190, gap = 40, x0 = (SIZE.width - count * width - (count - 1) * gap) / 2; return [x0 + slot * (width + gap), 130, width, 240]; };
+
+export function drawType(ctx, { types, index }, { time = 0 } = {}) {
+  ctx.clearRect(0, 0, SIZE.width, SIZE.height);
+  const grad = ctx.createRadialGradient(320, 250, 40, 320, 250, 420);
+  grad.addColorStop(0, "#4a5a54"); grad.addColorStop(1, "#1c2422");
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
+  title(ctx, "CHOOSE MATCH TYPE", [["\u2715", "SELECT"]]);
+  types.forEach((type, i) => {
+    const [x, y, w, h] = typeRect(types.length, i), [file, label] = TYPE_ART[type], card = have(file), chosen = i === index;
+    if (chosen) {
+      const bracket = have("type-bracket.png");
+      ctx.save(); ctx.globalAlpha = 0.7 + 0.3 * Math.sin(time / 140);
+      if (bracket) ctx.drawImage(bracket, 13, 12, 69, 112, x + w / 2 - 95, y - 22, 190, 262);
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2); ctx.rotate(chosen ? 0 : (i % 2 ? 0.03 : -0.03)); ctx.scale(chosen ? 1.06 : 1, chosen ? 1.06 : 1);
+    if (card) ctx.drawImage(card, 0, 0, 60, 84, -75, -122, 150, 210);   // the 128x128 picture holds one 58x82 card
+    ctx.restore();
+    outlined(ctx, label, x + w / 2, y + h - 38, 20, { align: "center", fill: chosen ? "#f1e8c8" : "#a8a290", width: 3 });
   });
 }
 

@@ -5,7 +5,8 @@
 //   screen   = "fighters" | "venue" | "done"
 //   result() = { mode, handles, venue } in the shape of the battle page's query (?mode=&p1=..&venue=)
 
-export const COLUMNS = 5, ROWS = 3;   // the thumbnail box shows 5 x 3 faces
+export const ROWS = 3;   // the thumbnail box shows 3 rows of faces: 5 columns on the two-player screen, 3 on the four-player one
+export const COLUMNS = 5;   // two-player default
 
 export const ACTIONS = ["left", "right", "up", "down", "confirm", "back", "next", "previous"];
 
@@ -17,8 +18,9 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
     if (spot) spot.variants.push(v); else spots.push({ pin: v.pin, variants: [v] });
   }
   const found = spots.findIndex(s => s.variants.some(v => v.file === venue));
+  const columns = seats > 2 ? 3 : COLUMNS;
   const state = {
-    mode, screen: "fighters", roster, spots, variant: Math.max(0, found < 0 ? 0 : spots[found].variants.findIndex(v => v.file === venue)),
+    columns, mode, screen: "fighters", roster, spots, variant: Math.max(0, found < 0 ? 0 : spots[found].variants.findIndex(v => v.file === venue)),
     seats: Array.from({ length: seats }, (_, i) => ({ cursor: Math.max(0, roster.findIndex(f => f.handle === picks[i])), ready: false })),
     venue: Math.max(0, found),
   };
@@ -26,12 +28,12 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
   const taken = (seat, index) => mode === "ffa" && state.seats.some((s, i) => i !== seat && s.cursor === index);
   state.seats.forEach((s, i) => { while (taken(i, s.cursor)) s.cursor = (s.cursor + 1) % roster.length; });
 
-  const columnOf = i => i % COLUMNS, rowOf = i => Math.floor(i / COLUMNS);
+  const columnOf = i => i % columns, rowOf = i => Math.floor(i / columns);
   function moveFighter(seat, dx, dy) {
     const s = state.seats[seat], last = roster.length - 1;
     let next = s.cursor;
     if (dx) next = (s.cursor + dx + roster.length) % roster.length;   // left/right walk the list and wrap
-    if (dy) next = Math.min(last, Math.max(0, s.cursor + dy * COLUMNS));
+    if (dy) next = Math.min(last, Math.max(0, s.cursor + dy * columns));
     if (taken(seat, next) && dx) next = (next + dx + roster.length) % roster.length;
     if (!taken(seat, next)) s.cursor = next;
   }
@@ -94,7 +96,7 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
     },
     // Scroll offset (first visible row) that keeps a seat's cursor on screen.
     scroll(seat) {
-      const row = rowOf(state.seats[seat].cursor), rows = Math.ceil(roster.length / COLUMNS);
+      const row = rowOf(state.seats[seat].cursor), rows = Math.ceil(roster.length / columns);
       return Math.max(0, Math.min(rows - ROWS, row - 1));
     },
     columnOf, rowOf,

@@ -34,6 +34,8 @@ try {
   await shot("1-fighters");
 
   const roster = JSON.parse(readFileSync(new URL("../port/menu/art/roster.json", import.meta.url), "utf8"));
+  await page.keyboard.press("Enter");   // match type: One on One (the default)
+  await page.waitForTimeout(200);
   const start = ["0x07000030", "0x07000025"].map(h => roster.findIndex(f => f.handle === h));
   // player 1 (WASD + I): two to the right; player 2 (arrows): one to the left; each confirms with their own button
   await page.keyboard.press("d"); await page.keyboard.press("d"); await page.keyboard.press("i");
@@ -56,9 +58,30 @@ try {
   assert.deepEqual(names, chosen.map(f => f.name), "the match runs the selected fighters");
   assert.equal(await page.locator("canvas[aria-label='Choose fighter and venue']").count(), 0, "menu removed");
   await shot("3-match");
+
+  // Free For All: the same menu with four cards; Enter locks in each seat in turn, and only venues with a four-fighter formation are offered.
+  const ffa = await browser.newPage({ viewport: { width: 1024, height: 824 } });
+  ffa.on("pageerror", e => errors.push("ffa: " + e.message));
+  await ffa.goto(base);
+  await ffa.waitForSelector("canvas[aria-label='Choose fighter and venue']");
+  await ffa.waitForFunction(() => document.fonts.check("12px BattleNames"));
+  await ffa.keyboard.press("ArrowRight"); await ffa.keyboard.press("Enter");
+  await ffa.waitForTimeout(800);
+  if (process.env.NATIVE_SCREENSHOT) writeFileSync(`${process.env.NATIVE_SCREENSHOT}/4-ffa.png`, await ffa.screenshot());
+  for (let seat = 0; seat < 4; seat++) await ffa.keyboard.press("Enter");
+  await ffa.waitForTimeout(300);
+  await ffa.keyboard.press("Enter");
+  await ffa.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 120000 });
+  const four = new URL(ffa.url()).searchParams;
+  assert.equal(four.get("mode"), "ffa");
+  const fighters4 = await ffa.evaluate(() => nativeBattle.diagnostics().actors.map(a => a.name));
+  assert.equal(fighters4.length, 4);
+  assert.equal(new Set(fighters4).size, 4, "four distinct fighters");
+  assert.deepEqual([1, 2, 3, 4].map(n => four.get("p" + n)).map(h => inventory.fighters.find(f => f.handle === h).name), fighters4);
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ fighters: names, venue: venue.name, file: venue.file, portraitsFetchedBeforeMatch: portraits().size }));
-  console.log("The retail selector chose two fighters and a venue and started the native match.");
+  console.log(JSON.stringify({ ffa: fighters4, venue: four.get("venue") }));
+  console.log("The retail selector chose fighters and a venue, one-on-one and Free For All, and started the native match.");
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

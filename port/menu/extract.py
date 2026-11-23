@@ -119,6 +119,13 @@ def export(iso, output: Path):
         for style, index in STYLES.items():
             f2pic(index, f"style-{style}")
 
+        types = source.pictures("screens/battle/support/chooseMatchTypeButtons.big")
+        for tag, name in (("9", "type-1v1"), ("27", "type-ffa"), ("15", "type-bracket")):
+            write(output / f"{name}.png", types[tag])
+        f4 = source.pictures("screens/battle/chooseF4.big")
+        for tag, name in (("344", "select4-bg-0"), ("343", "select4-bg-1"), ("338", "ready4"), ("376", "thumb-paper4")):
+            write(output / f"{name}.png", f4[tag])
+
         # -- venues (chsVenue + chooseVenueArt + venThumb<feID>) ------------------------------------------------
         for n in range(1, 8):
             write(output / f"map-{n}.png", source.pictures("screens/battle/venueMap.big")[str(n)])

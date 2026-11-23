@@ -3,7 +3,7 @@
 // (?mode=&p1=&p2=&venue=) so a reload or a shared link starts the same match directly.
 import { runMenu } from "./menu.mjs";
 import { selectionQuery } from "./state.mjs";
-import { DEFAULT_FIGHTERS, DEFAULT_VENUE } from "../battle/modes.mjs";
+import { DEFAULT_FIGHTERS, DEFAULT_VENUE, freeForAllAvailable } from "../battle/modes.mjs";
 
 export async function chooseMatch(params) {
   const $ = selector => document.querySelector(selector);
@@ -19,7 +19,7 @@ export async function chooseMatch(params) {
   join.onclick = joinRoom;
   code.onkeydown = event => { if (event.key === "Enter") joinRoom(); };
   try {
-    const choice = await runMenu({ mount: main, params, picks: [params.get("p1") ?? DEFAULT_FIGHTERS[0], params.get("p2") ?? DEFAULT_FIGHTERS[1]], venue: params.get("venue") ?? DEFAULT_VENUE });
+    const choice = await runMenu({ mount: main, types: freeForAllAvailable() ? ["1v1", "ffa"] : ["1v1"], picks: DEFAULT_FIGHTERS.map((handle, i) => params.get("p" + (i + 1)) ?? handle), venue: params.get("venue") ?? DEFAULT_VENUE });
     history.replaceState(null, "", `${location.pathname}?${selectionQuery(choice)}`);
     return choice;
   } finally {
