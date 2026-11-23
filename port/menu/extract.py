@@ -47,6 +47,11 @@ STICKERS = [0x7d, 0x7e, 0x80, 0x81]   # blue, red, green, purple player stickers
 THUMB = 40
 
 
+def fighter_art_id(record, ident):
+    # The four late replacements retain the outgoing fighters' gameplay IDs.
+    return {"Teck": 85, "Erick Sermon": 91, "O.E.": 92, "Santos": 93}.get(record["name"], ident)
+
+
 def members(big: bytes):
     count, _ = struct.unpack_from(">II", big, 8)
     pos, out = 16, {}
@@ -127,7 +132,7 @@ def export(iso, output: Path):
             else:
                 # The four late roster replacements kept the outgoing fighters' XML IDs.
                 # Their own front-end lettering and portraits use separate loading-card IDs.
-                art_id = {"Teck": 85, "Erick Sermon": 91, "O.E.": 92, "Santos": 93}.get(record["name"], ident)
+                art_id = fighter_art_id(record, ident)
                 lettering = f"screens/match/3_fighters/l_ML_{art_id}_2p.big"
                 portrait = f"screens/match/3_fighters/p_ML_{art_id + 1}_2p.big"
                 write(output / f"fighters/{ident}-n.png", next(iter(source.pictures(lettering).values())))

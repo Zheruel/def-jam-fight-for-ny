@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import { loadingSelection } from "./loading.mjs";
+import { MODES } from "../battle/modes.mjs";
 import { loadingFiles } from "./loading-files.mjs";
 import roster from "./art/roster.json" with { type: "json" };
 import venues from "./art/venues.json" with { type: "json" };
@@ -27,7 +28,7 @@ test("Free For All, Team and the special formats choose their own paper and titl
   assert.deepEqual([team.formation, team.title, team.ids], ["team", "team", [56, 55, 22, 48]]);
   for (const mode of ["window", "subway", "demolition", "inferno", "cage", "ringout"]) {
     const special = select(`mode=${mode}`);
-    assert.deepEqual([special.formation, special.title], ["1v1", mode], mode);
+    assert.deepEqual([special.formation, special.title], ["1v1", MODES[mode] ? mode : "1v1"], mode);
   }
 });
 
@@ -53,7 +54,7 @@ test("the files exist for every fighter in every poster size and for every venue
   // Anyone who can be picked has a portrait and a logo for the poster with the matching number of fighters.
   for (const count of ["2", "3", "4"]) {
     const lacking = roster.filter(f => !art.portraits[f.id]?.[count] || !art.logos[f.id]?.[count]).map(f => f.name);
-    console.log(`${count}p posters lack art for ${lacking.length} of ${roster.length} fighters${lacking.length ? ": " + lacking.join(", ") : ""}`);
+    assert.deepEqual(lacking.map(f=>f.name), [], count+"-fighter loading art");
   }
 });
 

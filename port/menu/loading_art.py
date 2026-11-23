@@ -27,7 +27,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from extract import Source
+from extract import Source, fighter_art_id
 from match_type_art import movie_shapes
 
 TITLES = {"1v1": "oneOnOne", "team": "team", "ffa": "ffa", "window": "window", "subway": "subway", "demolition": "demolition",
@@ -77,6 +77,30 @@ def save(image, path, lossy=False):
         image.save(path, "WEBP", lossless=True, method=6)
 
 
+def export_fighter(source, output, fighter, layout):
+    ident = fighter["id"]
+    art_id = fighter_art_id(fighter, ident)
+    for count in (2, 3, 4):
+        for kind, number, folder in (("logos", art_id, "l"), ("portraits", art_id + 1, "p")):
+            if fighter["model"] == "V2IP_999A":
+                # The E3 Hero has no retail poster. Use the selector's render of his own mesh.
+                assets = Path(__file__).parent / "art" / "fighters"
+                if kind == "portraits":
+                    image = Image.new("RGBA", (256,336))
+                    image.paste(Image.open(assets / f"{ident}-h.png"), (0,0))
+                    image.paste(Image.open(assets / f"{ident}-c.png"), (0,256))
+                    rect = [-128, -336, 128]
+                else:
+                    image = Image.open(assets / f"{ident}-n.png").convert("RGBA")
+                    rect = [-image.width / 2, -image.height / 2, image.width / 2]
+            else:
+                path = f"screens/match/3_fighters/{folder}_ML_{number}_{count}p.big"
+                image, rect = single_image(source, path)
+            name = f"{'logo' if kind == 'logos' else 'portrait'}-{ident}-{count}p"
+            save(image, output / (name + ".webp"), lossy=kind == "portraits")
+            layout[kind].setdefault(str(ident), {})[str(count)] = list(rect[:3])
+
+
 def export(source, output, roster, venues):
     output = Path(output)
     layout = {"size": [640, 480], "front": FRONT, "title": TITLE_ANCHOR, "vignette": VIGNETTE_ALPHA,
@@ -106,15 +130,7 @@ def export(source, output, roster, venues):
         save(image, output / f"venue-{number}.webp")
         layout["venues"][str(number)] = [rect[0], rect[1], rect[2]]
     for fighter in roster:
-        for count in (2, 3, 4):
-            for kind, number, folder in (("logos", fighter["id"], "l"), ("portraits", fighter["id"] + 1, "p")):
-                path = f"screens/match/3_fighters/{folder}_ML_{number}_{count}p.big"
-                if not source.has(path):
-                    continue
-                image, rect = single_image(source, path)
-                name = f"{'logo' if kind == 'logos' else 'portrait'}-{fighter['id']}-{count}p"
-                save(image, output / (name + ".webp"), lossy=kind == "portraits")
-                layout[kind].setdefault(str(fighter["id"]), {})[str(count)] = [rect[0], rect[1], rect[2]]
+        export_fighter(source, output, fighter, layout)
     (output / "layout.json").write_text(json.dumps(layout, separators=(",", ":")) + "\n")
     return layout
 

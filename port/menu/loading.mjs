@@ -5,7 +5,8 @@
 // each fighter's portrait and logo), shows as soon as the selection is known (from the selector or a direct link) and goes
 // when the match is ready: no minimum time. A hosted room's guests see the poster too: the session sends this canvas
 // instead of the (hidden) match canvas until closeMatchLoading() hands the picture back.
-import { MODES, DEFAULT_FIGHTERS, DEFAULT_VENUE, venueSupports } from "../battle/modes.mjs";
+import { parseBattleQuery, freeForAllAvailable } from "../battle/modes.mjs";
+import inventory from "../../ps2/content/inventory.json" with {type:"json"};
 import { roomSession } from "../battle/controls.mjs";
 
 const ART = new URL("./art/loading/", import.meta.url);
@@ -19,24 +20,9 @@ const layout = () => layoutRequest ??= fetch(new URL("layout.json", ART)).then(r
 // What the poster shows for a query: the match type, its fighters in poster order (the query's order) and the venue.
 // Fighters the query leaves out, repeats or does not know are replaced like the viewer's parser does (defaults first).
 export function loadingSelection(params, art) {
-  const requested = params.get("mode");
-  const mode = requested === "ffa3" || Object.hasOwn(art.titles, requested) ? requested : "1v1";
-  const count = MODES[mode]?.fighters ?? (mode === "ffa3" ? 3 : mode === "ffa" || mode === "team" ? 4 : 2);
-  const ids = [];
-  const used = new Set();
-  const pool = [...DEFAULT_FIGHTERS, ...Object.keys(art.fighters)];
-  for (let i = 0; i < count; i++) {
-    let handle = params.get("p" + (i + 1));
-    if (!Object.hasOwn(art.fighters, handle) || (count > 2 && used.has(handle))) {
-      handle = count === 2 ? DEFAULT_FIGHTERS[i] : pool.find(h => Object.hasOwn(art.fighters, h) && !used.has(h));
-    }
-    used.add(handle);
-    ids.push(art.fighters[handle]);
-  }
-  const file = params.get("venue");
-  const supported = file => Object.hasOwn(art.venueFiles, file) && (!MODES[mode] || venueSupports(file, mode));
-  const venue = art.venueFiles[supported(file) ? file : (MODES[mode]?.venues?.[0] ?? DEFAULT_VENUE)] ?? art.venueFiles[DEFAULT_VENUE];
-  return { mode, formation: formationOf(mode), title: titleOf(mode), ids, venue };
+  const {mode, handles, venue} = parseBattleQuery(params, {...inventory, ffa:freeForAllAvailable()});
+  return { mode, formation: formationOf(mode), title: titleOf(mode),
+    ids: handles.map(handle=>art.fighters[handle]), venue: art.venueFiles[venue] };
 }
 const signature = s => [s.mode, s.venue, ...s.ids].join(".");
 
