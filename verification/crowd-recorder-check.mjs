@@ -13,10 +13,12 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 try {
   const page = await browser.newPage();
   await page.route("**/ram.bin", route => route.fulfill({ body: ram, contentType: "application/octet-stream" }));
-  await page.route("**/", route => route.fulfill({ body: "<!doctype html><title>stub</title>", contentType: "text/html" }));
+  await page.route("**/", route => route.fulfill({ body: "<!doctype html><title>stub</title>", contentType: "text/html", headers: {"Cross-Origin-Opener-Policy":"same-origin", "Cross-Origin-Embedder-Policy":"require-corp"} }));
   await page.goto("http://127.0.0.1:9/");   // intercepted
   await page.evaluate(async counter => {
-    const image = new Uint8Array(await (await fetch("/ram.bin")).arrayBuffer());
+    const source = await (await fetch("/ram.bin")).arrayBuffer();
+    const image = new Uint8Array(new SharedArrayBuffer(source.byteLength));
+    image.set(new Uint8Array(source));
     window.referenceVm = { HEAPU8: image };
     const view = new DataView(image.buffer);
     // The emulator thread: a frame every 16 ms; the first spectator's root height and the counter move with it.

@@ -35,7 +35,18 @@ try {
   await press("start");
   await screen(/MAIN MENU/i);
   await press("cross");
-  await screen(/STANDARD RULES/i,"cross");await press("cross");
+  await screen(/STANDARD RULES/i,"cross");
+  const rule = process.env.BATTLE_RULE ?? "standard";
+  if (!["standard", "votes", "no-submissions"].includes(rule)) throw Error("Unknown rules "+rule);
+  if (rule !== "standard") {
+    await press("right");
+    await screen(/CROWD VOTES|FAN FAVORITE/i);
+    if (rule === "no-submissions") {
+      await press("right");
+      await screen(/NO SUBMISSIONS/i);
+    }
+  }
+  await press("cross");
   await screen(/pick MEMORY CARD/i);await press("cross");
   await screen(/PRESS START BUTTON/i);await press("start");
   await screen(/ENTER USER ID/i);await press("cross");
@@ -54,7 +65,7 @@ try {
       if(words[i]!==signature[0] || !signature.every((n,j)=>words[i+j]===n))continue;
       const base=i*4-0x360990;
       if(base<0 || base+0x2000000>heap.length || words[(base+0x471230)/4]!==0x445330)continue;
-      return {venue:words[(base+0x4bbd34)/4],phase:words[(base+0x4bbf98)/4]};
+      return {venue:words[(base+0x4bbd34)/4],phase:words[(base+0x4bbf98)/4], rules:words[(base+0x4bbd2c)/4], timer:words[(base+0x4bbd30)/4], config:Array.from(words.slice((base+0x4bbcf0)/4,(base+0x4bbd48)/4))};
     }
     return null;
   });
@@ -62,19 +73,25 @@ try {
   for(let i=0;i<120;i++) { state=await ready(); if(state?.phase===1)break; await run.waitFrames(30); }
   if(state?.phase!==1)throw Error("the match did not start: "+JSON.stringify(state));
   if(state.venue!==2)throw Error("not the Foundation: venue word "+state.venue);
-  await run.waitFrames(60);
-  const info=await startCrowdRecording(run.page,{frames});
-  console.log("recording",info.names.length,"spectators");
-  await run.shot("recording-start");
-  const strikes=["square","triangle","circle","cross"];
-  for(let i=0;;i++) {
-    const progress=await crowdRecordingProgress(run.page);
-    if(!progress.running || progress.frames>=frames)break;
-    await run.press(strikes[i%strikes.length],{hold:4,after:26});
+  console.log("RULES",state);
+  writeFileSync(path.join(outDir,"rules.json"),JSON.stringify(state)+"\n");
+  if (frames === 0) {
+    await run.shot("rules-fight");
+  } else {
+    await run.waitFrames(60);
+    const info=await startCrowdRecording(run.page,{frames});
+    console.log("recording",info.names.length,"spectators");
+    await run.shot("recording-start");
+    const strikes=["square","triangle","circle","cross"];
+    for(let i=0;;i++) {
+      const progress=await crowdRecordingProgress(run.page);
+      if(!progress.running || progress.frames>=frames)break;
+      await run.press(strikes[i%strikes.length],{hold:4,after:26});
+    }
+    const recording=await finishCrowdRecording(run.page);
+    console.log("recorded",recording.counters.length,"frames; torn",recording.torn,"gaps",recording.gaps.length);
+    writeFileSync(path.join(outDir,"crowd-recording.bin.gz"),gzipSync(packCrowdRecording(recording),{level:9}));
+    await run.shot("recording-end");
   }
-  const recording=await finishCrowdRecording(run.page);
-  console.log("recorded",recording.counters.length,"frames; torn",recording.torn,"gaps",recording.gaps.length);
-  writeFileSync(path.join(outDir,"crowd-recording.bin.gz"),gzipSync(packCrowdRecording(recording),{level:9}));
-  await run.shot("recording-end");
   console.log("DONE");
 } finally {await run.close();}

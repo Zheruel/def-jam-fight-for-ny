@@ -37,24 +37,29 @@ function install({ frames, counter }) {
     const object = u32(at + 0x8c);
     if (!object || object > 0x1fffe00) continue;
     const [current, previous, reference] = [0x14c, 0x150, 0x154].map(o => u32(object + o));
-    if (reference - current !== 2 * (previous - current)) continue;
-    found.push({ name: new TextDecoder().decode(heap.subarray(base + at, base + end)), current });
+    if (!current || !previous || !reference || new Set([current, previous, reference]).size !== 3) continue;
+    const addresses = [current, previous, reference].sort((a, b) => a - b);
+    if (addresses[1] - addresses[0] !== 0x280 || addresses[2] - addresses[1] !== 0x280) continue;
+    found.push({ name: String.fromCharCode(...heap.subarray(base + at, base + end)), object });
     at = end;
   }
   if (!found.length) throw new Error("no crowd instances found: is the match up?");
   const stride = found.length * 13 * 7;
   const state = window.crowdRecording = { names: found.map(f => f.name), counters: [], gaps: [], torn: 0, chunks: [], running: true, stride, base };
   let last = null, chunk = null, used = 0;
+  const out = new Float32Array(stride);
   const sample = () => {
     if (!state.running) return;
     const before = u32(counter);
     if (before !== last) {
       const dv = view();
-      const out = new Float32Array(stride);
       let n = 0;
-      for (const { current } of found) for (let bone = 0; bone < 13; bone++) {
-        const at = base + current + bone * 48 + 16;
-        for (let k = 0; k < 7; k++) out[n++] = dv.getFloat32(at + k * 4, true);
+      for (const { object } of found) {
+        const current = dv.getUint32(base + object + 0x14c, true);
+        for (let bone = 0; bone < 13; bone++) {
+          const at = base + current + bone * 48 + 16;
+          for (let k = 0; k < 7; k++) out[n++] = dv.getFloat32(at + k * 4, true);
+        }
       }
       if (u32(counter) !== before) state.torn++;
       else {
@@ -78,9 +83,16 @@ function progress() { const s = window.crowdRecording; return { frames: s.counte
 /** Runs in the page: the next 1 MiB of the recording as base64. */
 function slice({ offset, size }) {
   const s = window.crowdRecording;
-  const bytes = new Uint8Array(s.chunks.length * 64 * s.stride * 4);
-  s.chunks.forEach((c, i) => bytes.set(new Uint8Array(c.buffer), i * 64 * s.stride * 4));
-  return bytes.subarray(offset, offset + size).toBase64();
+  const bytes = new Uint8Array(size);
+  const chunkBytes = 64 * s.stride * 4;
+  for (let written = 0; written < size;) {
+    const at = offset + written;
+    const start = at % chunkBytes;
+    const count = Math.min(chunkBytes - start, size - written);
+    bytes.set(new Uint8Array(s.chunks[Math.floor(at / chunkBytes)].buffer, start, count), written);
+    written += count;
+  }
+  return bytes.toBase64();
 }
 
 export async function startCrowdRecording(page, { frames = 900, counter = FRAME_COUNTER } = {}) {
