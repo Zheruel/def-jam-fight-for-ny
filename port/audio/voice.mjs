@@ -26,7 +26,7 @@ export function createVoicePlayer(index, mix, audio) {
       last={name:key,offset,channel,tick};
       const gain=mix.gain["Speech_"+category[key.split("/")[1]]]*mix.gain.Master_Vol;
       const current=()=>channels.get(channel)===entry;
-      audio.track("voice/"+bank.file,{gain,offset:start/bank.rate,duration,current}).then(handle=>{
+      audio.track("voice/"+bank.file,{gain,group:key.split("/")[1] === "announcer" ? "announcer" : "effects",offset:start/bank.rate,duration,current}).then(handle=>{
         if(current())entry.handle=handle;
         else handle?.stop();
       }).catch(error=>console.error("Could not play "+key,error));

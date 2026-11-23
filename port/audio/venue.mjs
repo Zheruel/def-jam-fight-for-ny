@@ -39,6 +39,8 @@ export function venueAudio(file, {
 } = {}) {
   let context, bus, local, broadcast, bedGain, bed, source, venue, loading, level = 30000 / 32767;
   let active = true, requested = false, muted = false;
+  const categories = {};
+  const volumes = {music: 1, effects: 1, announcer: 1};
   const banks = new Map(), playing = new Set(), tracks = new Set();
   let generation = 0;
   const voiceBuffers=new Map();
@@ -54,7 +56,12 @@ export function venueAudio(file, {
     broadcast = context.createMediaStreamDestination();
     bedGain = context.createGain();
     bus.connect(local); local.connect(context.destination); bus.connect(broadcast);
-    bedGain.connect(bus);
+    for (const [name, gain] of Object.entries(volumes)) {
+      const group = categories[name] = context.createGain();
+      group.gain.value = gain;
+      group.connect(bus);
+    }
+    bedGain.connect(categories.effects);
     local.gain.value = muted ? 0 : 1;
   }
 
@@ -166,6 +173,11 @@ export function venueAudio(file, {
       if (source) { source.stop(); source.disconnect(); source = undefined; }
       loopBed();
     },
+    setVolume(name, percent) {
+      if (!Object.hasOwn(volumes, name) || !Number.isFinite(percent)) return;
+      volumes[name] = Math.max(0, Math.min(100, percent)) / 86;
+      if (categories[name]) categories[name].gain.value = volumes[name];
+    },
     setMuted,
     get muted() { return muted; },
     get venue() { return venue; },
@@ -187,17 +199,17 @@ export function venueAudio(file, {
       node.buffer = buffer;
       node.playbackRate.value = rate;
       volume.gain.value = gain;
-      node.connect(volume); volume.connect(bus);
+      node.connect(volume); volume.connect(categories.effects);
       node.start(when ? context.currentTime + when : 0, cue.start / entry.rate, cue.frames / entry.rate);
       return node;
     },
     // Stream a music file into the host mix (so WebRTC guests hear it): `loopStart` seconds into the file the
     // track loops to its end when `loop`; otherwise it plays once and `onEnded` fires. Returns {stop()}.
-    async track(path, {gain = 1, loop = false, loopStart = 0, offset = 0, duration, current, onEnded} = {}) {
+    async track(path, {gain = 1, loop = false, loopStart = 0, offset = 0, duration, current, onEnded, group = "music"} = {}) {
       if (!requested) start();
       graph();
       const buffer = duration===undefined ? await decode(path) : await voiceBuffer(path);
-      await context.resume();
+      if (active && !hidden()) await context.resume();
       if(current && !current()) return;
       const node = context.createBufferSource(), volume = context.createGain();
       const handle = { node, stop() { if (!tracks.delete(handle)) return; node.onended = null; try { node.stop(); } catch {} node.disconnect(); volume.disconnect(); } };
@@ -206,7 +218,7 @@ export function venueAudio(file, {
       if (loop) { node.loop = true; node.loopStart = loopStart; node.loopEnd = buffer.duration; }
       node.onended = () => { if (!tracks.delete(handle)) return; node.disconnect(); volume.disconnect(); onEnded?.(); };
       volume.gain.value = gain;
-      node.connect(volume); volume.connect(bus);
+      node.connect(volume); volume.connect(categories[group]);
       if(duration===undefined) node.start(0,offset);
       else node.start(0,offset,duration);
       return handle;

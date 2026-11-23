@@ -28,6 +28,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: netplay
       - run: npm run test:native-menu
+      - run: node verification/native-pause-browser.mjs
       - run: node verification/native-refresh.mjs
       - run: npm run test:native-damage
       - run: npm run test:native-venue

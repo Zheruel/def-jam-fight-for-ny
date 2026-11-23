@@ -1,3 +1,4 @@
+import {pauseMenu} from "../hud/pause.mjs";
 import { shadowProjection } from "../render/shadow.mjs";
 import { irradianceGLSL, loadLighting, sampleIrradiance } from "../scenery/irradiance.mjs";
 import { loadPoseBank, capturedIdles, poseIndex } from "../motion/pose-bank.mjs";
@@ -179,7 +180,30 @@ async function display() {
   let yaw = 0.28, pitch = 0.32, zoom = 1;
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  let lineup;
+  let lineup, pause, pauseOwner = 0, lastPauseBroadcast = -Infinity;
+  const menuHeld = [], healthShown = [];
+  function handlePadMenus(inputs) {
+    let changed = false;
+    inputs.forEach(({buttons, x, z}, seat) => {
+      const bits = buttons | (x < -.5 ? 0x80 : x > .5 ? 0x20 : 0) | (z > .5 ? 0x10 : z < -.5 ? 0x40 : 0);
+      const pressed = bits & ~menuHeld[seat];
+      menuHeld[seat] = bits;
+      if (!pause || !pressed) return;
+      if (!pause.open && rematch?.shown) {
+        const key = pressed & 0x4000 ? "Enter" : pressed & 0x80 ? "ArrowLeft" : pressed & 0x20 ? "ArrowRight" : null;
+        if (key) changed = rematch.key({key}) || changed;
+        return;
+      }
+      if (!pause.open && (pressed & 8) && !fight.outcome().over) {
+        pauseOwner = seat; pause.show(); pause.syncAudio(); changed = true;
+      } else if (pause.open && seat === pauseOwner) {
+        const action = pressed & 8 ? "start" : pressed & 0x4000 ? "confirm" : pressed & 0xa000 ? "back"
+          : pressed & 0x10 ? "up" : pressed & 0x40 ? "down" : pressed & 0x80 ? "left" : pressed & 0x20 ? "right" : null;
+        if (action) { pause.press(action); changed = true; }
+      }
+    });
+    return changed;
+  }
   function updateLineup() {
     if (selected.length === count) lineup = createBattleLineup(venue.selectedOptions[0].dataset.handle,
       MODES[mode].formation,selected.map(s => s.handle));
@@ -191,10 +215,22 @@ async function display() {
     let advanced = false;
     if (fight && !paused && !controls.isGuest()) {
       const elapsed = previousFrame === undefined ? 0 : Math.min(100,now-previousFrame);
+      const inputs = controls.inputs();
+      const changed = handlePadMenus(inputs);
+      if (pause?.open || changed) {
+        previousFrame = undefined;
+        // Canvas capture may drop a single submitted frame as its encoder adapts.
+        // A connected or newly joining guest also needs the current panel while play is frozen.
+        if (changed || (controls.connection() !== "local" && now - lastPauseBroadcast >= 500)) {
+          draw();
+          lastPauseBroadcast = now;
+        }
+        if (!scheduled) scheduled = requestAnimationFrame(frame);
+        return;
+      }
       carry += elapsed;
       try {
         while (carry >= stepMs) {
-          const inputs = controls.inputs();
           fight.tick(query.teamOrder ? query.teamOrder.map(seat => inputs[seat]) : inputs);
           combatAudio?.tick(fight);
           if(environment) { environment.update(fight.memory,1,fight.states); const effects=environment.effects(); combatAudio?.environment?.(effects); trainAudio?.effects(effects); }
@@ -302,7 +338,14 @@ async function display() {
         }
         body.draw(live?.damage??0);
       });
-      if (matchState) hud({...matchState,rematch});
+      if (matchState) {
+        matchState.actors.forEach((actor, slot) => {
+          const loss = healthShown[slot] - actor.health;
+          if (loss > 0 && pause?.vibration) controls.impact(query.teamOrder?.[slot] ?? slot, Math.min(1, loss / 30));
+          healthShown[slot] = actor.health;
+        });
+        hud({...matchState,rematch,pause});
+      }
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
       if (animate && !document.hidden && !scheduled) scheduled = requestAnimationFrame(frame);
     }
@@ -432,18 +475,70 @@ async function display() {
     if(voicePlayer)fight.setVoicePlayer(voicePlayer);
     camera = battleCamera(fight.kernel, arena.file);
     const cpuNote = query.cpu ? " · "+query.cpu+(query.cpu>1?" CPU opponents":" CPU opponent") : "";
+    const pauseButton = document.querySelector("#pause");
+    pauseButton.hidden = false;
+    pause = pauseMenu({
+      onChange:(kind,percent)=>audio.setVolume(kind,percent),
+      onClose:()=>{ audio.setActive(true); pauseButton.textContent="Pause"; previousFrame=undefined; carry=0; },
+      onQuit:()=>location.assign(location.pathname),
+    });
+    pause.redraw = draw;
+    pause.syncAudio = () => { audio.setActive(!pause.open); pauseButton.textContent = pause.open ? "Resume" : "Pause"; };
+    pauseButton.onclick = () => {
+      if (paused || controls.isGuest() || fight.outcome().over) return;
+      if (pause.open) pause.close(); else { pauseOwner=0; pause.show(); pause.syncAudio(); }
+      draw();
+    };
+    canvas.addEventListener("pointerdown", event => {
+      if (!pause.open) return;
+      const bounds = canvas.getBoundingClientRect();
+      const viewHeight = bounds.height * 448/480;
+      const x = (event.clientX-bounds.left)*640/bounds.width;
+      const y = (event.clientY-bounds.top-(bounds.height-viewHeight)/2)*448/viewHeight;
+      if (pause.confirming) {
+        if (y<245 || y>293 || x<180 || x>462) return;
+        pause.yes = x<320;
+        pause.press("confirm");
+      } else {
+        const row = pause.hitRow(x,y);
+        if (row<0) return;
+        pause.row=row;
+        if (row<3) {
+          if (x>235 && x<475) pause.press(x<355?"left":"right");
+        } else pause.press("confirm");
+      }
+      draw();
+    });
+    const pauseKeys = {Escape:"back", Enter:"confirm", ArrowUp:"up", ArrowDown:"down", ArrowLeft:"left", ArrowRight:"right",
+      w:"up", s:"down", a:"left", d:"right", i:"confirm", j:"back"};
+    addEventListener("keydown", event => {
+      if (controls.isGuest() || paused || fight.outcome().over || event.target.closest?.("input,select,textarea")) return;
+      if (!pause.open && event.key !== "Escape") return;
+      const action = pauseKeys[event.key];
+      if (!action) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (event.repeat && (action === "back" || action === "confirm")) return;
+      if (pause.open) pause.press(action);
+      else { pauseOwner=0; pause.show(); pause.syncAudio(); }
+      draw();
+    }, true);
     const hint = (count>2 ? MODES[mode].label+" · WASD, arrows, gamepads and guests · Controls below" : "WASD and arrows to move · Controls below")+cpuNote;
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
-      rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      if (pause.open) pause.close();
+      healthShown.length=0; rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = hint;
     };
     // Once the result hold is over the retail REMATCH? card takes left/right (or A/D) and Enter: YES restarts the match.
     rematch = rematchChoice(() => { const result = fight.outcome(); return result.result && result.ticksSinceOver >= REMATCH_DELAY; },
       () => document.getElementById("restart").click());
-    addEventListener("keydown",event => { if (rematch.key(event)) { event.preventDefault(); draw(); } });
+    addEventListener("keydown", event => {
+      if (!event.repeat && !controls.isGuest() && rematch.key(event)) {
+        event.preventDefault(); event.stopImmediatePropagation(); draw();
+      }
+    }, true);
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
-      ...fight.diagnostics(), renderedFrames, paused, network:controls.connection(), environment:environment?.state(), music:music?.tune }) });
+      ...fight.diagnostics(), renderedFrames, paused:paused || pause.open, pause:pause.open ? {row:pause.row,levels:[...pause.levels],vibration:pause.vibration,confirming:pause.confirming} : null, network:controls.connection(), environment:environment?.state(), music:music?.tune }) });
     draw();
   }
 }

@@ -2,7 +2,7 @@ const keys = new Set();
 const keyPads = [
   {axes:[["KeyA","KeyD"],["KeyW","KeyS"],["KeyZ","KeyC"],["KeyT","KeyV"]], buttons:{KeyJ:0x1000,KeyU:0x8000,KeyI:0x4000,KeyO:0x2000,
     KeyQ:0x0400,KeyE:0x0800,KeyR:0x0100,KeyF:0x0200}},
-  {axes:[["ArrowLeft","ArrowRight"],["ArrowUp","ArrowDown"],["Numpad4","Numpad6"],["Numpad8","Numpad2"]], buttons:{KeyL:0x1000,KeyK:0x8000,
+  {axes:[["ArrowLeft","ArrowRight"],["ArrowUp","ArrowDown"],["Numpad4","Numpad6"],["Numpad8","Numpad2"]], buttons:{Escape:8,KeyL:0x1000,KeyK:0x8000,
     BracketLeft:0x4000,BracketRight:0x2000,Comma:0x0400,Period:0x0800,Slash:0x0100,Semicolon:0x0200}},
 ];
 const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p.buttons)]));
@@ -19,15 +19,16 @@ export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
   let state = "local";
   const button = id => document.getElementById(id);
   const IDLE={buttons:0,x:0,z:0};
+  let devices = [];
+  function readDevices() { return Array.from(navigator.getGamepads?.() ?? []).filter(p => p?.connected); }
   function input(slot) {
     if (slot>=people) return IDLE;
     if (pads[slot]) return pads[slot];
     if (slot >= 1 && remote[slot]) return remote[slot];
-    return read(keyPads[slot], slot);
+    return read(keyPads[slot], devices[slot]);
   }
   // A guest always plays from its own first controller and the second keyboard map, whichever seat it holds.
-  function read(config, gamepad) {
-    const controller=Array.from(navigator.getGamepads?.()??[]).filter(p=>p?.connected)[gamepad];
+  function read(config, controller) {
     let buttons=0;
     Object.entries(config?.buttons??{}).forEach(([key,mask])=>{if(keys.has(key)) buttons|=mask;});
     controller?.buttons.forEach((b,i)=>{if(b.pressed) buttons|=gamepadBits[i]??0;});
@@ -40,7 +41,7 @@ export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
   }
   function send() {
     if (!guest || !room) return;
-    const p = pads[1] ?? read(keyPads[1], 0);
+    const p = pads[1] ?? read(keyPads[1], readDevices()[0]);
     const axes = [p.x,p.z,p.rx??0,p.rz??0];
     const packet=[p.buttons,...axes].join(",");
     if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes});
@@ -112,7 +113,14 @@ export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
     button("network").textContent=""; if(button("seats")) button("seats").textContent=""; button("code").value=""; button("invite").hidden=true;
     button("sound").hidden=false; audio?.setActive(true); redraw();
   };
-  return { inputs:() => Array.from({length:seats},(_,slot)=>input(slot)), isGuest:()=>guest, connection:()=>state,
+  return { inputs() { devices = readDevices(); return Array.from({length:seats},(_,slot)=>input(slot)); },
+    impact(slot,strength) {
+      if (slot >= people || remote[slot]) return;
+      const actuator = devices[slot]?.vibrationActuator;
+      if (actuator?.playEffect) actuator.playEffect("dual-rumble", {
+        duration:80, strongMagnitude:strength, weakMagnitude:strength/2,
+      }).catch(()=>{});
+    }, isGuest:()=>guest, connection:()=>state,
     setInput(slot,value) { pads[slot]=value; if (guest) send(); },
     release() { keys.clear(); pads.fill(null); if (guest) send(); } };
 }

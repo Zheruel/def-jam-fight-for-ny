@@ -2,7 +2,7 @@
 
 **[Play on GitHub Pages](https://zheruel.github.io/def-jam-fight-for-ny/)**
 
-Open the player in desktop Chrome or Edge. Choose One on One, three- or four-fighter Free For All, or a two-on-two Team Match. Pick your fighters and venue. On the fighter screen, press C to cycle the number of CPU opponents. In Team Match, place two fighters on each side of the Choose Teams screen. Each player keeps control of the fighter they picked. WASD moves player one and the arrows move player two. Local players can also use gamepads. To play online, choose Host match and share the invite. Each guest takes a fighter and receives the host’s video and audio.
+Open the player in desktop Chrome or Edge. Choose One on One, three- or four-fighter Free For All, or a two-on-two Team Match. Pick your fighters and venue. On the fighter screen, press C to cycle the number of CPU opponents. In Team Match, place two fighters on each side of the Choose Teams screen. Each player keeps control of the fighter they picked. WASD moves player one and the arrows move player two. Local players can also use gamepads. Escape or the controller’s Start button pauses the match. To play online, choose Host match and share the invite. Each guest takes a fighter and receives the host’s video and audio.
 
 ## Local development
 

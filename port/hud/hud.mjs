@@ -1,3 +1,4 @@
+import {drawPause} from "./pause.mjs";
 import layout from "./layout.json" with {type:"json"};
 import { BANNER, resultLines } from "./result.mjs";
 import { CARD, drawRematch } from "./rematch.mjs";
@@ -58,6 +59,7 @@ export async function createHud(gl) {
   const banner=new OffscreenCanvas(BANNER.width,BANNER.height), bannerCtx=banner.getContext("2d");
   const cardTexture=makeTexture(CARD.width,CARD.height);
   const card=new OffscreenCanvas(CARD.width,CARD.height), cardCtx=card.getContext("2d");
+  let pauseTexture, pauseCanvas, pauseContext, pauseImage, pauseKey;
   const {anchors}=layout;
   function label(value,x,y,size,family,align,context=ctx) {
     context.font=size+"px Battle"+family;
@@ -105,7 +107,7 @@ export async function createHud(gl) {
     }
   }
   // `rematch` (port/hud/rematch.mjs) is the YES/NO choice; its card replaces the banner's plain rematch line.
-  return function draw({actors,ticks,outcome,rematch}) {
+  return function draw({actors,ticks,outcome,rematch,pause}) {
     const {minutes,seconds}=outcome.clock;
     const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin,a.eliminated]);
     const four=actors.length>2;
@@ -184,6 +186,25 @@ export async function createHud(gl) {
       gl.uniform2f(band,1-2*CARD.top/448,CARD.height/224);
       gl.drawArrays(gl.TRIANGLES,0,3);
     } else lastCard=-1;
+    if (pause?.open) {
+      if (!pauseCanvas) {
+        pauseTexture = makeTexture(640,448);
+        pauseCanvas = new OffscreenCanvas(640,448);
+        pauseContext = pauseCanvas.getContext("2d");
+        load("pause.png").then(r=>r.blob()).then(createImageBitmap).then(image => {
+          pauseImage = image; pause.redraw();
+        }).catch(error=>console.error("Could not load pause artwork",error));
+      }
+      gl.bindTexture(gl.TEXTURE_2D,pauseTexture);
+      const key = [pause.row,pause.confirming,pause.yes,...pause.levels,pause.vibration,!!pauseImage].join(",");
+      if (key !== pauseKey) {
+        drawPause(pauseContext,pause,pauseImage);
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,pauseCanvas);
+        pauseKey = key;
+      }
+      gl.uniform2f(band,1,2);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    }
     gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);
   };
 }

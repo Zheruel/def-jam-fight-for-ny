@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Blaze vs. Doc · Native Battle</title>
+  <title>Def Jam: Fight for NY · Battle</title>
   <style>
     :root { color-scheme:dark; font:1rem system-ui,sans-serif; background:#141719; color:#eeefe9 }
     body { margin:0; display:grid; height:100dvh; grid-template-rows:auto 1fr auto }
@@ -18,7 +18,7 @@
 <body data-battle>
 <header><h1>Def Jam: Fight for NY</h1><select id="mode" aria-label="Match type" hidden><option value="1v1">One on one</option><option value="ffa">Free For All</option></select><select id="player1" aria-label="Player one fighter"></select><span>vs.</span><select id="player2" aria-label="Player two fighter"></select><select id="player3" aria-label="Player three fighter" hidden></select><select id="player4" aria-label="Player four fighter" hidden></select><select id="venue" aria-label="Match venue"></select>
 
-  <button id="restart">Restart</button><button id="sound">Mute</button><p id="status" role="status">Loading native Battle…</p>
+  <button id="pause" hidden>Pause</button><button id="restart">Restart</button><button id="sound">Mute</button><p id="status" role="status">Loading native Battle…</p>
 </header>
 <main><canvas tabindex="0" aria-label="Native Battle"></canvas><video id="remote" muted autoplay playsinline hidden></video></main>
 <footer><details><summary>Controls</summary><p>Player 1 moves with WASD. J / U / I / O press Triangle / Square / Cross / Circle. Q / E and R / F control the shoulder buttons. T / V and Z / C move the right stick up / down and left / right.</p><p>Player 2 moves with the arrows. L / K / [ / ] press Triangle / Square / Cross / Circle. Comma / period and slash / semicolon control the shoulder buttons. Numpad 8 / 2 and 4 / 6 move the right stick. Both sticks work on standard gamepads.</p><p>Free For All seats three and four use the third and fourth gamepads, or guests who join the host's room.</p><p>When the Blazin’ indicator appears, tap the right stick to activate it. Grapple with Cross, then tap the right stick again for the signature move.</p></details><button id="host">Host match</button><input id="code" aria-label="Room code" placeholder="Room code" maxlength="8">
