@@ -3,10 +3,12 @@ import weapons from "../port/scenery/weapons/index.json" with {type:"json"};
 import scenery from "../port/scenery/index.json" with { type: "json" };
 import { audioFiles } from "../port/audio/files.mjs";
 import damage from "../port/render/damage/tiles.json" with {type:"json"};
+import { menuFiles } from "../port/menu/files.mjs";
 import inventory from "../ps2/content/inventory.json" with { type: "json" };
 
 // Runtime files shared by the local native port and the Pages deployment.
 export const portFiles = [
+  ...menuFiles,
   "port/scenery/scenery.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/train.mjs", "port/scenery/events.json", "port/scenery/index.json",
   "port/scenery/weapons/index.json",
   ...Object.values(weapons.models).map(({file}) => "port/scenery/weapons/" + file),
