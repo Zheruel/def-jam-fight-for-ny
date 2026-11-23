@@ -1,3 +1,4 @@
+import { audioFiles } from "../port/audio/files.mjs";
 import damage from "../port/render/damage/tiles.json" with {type:"json"};
 import inventory from "../ps2/content/inventory.json" with { type: "json" };
 
@@ -13,7 +14,7 @@ export const portFiles = [
   "port/collision/contact.mjs",
   "port/motion/pose-bank.mjs", "port/motion/poses/V2IP_113A.poses.gz", "port/motion/poses/V2IP_109A.poses.gz",
   "port/motion/clock.mjs", "port/motion/settings.mjs", "port/motion/motion-settings.bin", "port/motion/library.mjs", "port/motion/library.json",
-  "port/audio/foundation.mjs", "port/audio/foundation-loop.ogg", "port/battle/entry.mjs",
+  ...audioFiles, "port/battle/entry.mjs",
   ...new Set(inventory.fighters.map(f=>`port/animation/banks/wres${String(f.fighterXml.coreID).padStart(3,"0")}.gz`)),
   "port/animation/match.mjs","port/animation/runtime.mjs","port/animation/banks.mjs",
   "port/animation/shared.gz","port/animation/sampler.wasm.gz","port/fighters/pose.mjs",

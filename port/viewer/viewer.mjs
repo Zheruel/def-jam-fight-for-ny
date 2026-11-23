@@ -307,9 +307,8 @@ async function display() {
     const { battleControls } = await import("../battle/controls.mjs");
     const { foundationCamera } = await import("../battle/camera.mjs");
     const { createHud } = await import("../hud/hud.mjs");
-    const { foundationAudio }=await import("../audio/foundation.mjs");
-    const audio=arena.file==="V2BG_02A" ? foundationAudio() : undefined;
-    if(!audio) document.querySelector("#sound").hidden=true;
+    const { venueAudio } = await import("../audio/venue.mjs");
+    const audio = venueAudio(arena.file);
     if(arena.file==="V2BG_02A") {
       const {createSceneryRenderer,loadScenery}=await import("../scenery/scenery.mjs");
       scenery=await createSceneryRenderer(gl,await loadScenery(arena.file));

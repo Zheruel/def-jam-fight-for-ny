@@ -95,6 +95,10 @@ try {
   await host.locator("#leave").click();
   await host.selectOption("#venue","V2BG_21A");
   await host.waitForFunction(()=>document.querySelector("canvas").dataset.venue==="V2BG_21A" && window.nativeBattle?.diagnostics().ticks>=15);
+  const ambienceRequest = host.waitForResponse(response =>
+    response.url().endsWith("/port/audio/ambience/carib.ogg") && response.ok());
+  await host.locator("#sound").click();
+  await ambienceRequest;
   const babylon=await host.evaluate(()=>nativeBattle.diagnostics());
   assert.ok(!babylon.paused);
   assert.ok(babylon.actors.every(actor=>Math.abs(actor.position[2]+12)<1),"Babylon's starting line has Z = -12");
