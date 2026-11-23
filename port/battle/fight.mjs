@@ -102,7 +102,7 @@ export async function createFoundationFight(fighters,source,seed) {
   function diagnostics() {
     return {ticks,actors: ACTOR.map(a=>({action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
-      momentum:scalar(a+0x364)}))};
+      score:word(a+0x480),momentum:scalar(a+0x364)}))};
   }
   return { states, tick, restart, diagnostics, observedPages:kernel.observedPages };
 }

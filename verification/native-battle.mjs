@@ -12,7 +12,7 @@ const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/port/b
 let browser;
 try {
   browser = await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});
-  const open = () => browser.newPage({viewport:{width:960,height:610}});
+  const open = () => browser.newPage({viewport:{width:1024,height:824}});
   const host = await open();
   const errors = [], requests = [];
   host.on("pageerror",error => errors.push(error.message));
@@ -41,10 +41,12 @@ try {
     samples.sort((a,b)=>a-b);
     return {fps:(final.renderedFrames-initial.renderedFrames)*1000/elapsed,ticksPerSecond:final.ticks*1000/elapsed,
       p95FrameMs:samples[Math.floor(samples.length*.95)],size:[canvas.width,canvas.height],
-      actions:actions.map(s=>[...s]),health:final.actors.map(a=>a.health)};
+      actions:actions.map(s=>[...s]),health:final.actors.map(a=>a.health),scores:final.actors.map(a=>a.score)};
   });
   assert.ok(bench.actions[0].includes(67) && bench.actions[1].includes(1069),"Both players must strike");
   assert.ok(bench.actions[0].includes(10334) && bench.actions[1].includes(10328),"Both players must react");
+  assert.deepEqual(bench.scores,[250,250]);
+  if(process.env.NATIVE_SCREENSHOT) await host.locator("canvas").screenshot({path:process.env.NATIVE_SCREENSHOT});
   assert.deepEqual(errors,[]);
   assert.ok(requests.every(p=>!/(?:\/runtime\/|\/game-assets\/|\.iso$)/.test(p)));
   console.log(JSON.stringify(bench));

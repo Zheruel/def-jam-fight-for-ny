@@ -1,0 +1,173 @@
+{
+  "sourceSha256": "11b067f9cfa9344411310447c631b65423bb6e211c80f21255957917a7bec00a",
+  "size": [
+    640,
+    448
+  ],
+  "anchors": {
+    "text_p1_tapname": [
+      16,
+      124
+    ],
+    "text_p1_taphealth": [
+      16,
+      83
+    ],
+    "text_p1_name": [
+      19,
+      16
+    ],
+    "text_p1_totalscore": [
+      17,
+      67
+    ],
+    "text_p1_score": [
+      109,
+      68
+    ],
+    "text_p1_combo_name": [
+      17,
+      100
+    ],
+    "text_p1_danger": [
+      58,
+      31
+    ],
+    "text_p2_tapname": [
+      620,
+      124
+    ],
+    "text_p2_taphealth": [
+      620,
+      83
+    ],
+    "text_p2_name": [
+      622,
+      17
+    ],
+    "text_p2_totalscore": [
+      621,
+      68
+    ],
+    "text_p2_score": [
+      533,
+      68
+    ],
+    "text_p2_combo_name": [
+      623,
+      104
+    ],
+    "text_p2_danger": [
+      567,
+      35
+    ],
+    "text_time": [
+      277,
+      48
+    ],
+    "pos_p1_mainBarContainer": [
+      8,
+      36
+    ],
+    "pos_p2_mainBarContainer": [
+      378,
+      36
+    ],
+    "pos_p1_blazin": [
+      47,
+      48
+    ],
+    "pos_p1_blazinFire01": [
+      20,
+      41
+    ],
+    "pos_p1_blazinFire02": [
+      20,
+      41
+    ],
+    "pos_p1_blazinFire03": [
+      20,
+      41
+    ],
+    "pos_p1_blazinFire04": [
+      20,
+      41
+    ],
+    "pos_p1_danger": [
+      160,
+      28
+    ],
+    "pos_p1_healthBar": [
+      25,
+      43
+    ],
+    "pos_p1_momentumBar": [
+      24,
+      57
+    ],
+    "pos_p1_tapBarContainer": [
+      9,
+      102
+    ],
+    "pos_p1_tapBarMeter": [
+      23,
+      118
+    ],
+    "pos_p1_tapHealthMeter": [
+      23,
+      107
+    ],
+    "pos_p2_blazin": [
+      514,
+      48
+    ],
+    "pos_p2_blazinFire01": [
+      366,
+      41
+    ],
+    "pos_p2_blazinFire02": [
+      366,
+      41
+    ],
+    "pos_p2_blazinFire03": [
+      366,
+      41
+    ],
+    "pos_p2_blazinFire04": [
+      366,
+      41
+    ],
+    "pos_p2_danger": [
+      410,
+      28
+    ],
+    "pos_p2_healthBar": [
+      361,
+      43
+    ],
+    "pos_p2_momentumBar": [
+      490,
+      57
+    ],
+    "pos_p2_tapBarMeter": [
+      489,
+      118
+    ],
+    "pos_p2_tapBarContainer": [
+      375,
+      102
+    ],
+    "pos_p2_tapHealthMeter": [
+      361,
+      107
+    ],
+    "pos_p1_rightStick": [
+      160,
+      44
+    ],
+    "pos_p2_rightStick": [
+      446,
+      44
+    ]
+  }
+}

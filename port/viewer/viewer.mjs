@@ -23,6 +23,8 @@ uniform vec3 right;
 uniform vec3 up;
 uniform vec3 forward;
 uniform vec3 scale;
+uniform bool matchView;
+uniform mat4 viewProjection;
 out float height;
 out vec3 world;
 out vec3 vertexColor;
@@ -44,7 +46,7 @@ void main() {
   }
   height = p.y;
   world = p - center;
-  gl_Position = vec4(vec3(dot(world,right), dot(world,up), dot(world,forward)) * scale, 1.0);
+  gl_Position = matchView ? viewProjection * vec4(p,1.0) : vec4(vec3(dot(world,right), dot(world,up), dot(world,forward)) * scale, 1.0);
 }`;
 const fragment = `#version 300 es
 precision highp float;
@@ -86,7 +88,7 @@ async function display() {
   gl.clearColor(0.10, 0.115, 0.12, 1);
 
   const battle = document.body.hasAttribute("data-battle");
-  let fight, controls, paused = false, previousFrame, carry = 0, renderedFrames = 0;
+  let fight, controls, camera, hud, paused = false, previousFrame, carry = 0, renderedFrames = 0;
   let scene, request, skinRequest, selected = [];
   const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
   const pose = gl.createBuffer();
@@ -116,6 +118,7 @@ async function display() {
   const right = uniform("right"), up = uniform("up"), forward = uniform("forward"), scale = uniform("scale");
   const skinned = uniform("skinned"), origin = uniform("origin"), heading = uniform("heading");
   const focus = uniform("center"), ceiling = uniform("ceiling");
+  const perspective = uniform("matchView"), viewProjection=uniform("viewProjection");
   const cutaway = document.querySelector("#cutaway");
   let yaw = 0.28, pitch = 0.32, zoom = 1;
 
@@ -135,19 +138,12 @@ async function display() {
       try {
         while (carry >= 1000/60) {
           fight.tick(controls.inputs());
+          camera.step(fight.states);
           carry -= 1000/60;
         }
       } catch (error) {
         paused = true;
         status.textContent = error.message + " Restart to return to the match.";
-      }
-      if (renderedFrames % 6 === 0) {
-        const { actors } = fight.diagnostics();
-        actors.forEach((a,i) => {
-          const meter = document.getElementById("health"+i);
-          meter.max = a.maxHealth;
-          meter.value = a.health;
-        });
       }
     }
     previousFrame = now;
@@ -170,6 +166,9 @@ async function display() {
       canvas.width = width;
       canvas.height = height;
     }
+    gl.useProgram(program);
+    gl.uniform1i(perspective,Boolean(camera));
+    if(camera) gl.uniformMatrix4fv(viewProjection,false,camera.matrix());
     gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -180,7 +179,7 @@ async function display() {
     // inspection camera on the fight floor when the upper room is clipped.
     const span = cutaway.checked ? 39 : radius;
     gl.uniform3fv(focus, cutaway.checked ? [0, 11, 0] : center);
-    gl.uniform1f(ceiling, cutaway.checked ? 23 : max[1] + 1);
+    gl.uniform1f(ceiling, camera ? 1e8 : cutaway.checked ? 23 : max[1] + 1);
     const size = zoom * 0.98 / span;
     gl.uniform3f(scale, size * Math.min(1, height / width), size * Math.min(1, width / height), 0.98 / (radius * 2));
     gl.uniform1i(skinned, 0);
@@ -207,6 +206,7 @@ async function display() {
         }
         body.draw();
       });
+      if (fight) hud(fight.diagnostics());
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
       if (animate && !document.hidden && !scheduled) scheduled = requestAnimationFrame(frame);
     }
@@ -282,11 +282,15 @@ async function display() {
   if (battle && selected.length === 2 && scene) {
     const { loadFoundationFight } = await import("../battle/fight.mjs");
     const { battleControls } = await import("../battle/controls.mjs");
+    const { foundationCamera } = await import("../battle/camera.mjs");
+    const { createHud } = await import("../hud/hud.mjs");
+    camera=foundationCamera();
+    hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); });
     fight = await loadFoundationFight(selected);
     status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
     document.getElementById("restart").onclick = () => {
-      controls.release(); fight.restart(); paused=false; previousFrame=undefined; carry=0; draw();
+      controls.release(); fight.restart(); camera.reset(); paused=false; previousFrame=undefined; carry=0; draw();
       status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
     };
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({

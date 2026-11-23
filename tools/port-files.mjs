@@ -9,6 +9,8 @@ export const portFiles = [
   "port/collision/contact.mjs",
   "port/motion/pose-bank.mjs", "port/motion/poses/V2IP_113A.poses.gz", "port/motion/poses/V2IP_109A.poses.gz",
   "port/motion/clock.mjs", "port/motion/settings.mjs", "port/motion/motion-settings.bin", "port/motion/library.mjs", "port/motion/library.json",
+  "port/battle/camera.mjs", "port/hud/hud.mjs", "port/hud/layout.json", "port/hud/healthBar.png",
+  "port/hud/mainBarContainer_1.png", "port/hud/momentumBar.png", "port/hud/names.ttf", "port/hud/numbers.ttf",
   "port/battle/index.html", "port/battle/controls.mjs", "port/battle/fight.mjs",
   "port/kernel/runtime.mjs", "port/kernel/battle.wasm.gz", "port/kernel/foundation-start.gz",
   "port/battle/setup.mjs", "port/battle/lineups.json", "ps2/content/inventory.json",

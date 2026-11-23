@@ -69,7 +69,10 @@ export function startRetailTrace({memorySnapshots = false, poses = false} = {}) 
     }
     const pads = [vm._getPadReadback(0), vm._getPadReadback(1)];
     if (vm._getVblanks() !== blank) return;
-    samples.push({blank, pads, actors});
+    // SLUS-21004 camera subsystem: final eye, target and up passed to EAGL.
+    const vector = address => [f(address),f(address+4),f(address+8)];
+    const camera = {eye:vector(0x43d610),target:vector(0x43d620),up:vector(0x43d630)};
+    samples.push({blank, pads, actors, camera});
     last = blank;
   }
   capture();
