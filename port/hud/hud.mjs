@@ -18,6 +18,8 @@ export async function createHud(gl) {
   }));
   const rematchScreen=await loadScreen("rematch",new URL("./screens/",import.meta.url));
   const surface=new OffscreenCanvas(640,96),ctx=surface.getContext("2d");
+  // Four-fighter matches add a second strip along the bottom edge for seats 3 and 4 (see drawSeat).
+  const lower=new OffscreenCanvas(640,96),lowerCtx=lower.getContext("2d");
   const tint=(image,color)=>{
     const tile=new OffscreenCanvas(image.width,image.height),ink=tile.getContext("2d");
     ink.drawImage(image,0,0);
@@ -52,7 +54,7 @@ export async function createHud(gl) {
     gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA8,width,height);
     return made;
   };
-  const texture=makeTexture(640,96), bannerTexture=makeTexture(BANNER.width,BANNER.height);
+  const texture=makeTexture(640,96), lowerTexture=makeTexture(640,96), bannerTexture=makeTexture(BANNER.width,BANNER.height);
   const banner=new OffscreenCanvas(BANNER.width,BANNER.height), bannerCtx=banner.getContext("2d");
   const cardTexture=makeTexture(CARD.width,CARD.height);
   const card=new OffscreenCanvas(CARD.width,CARD.height), cardCtx=card.getContext("2d");
@@ -63,17 +65,75 @@ export async function createHud(gl) {
     context.lineWidth=2.5;context.strokeStyle="#3d352b";context.strokeText(value,x,y);
     context.fillText(value,x,y);
   }
-  let last, lastBanner="", lastCard=-1;
+  let last, lastLower, lastBanner="", lastCard=-1;
+  // Bonus popups ("+1000" beside a score) of a four-fighter match: retail fades them over about a second.
+  const POPUP=75;
+  let scores=[], popups=[];
+  // Seats 3 and 4 are seats 1 and 2 turned over a horizontal axis: bar container and fills flip vertically, the name
+  // sits below the bar and the score above it (retail four-way capture, private/ps2-battle/four-way/035-menu.png).
+  // `top` is the strip's first row in the 640x448 picture.
+  const LOWER={top:352,axis:444.5,nameHeight:17,scoreHeight:20};
+  function drawSeat(context,actor,seat,[hp,mp,score],popup,tick) {
+    const id="p"+(seat%2+1),lowerSeat=seat>=2,right=seat%2===1;
+    const out=actor.health<1;
+    context.save();
+    context.setTransform(right?-1:1,0,0,lowerSeat?-1:1,right?640:0,lowerSeat?LOWER.axis-LOWER.top:0);
+    context.drawImage(border,...anchors.pos_p1_mainBarContainer);
+    if(hp>0)context.drawImage(green,0,0,hp,8,...anchors.pos_p1_healthBar,hp,8);
+    if(mp>0)context.drawImage(gold,0,0,mp,8,...anchors.pos_p1_momentumBar,mp,8);
+    context.restore();
+    const [nx,ny]=anchors["text_"+id+"_name"],[sx,sy]=anchors["text_"+id+"_totalscore"];
+    // A fighter whose health the referee has zeroed is out of the match: dimmed text and a K.O. tag in the empty bar.
+    context.globalAlpha=out?0.45:1;
+    const align=right?"right":"left";
+    const row=(y,height)=>lowerSeat?LOWER.axis-LOWER.top-y-height:y;
+    if(actor.blazin)context.drawImage(blazin,...(lowerSeat?[anchors["pos_"+id+"_blazin"][0],row(anchors["pos_"+id+"_blazin"][1],blazin.height)]:anchors["pos_"+id+"_blazin"]));
+    label(actor.name.toUpperCase(),nx,row(ny,LOWER.nameHeight),14,"names",align,context);
+    label(String(score),sx,row(sy,LOWER.scoreHeight),18,"numbers",align,context);
+    context.globalAlpha=1;
+    if(out) {
+      const [bx,by]=anchors.pos_p1_healthBar;
+      label("K.O.",right?640-bx-100:bx+100,row(by-4,12),12,"names","center",context);
+    }
+    if(popup) {
+      const age=tick-popup.tick;
+      context.globalAlpha=Math.max(0,1-age/POPUP)*0.8;
+      context.fillStyle="#dc9e0a";
+      context.font="14px Battlenumbers";context.textBaseline="top";context.textAlign=align;
+      context.fillText("+"+popup.delta,right?sx-70:sx+70,row(sy+2,14));
+      context.globalAlpha=1;
+    }
+  }
   // `rematch` (port/hud/rematch.mjs) is the YES/NO choice; its card replaces the banner's plain rematch line.
   return function draw({actors,ticks,outcome,rematch}) {
     const second=Math.floor(ticks/60);
     const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin]);
-    const key=[second,...bars.flat()].join(",");
+    const four=actors.length>2;
+    if(four) {
+      popups=popups.slice(0,actors.length);
+      actors.forEach((a,i)=>{
+        if(scores[i]!==undefined && ticks<popups[i]?.tick) popups[i]=undefined; // the match restarted
+        if(scores[i]!==undefined && a.score>scores[i]) popups[i]={delta:a.score-scores[i],tick:ticks};
+        else if(popups[i] && ticks-popups[i].tick>=POPUP) popups[i]=undefined;
+        scores[i]=a.score;
+      });
+    }
+    const fade=i=>popups[i]?Math.floor((ticks-popups[i].tick)/5)+":"+popups[i].delta:"";
+    const key=[second,...bars.flat(),...(four?actors.map((a,i)=>(a.health<1)+fade(i)):[])].join(",");
     gl.bindTexture(gl.TEXTURE_2D,texture);
+    if(four && (key!==lastLower)) {
+      lastLower=key;
+      lowerCtx.clearRect(0,0,640,96);
+      for(let seat=2;seat<actors.length;seat++) drawSeat(lowerCtx,actors[seat],seat,bars[seat],popups[seat],ticks);
+      gl.bindTexture(gl.TEXTURE_2D,lowerTexture);
+      gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,lower);
+      gl.bindTexture(gl.TEXTURE_2D,texture);
+    }
     if(key!==last) {
       last=key;
       ctx.clearRect(0,0,640,96);
-      for(let i=0;i<2;i++) {
+      if(four) for(let seat=0;seat<2;seat++) drawSeat(ctx,actors[seat],seat,bars[seat],popups[seat],ticks);
+      else for(let i=0;i<2;i++) {
         const id="p"+(i+1),[hp,mp,score]=bars[i];
         ctx.save();
         if(i) {ctx.translate(640,0);ctx.scale(-1,1);}
@@ -93,6 +153,11 @@ export async function createHud(gl) {
     gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     gl.uniform2f(band,1,192/448);
     gl.drawArrays(gl.TRIANGLES,0,3);
+    if(four) {
+      gl.bindTexture(gl.TEXTURE_2D,lowerTexture);
+      gl.uniform2f(band,1-2*LOWER.top/448,192/448);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    }
     const cardShown=Boolean(rematch?.shown);
     const lines=resultLines(outcome,actors.map(a=>a.name))?.filter(l=>!cardShown||l.text!=="ENTER  REMATCH");
     if(lines) {
