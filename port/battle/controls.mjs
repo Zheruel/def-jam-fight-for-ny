@@ -1,8 +1,8 @@
 const keys = new Set();
 const keyPads = [
-  {axes:[["KeyA","KeyD"],["KeyW","KeyS"]], buttons:{KeyJ:0x1000,KeyU:0x8000,KeyI:0x4000,KeyO:0x2000,
+  {axes:[["KeyA","KeyD"],["KeyW","KeyS"],["KeyZ","KeyC"],["KeyT","KeyV"]], buttons:{KeyJ:0x1000,KeyU:0x8000,KeyI:0x4000,KeyO:0x2000,
     KeyQ:0x0400,KeyE:0x0800,KeyR:0x0100,KeyF:0x0200}},
-  {axes:[["ArrowLeft","ArrowRight"],["ArrowUp","ArrowDown"]], buttons:{KeyL:0x1000,KeyK:0x8000,
+  {axes:[["ArrowLeft","ArrowRight"],["ArrowUp","ArrowDown"],["Numpad4","Numpad6"],["Numpad8","Numpad2"]], buttons:{KeyL:0x1000,KeyK:0x8000,
     BracketLeft:0x4000,BracketRight:0x2000,Comma:0x0400,Period:0x0800,Slash:0x0100,Semicolon:0x0200}},
 ];
 const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p.buttons)]));
@@ -21,18 +21,19 @@ export function battleControls(redraw,audio) {
     let buttons=0;
     Object.entries(config.buttons).forEach(([key,mask])=>{if(keys.has(key)) buttons|=mask;});
     controller?.buttons.forEach((b,i)=>{if(b.pressed) buttons|=gamepadBits[i]??0;});
-    const [x,z]=config.axes.map(([negative,positive],i)=>{
+    const [x,z,rx,rz]=config.axes.map(([negative,positive],i)=>{
       const axis=controller?.axes[i]??0;
       return Number(keys.has(positive))-Number(keys.has(negative)) || (Math.abs(axis)>0.15 ? axis : 0);
     });
     // The native pad record expresses forward as positive. Browser Y increases downwards.
-    return {buttons,x,z:-z};
+    return {buttons,x,z:-z,rx,rz:-rz};
   }
   function send() {
     if (!guest || !room) return;
     const p = input(1);
-    const packet=[p.buttons,p.x,p.z].join(",");
-    if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes:[p.x,p.z,0,0]});
+    const axes = [p.x,p.z,p.rx??0,p.rz??0];
+    const packet=[p.buttons,...axes].join(",");
+    if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes});
     lastPacket=packet;
   }
   function press(event) {
@@ -66,7 +67,7 @@ export function battleControls(redraw,audio) {
       document.querySelector("canvas").hidden = true;
     } else {
       room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),audioStream:audio?.stream(),onState,
-        onInput(p){remote={buttons:p.buttons,x:p.axes[0],z:p.axes[1]};}});
+        onInput(p){remote={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};}});
       button("code").value = room.code;
       const invite=new URL(location.href);
       invite.searchParams.set("room",room.code);

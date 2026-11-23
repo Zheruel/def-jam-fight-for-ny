@@ -1,6 +1,6 @@
 import { instantiateSampler } from "./runtime.mjs";
 import { installWrestlingBank } from "./banks.mjs";
-import { composePose, applyBoneEuler, applyFaceRest } from "../fighters/pose.mjs";
+import { composePose, createPoseWorkspace, NAMED_BONES, applyBoneEuler, applyFaceRest } from "../fighters/pose.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
 
 export async function loadMatchAnimation(fighters) {
@@ -24,8 +24,9 @@ export async function createMatchAnimation(source,shared,banks) {
     const character=sampler.memory.getUint32(0x471230+slot*4,true);
     return new Float32Array(sampler.ram.buffer,sampler.ram.byteOffset+sampler.memory.getUint32(character+0x180,true),94*12);
   };
-  function compose(state,slot) {
-    const entries=sampler.pose(slot), pose=composePose(state,entries);
+  function compose(state,slot,changedBone) {
+    state.logicPose ??= createPoseWorkspace(state);
+    const entries=sampler.pose(slot), pose=composePose(state,entries,state.logicPose,changedBone);
     state.entries=entries;
     state.world=pose.world;
     state.skin=pose.skin;
@@ -44,7 +45,9 @@ export async function createMatchAnimation(source,shared,banks) {
     const pending=state.pending;
     state.pending=null;
     if(!pending) {
-      state.final=Float32Array.from(sampler.pose(slot));
+      const pose=sampler.pose(slot);
+      state.final ??= new Float32Array(pose.length);
+      state.final.set(pose);
       return;
     }
     const dx=state.actorPosition[0]-from[0], dz=state.actorPosition[2]-from[2], a=state.yaw*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
@@ -60,7 +63,8 @@ export async function createMatchAnimation(source,shared,banks) {
       for(let j=4;j<11;j++) shown[o+j]=shown[o+j]*keep+(j<8 ? sign : 1)*target[o+j]*weight;
     }
     state.final=shown;
-    state.skin=composePose(state,shown).skin;
+    state.shownPose ??= createPoseWorkspace(state);
+    state.skin=composePose(state,shown,state.shownPose).skin;
   }
   return {reset,duration:sampler.duration,finish,
     sample(state,slot,bank,local,frame,blendWeight,transition) {
@@ -76,7 +80,7 @@ export async function createMatchAnimation(source,shared,banks) {
     rotate(state,slot,id,euler) {
       applyBoneEuler(sampler.pose(slot),id,euler);
       state.pending?.aim.push([id,euler]);
-      compose(state,slot);
+      compose(state,slot,NAMED_BONES[id-1]);
     },
   };
 }

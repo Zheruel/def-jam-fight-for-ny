@@ -1,3 +1,4 @@
+import { irradianceGLSL, loadLighting, sampleIrradiance } from "../scenery/irradiance.mjs";
 import { loadPoseBank, capturedIdles, poseIndex } from "../motion/pose-bank.mjs";
 import { createBattleLineup } from "../battle/setup.mjs";
 import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
@@ -28,6 +29,7 @@ uniform mat4 viewProjection;
 out float height;
 out vec3 world;
 out vec3 vertexColor;
+out vec3 worldNormal;
 void main() {
   texcoord = uv;
   vec3 p = position;
@@ -40,8 +42,10 @@ void main() {
     p += origin;
     vec3 n = mat3(pose) * normal;
     n.xz = turn * n.xz;
+    worldNormal = n;
     vertexColor = vec3(0.80 + 0.20 * dot(normalize(n), normalize(vec3(0.3,1.0,0.7))));
   } else {
+    worldNormal = vec3(0.0,1.0,0.0);
     vertexColor = rgba.rgb * (255.0 / 128.0);
   }
   height = p.y;
@@ -56,12 +60,17 @@ in vec3 world;
 in vec2 texcoord;
 uniform sampler2D diffuse;
 in vec3 vertexColor;
+in vec3 worldNormal;
+uniform bool skinned;
+uniform bool lightFighters;
+${irradianceGLSL}
 out vec4 color;
 void main() {
   if (height > ceiling) discard;
   vec4 texel = texture(diffuse, texcoord);
   if (texel.a < 0.01) discard;
-  color = vec4(texel.rgb * vertexColor, 1.0);
+  vec3 tint = skinned && lightFighters ? clamp(1.2 * irradiance(normalize(worldNormal)), 0.0, 1.5) : vertexColor;
+  color = vec4(texel.rgb * tint, 1.0);
 }`;
 
 function createProgram(gl) {
@@ -88,8 +97,10 @@ async function display() {
   gl.clearColor(0.10, 0.115, 0.12, 1);
 
   const battle = document.body.hasAttribute("data-battle");
-  let fight, controls, camera, hud, paused = false, previousFrame, carry = 0, renderedFrames = 0;
-  let scenery;
+  const stepMs = 1000/60;
+  let fight, controls, camera, hud, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
+  let scenery, lighting;
+  const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
   const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
   const pose = gl.createBuffer();
@@ -125,6 +136,7 @@ async function display() {
   const uniform = key => gl.getUniformLocation(program, key);
   const right = uniform("right"), up = uniform("up"), forward = uniform("forward"), scale = uniform("scale");
   const skinned = uniform("skinned"), origin = uniform("origin"), heading = uniform("heading");
+  const lightFighters = uniform("lightFighters"), lightCoefficients = uniform("irradianceCoefficients[0]");
   const focus = uniform("center"), ceiling = uniform("ceiling");
   const perspective = uniform("matchView"), viewProjection=uniform("viewProjection");
   const cutaway = document.querySelector("#cutaway");
@@ -140,14 +152,16 @@ async function display() {
   function frame(now) {
     scheduled = 0;
     if (document.hidden) { previousFrame = undefined; return; }
+    let advanced = false;
     if (fight && !paused && !controls.isGuest()) {
       const elapsed = previousFrame === undefined ? 0 : Math.min(100,now-previousFrame);
       carry += elapsed;
       try {
-        while (carry >= 1000/60) {
+        while (carry >= stepMs) {
           fight.tick(controls.inputs());
-          camera.step(fight.states);
-          carry -= 1000/60;
+          camera.step();
+          carry -= stepMs;
+          advanced = true;
         }
       } catch (error) {
         paused = true;
@@ -155,7 +169,11 @@ async function display() {
       }
     }
     previousFrame = now;
-    if (!controls?.isGuest()) { draw(); renderedFrames++; }
+    if (controls?.isGuest()) return;
+    // On a high-refresh display multiple callbacks can share a simulation tick.
+    // Keep polling input, and submit the scene only when a new pose is available.
+    if (fight && !advanced && !paused) scheduled = requestAnimationFrame(frame);
+    else { draw(); renderedFrames++; }
   }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { previousFrame = undefined; cancelAnimationFrame(scheduled); scheduled = 0; }
@@ -167,7 +185,8 @@ async function display() {
     const center = min.map((value, i) => (value + max[i]) / 2);
     const radius = Math.hypot(...max.map((value, i) => value - center[i]));
     const rect = canvas.getBoundingClientRect();
-    const ratio = Math.min(devicePixelRatio, 2);
+    // Two times the retail framebuffer resolution keeps high-DPI screens within the same GPU budget.
+    const ratio = battle ? Math.min(devicePixelRatio,2,1280/rect.width,960/rect.height) : Math.min(devicePixelRatio,2);
     const width = Math.max(1, Math.round(rect.width * ratio));
     const height = Math.max(1, Math.round(rect.height * ratio));
     if (canvas.width !== width || canvas.height !== height) {
@@ -178,7 +197,10 @@ async function display() {
     gl.uniform1i(perspective,Boolean(camera));
     const projection=camera?.matrix();
     if(projection) gl.uniformMatrix4fv(viewProjection,false,projection);
-    gl.viewport(0, 0, width, height);
+    // The NTSC output places its 640 × 448 picture inside a 640 × 480 frame.
+    const viewHeight = camera ? Math.round(height * 448 / 480) : height;
+    gl.viewport(0, Math.floor((height-viewHeight)/2), width, viewHeight);
+    if (camera) gl.clearColor(0,0,0,1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
     gl.uniform3f(right, cy, 0, -sy);
@@ -192,9 +214,11 @@ async function display() {
     const size = zoom * 0.98 / span;
     gl.uniform3f(scale, size * Math.min(1, height / width), size * Math.min(1, width / height), 0.98 / (radius * 2));
     gl.uniform1i(skinned, 0);
+    gl.uniform1i(lightFighters, Boolean(lighting));
     scene.draw();
+    const matchState = fight?.diagnostics();
     if(scenery && projection) {
-      scenery.render({viewProjection:projection,tick:fight?.diagnostics().ticks??0});
+      scenery.render({viewProjection:projection,tick:matchState?.ticks??0});
       gl.useProgram(program);
     }
     if (selected.length) {
@@ -211,6 +235,7 @@ async function display() {
         const [x,z] = lineup.participants[i].position;
         const target = lineup.participants[1-i].position;
         if (live) {
+          if (lighting) gl.uniform3fv(lightCoefficients,sampleIrradiance(lighting,live.position,coefficients));
           gl.uniform3fv(origin,live.position);
           gl.uniform1f(heading,live.yaw*Math.PI/180);
         } else {
@@ -219,7 +244,7 @@ async function display() {
         }
         body.draw(live?.damage??0);
       });
-      if (fight) hud(fight.diagnostics());
+      if (matchState) hud(matchState);
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
       if (animate && !document.hidden && !scheduled) scheduled = requestAnimationFrame(frame);
     }
@@ -305,23 +330,28 @@ async function display() {
   if (battle && selected.length === 2 && scene) {
     const { loadFoundationFight } = await import("../battle/fight.mjs");
     const { battleControls } = await import("../battle/controls.mjs");
-    const { foundationCamera } = await import("../battle/camera.mjs");
+    const { battleCamera } = await import("../battle/camera.mjs");
     const { createHud } = await import("../hud/hud.mjs");
     const { venueAudio } = await import("../audio/venue.mjs");
     const audio = venueAudio(arena.file);
-    if(arena.file==="V2BG_02A") {
-      const {createSceneryRenderer,loadScenery}=await import("../scenery/scenery.mjs");
-      scenery=await createSceneryRenderer(gl,await loadScenery(arena.file));
-    }
-    camera=foundationCamera();
+    const {createSceneryRenderer,loadScenery} = await import("../scenery/scenery.mjs");
+    const [stage, lights] = await Promise.all([loadScenery(arena.file),loadLighting(arena.file)]);
+    lighting = lights.settings[0]?.sets[0];
+    scenery = await createSceneryRenderer(gl,stage,{lighting});
     hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio);
     fight = await loadFoundationFight(selected,arena);
+    camera = battleCamera(fight.kernel, arena.file);
     status.textContent = "WASD and arrows to move · Controls below";
     document.getElementById("restart").onclick = () => {
-      controls.release(); fight.restart(); camera.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=0; draw();
+      controls.release(); fight.restart(); camera.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = "WASD and arrows to move · Controls below";
     };
+    // Enter starts the rematch once the result banner has offered it.
+    addEventListener("keydown",event=>{
+      const result = fight.outcome();
+      if (event.key === "Enter" && result.result && result.ticksSinceOver >= 120) document.getElementById("restart").click();
+    });
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
       ...fight.diagnostics(), renderedFrames, paused, network:controls.connection() }) });
     draw();

@@ -54,8 +54,10 @@ export function localMatrix(entries, bone, out = new Float64Array(16), offset = 
   const r10 = 2 * (x * y + z * w), r11 = 1 - 2 * (x * x + z * z), r12 = 2 * (y * z - x * w);
   const r20 = 2 * (x * z - y * w), r21 = 2 * (y * z + x * w), r22 = 1 - 2 * (x * x + y * y);
   // Row i of the matrix is column i of R (row-vector convention), scaled by s_i.
-  out.set([r00 * sx, r10 * sx, r20 * sx, 0, r01 * sy, r11 * sy, r21 * sy, 0, r02 * sz, r12 * sz, r22 * sz, 0,
-    entries[e + 8], entries[e + 9], entries[e + 10], 1], offset);
+  out[offset] = r00*sx; out[offset+1] = r10*sx; out[offset+2] = r20*sx; out[offset+3] = 0;
+  out[offset+4] = r01*sy; out[offset+5] = r11*sy; out[offset+6] = r21*sy; out[offset+7] = 0;
+  out[offset+8] = r02*sz; out[offset+9] = r12*sz; out[offset+10] = r22*sz; out[offset+11] = 0;
+  out[offset+12] = entries[e+8]; out[offset+13] = entries[e+9]; out[offset+14] = entries[e+10]; out[offset+15] = 1;
   return out;
 }
 
@@ -68,28 +70,35 @@ function multiply(a, ao, b, bo, out, oo) {
   }
 }
 
-/**
- * Compose local entries into bone-to-model world matrices and skin matrices (inverseBind * world).
- * `model` is a def-jam-fny-fighter-model/1 document (needs `bones[].parent` and `.inverseBind`).
- * Parents always precede children, so one forward pass is enough.
- */
-export function composePose(model, entries) {
-  const bones = model.bones;
-  const world = new Float32Array(bones.length * 16);
-  const skin = new Float32Array(bones.length * 16);
-  const local = new Float64Array(16);
-  const w = new Float64Array(bones.length * 16);
-  const s = new Float64Array(16);
-  for (let k = 0; k < bones.length; k++) {
-    localMatrix(entries, k, local);
-    const parent = bones[k].parent;
-    if (parent === null) w.set(local, k * 16);
-    else multiply(local, 0, w, parent * 16, w, k * 16);
-    multiply(bones[k].inverseBind, 0, w, k * 16, s, 0);
-    world.set(w.subarray(k * 16, k * 16 + 16), k * 16);
-    skin.set(s, k * 16);
+/** Separate workspaces keep the simulation pose and the displayed transition pose independent. */
+export function createPoseWorkspace(model) {
+  const size = model.bones.length * 16;
+  return { world: new Float32Array(size), skin: new Float32Array(size),
+    preciseWorld: new Float64Array(size), local: new Float64Array(16),
+    all: model.bones.map((_, index) => index), branches: new Map() };
+}
+
+/** Recompose one bone and its descendants after an in-place aim rotation, or the full sampled pose. */
+export function composePose(model, entries, workspace = createPoseWorkspace(model), changedBone) {
+  const { world, skin, preciseWorld, local, branches } = workspace;
+  let bones = workspace.all;
+  if (changedBone !== undefined) {
+    if (!branches.has(changedBone)) {
+      const branch = new Set([changedBone]);
+      for (const k of bones) if (branch.has(model.bones[k].parent)) branch.add(k);
+      branches.set(changedBone,[...branch]);
+    }
+    bones = branches.get(changedBone);
   }
-  return { world, skin };
+  for (const k of bones) {
+    const {parent, inverseBind} = model.bones[k], at = k*16;
+    localMatrix(entries,k,local);
+    if (parent === null) preciseWorld.set(local,at);
+    else multiply(local,0,preciseWorld,parent*16,preciseWorld,at);
+    multiply(inverseBind,0,preciseWorld,at,skin,at);
+  }
+  world.set(preciseWorld);
+  return {world,skin};
 }
 
 /** Read slot `slot` from a DataView over a 32MB EE RAM image and return its posed matrices. */

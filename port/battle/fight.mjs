@@ -128,12 +128,14 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     // Retail runs the match referee (0x2dbbd8, delta 1.0) before the actor update; once it calls the finish the pads go dead.
     const finished = outcome.advance().over;
     pads.forEach((p,i) => {
-      const {buttons,x,z} = finished ? {buttons:0,x:0,z:0} : inputs[i];
+      const {buttons,x,z,rx=0,rz=0} = finished ? {buttons:0,x:0,z:0} : inputs[i];
       const previous = word(p);
       memory.setUint32(p,buttons,true);
       memory.setUint32(p+4,buttons & ~previous,true);
       memory.setFloat32(p+8,x,true);
       memory.setFloat32(p+12,z,true);
+      memory.setFloat32(p+16,rx,true);
+      memory.setFloat32(p+20,rz,true);
     });
     kernel.tick();
     states.forEach((state,slot) => {

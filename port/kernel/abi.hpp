@@ -84,6 +84,13 @@ template <typename T> void put(uint8_t* data, uint32_t addr, T value, uint32_t p
 #define SRA32(a,b) ((int32_t)(a)>>((b)&31))
 inline uint64_t Ps2SignExt32ToU64(uint32_t n) { return (int64_t)(int32_t)n; }
 inline uint64_t Ps2HiLoToU64(uint64_t hi,uint64_t lo) { return (hi<<32) | (uint32_t)lo; }
+using PackedBytes = uint8_t __attribute__((vector_size(16)));
+inline Quad PS2_PCPYLD(Quad a,Quad b) { return {b[0],b[1],a[0],a[1]}; }
+inline Quad _mm_unpackhi_epi64(Quad a,Quad b) { return {a[2],a[3],b[2],b[3]}; }
+inline Quad PS2_PSUBB(Quad a,Quad b) { return (Quad)((PackedBytes)a - (PackedBytes)b); }
+inline Quad PS2_PSUBW(Quad a,Quad b) { return a-b; }
+inline Quad PS2_PNOR(Quad a,Quad b) { return ~(a|b); }
+inline Quad PS2_PAND(Quad a,Quad b) { return a&b; }
 inline Quad PS2_PEXTLW(Quad a,Quad b) { return {b[0],a[0],b[1],a[1]}; }
 
 #define FPU_ADD_S(a,b) ((a)+(b))

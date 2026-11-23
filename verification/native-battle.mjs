@@ -18,7 +18,10 @@ try {
   host.on("pageerror",error => errors.push(error.message));
   host.on("request",request => requests.push(new URL(request.url()).pathname));
   await host.goto(url);
-  await host.waitForFunction(()=>window.nativeBattle?.diagnostics().ticks>5);
+  await host.waitForFunction(()=>window.nativeBattle?.diagnostics().ticks>5).catch(async error => {
+    throw new Error("Match failed to start: " + await host.locator("#status").textContent() +
+      (errors.length ? " (" + errors.join(", ") + ")" : ""), {cause:error});
+  });
   const bench = await host.evaluate(async () => {
     document.querySelector("#restart").click();
     const actions=[new Set(),new Set()];
@@ -90,6 +93,13 @@ try {
     throw error;
   }
   await guest.keyboard.up("ArrowLeft");
+  await host.locator("#restart").click();
+  await guest.keyboard.down("Numpad4");
+  try {
+    await host.waitForFunction(()=>nativeBattle.diagnostics().actors[1].state === 85);
+  } finally {
+    await guest.keyboard.up("Numpad4");
+  }
   await guest.locator("#leave").click();
   console.log("A second browser received host audio and video and moved Doc using the guest keyboard.");
   await host.locator("#leave").click();

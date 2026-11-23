@@ -29,7 +29,11 @@ export async function instantiateBattle(source, engine) {
         case 0x340500: return fpResult(Math.cos(float(12)));
         case 0x3406f0: return fpResult(Math.sin(float(12)));
         case 0x340fe8: return fpResult(Math.atan2(float(12),float(13)));
+        // EAGL submits the final eye/target/up to its renderer here.
+        case 0x132778: return engine.presentCamera?.(memory);
         case 0x133070: return engine.damage?.(arg(4),arg(5));
+        case 0x1325b8: return engine.timeScale?.(arg(4),float(12));
+        case 0x131b30: return engine.gameSpeed?.(float(12));
         case 0x132a28: return engine.writeBone(arg(5),arg(6),arg(4),memory);
         case 0x132b48:
         case 0x132bb8: {
@@ -49,5 +53,9 @@ export async function instantiateBattle(source, engine) {
   core = (await WebAssembly.instantiate(module,{env})).exports;
   memory = new DataView(core.memory.buffer,core.battle_data(),0x2000000);
   registers = new DataView(core.memory.buffer,core.battle_context());
-  return { memory, observedPages: new Uint8Array(core.memory.buffer,core.battle_pages(),8192), call: core.battle_call, tick: () => core.battle_call(0x2dbdd0,0,0,0,0) };
+  return { memory, observedPages: new Uint8Array(core.memory.buffer,core.battle_pages(),8192), call: core.battle_call,
+    callWithDelta(target, object, seconds) {
+      registers.setFloat32(512 + 12 * 4, seconds, true);
+      return core.battle_call(target,object,0,0,0);
+    }, tick: () => core.battle_call(0x2dbdd0,0,0,0,0) };
 }
