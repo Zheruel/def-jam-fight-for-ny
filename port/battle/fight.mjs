@@ -1,6 +1,7 @@
 import { loadMatchAnimation } from "../animation/match.mjs";
 import { loadMatchRules, initializeFighterProfile } from "./roster.mjs";
 import { installArena,loadArena } from "./arena.mjs";
+import { createOutcome } from "./outcome.mjs";
 import { instantiateBattle } from "../kernel/runtime.mjs";
 import { poseIndex } from "../motion/pose-bank.mjs";
 import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
@@ -21,7 +22,7 @@ export async function loadFoundationFight(fighters,venue) {
 }
 
 export async function createFoundationFight(fighters,source,seed,arena,rules,animation) {
-  let memory;
+  let memory, outcome;
   const word = address => memory.getUint32(address,true);
   const scalar = address => memory.getFloat32(address,true);
   const readVector = address => [scalar(address),scalar(address+4),scalar(address+8)];
@@ -52,6 +53,8 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     duration(slot,bank,index) { return animation ? animation.duration(slot,bank,index) : clip(slot,bank,index).end; },
     rootYaw(slot) { return states[slot].root[3]; },
     damage(slot,level) { states[slot].damage = level; },
+    timeScale(kind,frames) { outcome?.timeScale(kind,frames); },
+    gameSpeed(scale) { outcome?.gameSpeed(scale); },
     rotateBone(slot,id,address) {
       const euler = readVector(address);
       // The sampler's pose array is edited in place, as retail 0x132ab8 does; recorded captures can only keep the request.
@@ -86,6 +89,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   };
   const kernel = await instantiateBattle(source,engine);
   memory = kernel.memory;
+  outcome = createOutcome(kernel,ACTOR);
   const bytes = new Uint8Array(memory.buffer,memory.byteOffset,memory.byteLength);
   const file = new DataView(seed);
   if (!file.byteLength || file.byteLength % 4100) throw new Error("Invalid Foundation start data");
@@ -116,12 +120,15 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       states[i].pending = null;
       states[i].final = null;
     });
+    outcome.reset();
     ticks = 0;
   }
   restart();
   function tick(inputs) {
+    // Retail runs the match referee (0x2dbbd8, delta 1.0) before the actor update; once it calls the finish the pads go dead.
+    const finished = outcome.advance().over;
     pads.forEach((p,i) => {
-      const {buttons,x,z} = inputs[i];
+      const {buttons,x,z} = finished ? {buttons:0,x:0,z:0} : inputs[i];
       const previous = word(p);
       memory.setUint32(p,buttons,true);
       memory.setUint32(p+4,buttons & ~previous,true);
@@ -138,7 +145,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   function diagnostics() {
     return {ticks,actors: ACTOR.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
-      score:word(a+0x480),momentum:scalar(a+0x364)}))};
+      score:word(a+0x480),momentum:scalar(a+0x364)})),outcome:outcome.read()};
   }
-  return { states, tick, restart, diagnostics, observedPages:kernel.observedPages };
+  return { states, tick, restart, rematch: restart, outcome: () => outcome.read(), diagnostics, observedPages:kernel.observedPages, memory, kernel };
 }

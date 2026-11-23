@@ -1,4 +1,5 @@
 import layout from "./layout.json" with {type:"json"};
+import { BANNER, resultLines } from "./result.mjs";
 
 // Keep the HUD in the host canvas so the WebRTC guest receives the same frame.
 export async function createHud(gl) {
@@ -24,9 +25,9 @@ export async function createHud(gl) {
   const program=gl.createProgram();
   const shaders=[
     [gl.VERTEX_SHADER,`#version 300 es
-      out vec2 uv;
+      uniform vec2 band; out vec2 uv;
       void main(){ vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);
-        uv=p;gl_Position=vec4(p.x*2.-1.,1.-p.y*(192./448.),0.,1.); }`],
+        uv=p;gl_Position=vec4(p.x*2.-1.,band.x-p.y*band.y,0.,1.); }`],
     [gl.FRAGMENT_SHADER,`#version 300 es
       precision mediump float; in vec2 uv; uniform sampler2D art;out vec4 color;
       void main(){if(uv.y>1.)discard;color=texture(art,uv);}`]];
@@ -37,22 +38,28 @@ export async function createHud(gl) {
   }
   gl.linkProgram(program);
   if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));
-  const texture=gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D,texture);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-  gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA8,640,96);
+  const band=gl.getUniformLocation(program,"band");
+  const makeTexture=(width,height)=>{
+    const made=gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D,made);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA8,width,height);
+    return made;
+  };
+  const texture=makeTexture(640,96), bannerTexture=makeTexture(BANNER.width,BANNER.height);
+  const banner=new OffscreenCanvas(BANNER.width,BANNER.height), bannerCtx=banner.getContext("2d");
   const {anchors}=layout;
-  function label(value,x,y,size,family,align) {
-    ctx.font=size+"px Battle"+family;
-    ctx.textAlign=align;ctx.textBaseline="top";ctx.fillStyle="#e6dfd0";
-    ctx.lineWidth=2.5;ctx.strokeStyle="#3d352b";ctx.strokeText(value,x,y);
-    ctx.fillText(value,x,y);
+  function label(value,x,y,size,family,align,context=ctx) {
+    context.font=size+"px Battle"+family;
+    context.textAlign=align;context.textBaseline="top";context.fillStyle="#e6dfd0";
+    context.lineWidth=2.5;context.strokeStyle="#3d352b";context.strokeText(value,x,y);
+    context.fillText(value,x,y);
   }
-  let last;
-  return function draw({actors,ticks}) {
+  let last, lastBanner="";
+  return function draw({actors,ticks,outcome}) {
     const second=Math.floor(ticks/60);
     const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score]);
     const key=[second,...bars.flat()].join(",");
@@ -77,7 +84,21 @@ export async function createHud(gl) {
     }
     gl.useProgram(program);gl.bindVertexArray(null);
     gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform2f(band,1,192/448);
     gl.drawArrays(gl.TRIANGLES,0,3);
+    const lines=resultLines(outcome,actors.map(a=>a.name));
+    if(lines) {
+      gl.bindTexture(gl.TEXTURE_2D,bannerTexture);
+      const bannerKey=JSON.stringify(lines);
+      if(bannerKey!==lastBanner) {
+        lastBanner=bannerKey;
+        bannerCtx.clearRect(0,0,BANNER.width,BANNER.height);
+        lines.forEach(l=>label(l.text,l.x,l.y,l.size,l.family,l.align,bannerCtx));
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,banner);
+      }
+      gl.uniform2f(band,1-2*BANNER.top/448,BANNER.height/224);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    }
     gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);
   };
 }
