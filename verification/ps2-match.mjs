@@ -140,8 +140,8 @@ async function selectFightersAndVenue(controls) {
   await waitScreen('host-fighter-ready', /CHOOSE FIGHTER.*READY/iu);
   await findFighter(controls, 2, 'Doc', isDoc);
   await input(2, 'cross');
-  await waitScreen('two-fighters-ready', /READY!?.*READY/iu);
-  await input(2, 'cross');
+  const ready = await waitScreen('two-fighters-ready', /READY!?.*READY|CHOOSE VENUE/iu);
+  if (!/CHOOSE VENUE/iu.test(ready.text)) await input(2, 'cross');
   await waitScreen('venue-foundation', /CHOOSE VENUE.*FOUNDATION/iu);
   await input(1, 'cross');
   await waitScreen('match-card', isMatchCard);
@@ -173,6 +173,25 @@ async function playBattle(controls) {
   const firstGuestFrame = await waitScreen('guest-fight-ready', activeFight, { side: 'guest', timeout: 45_000 });
   report.secondsFromFighterSelectionToFight = (performance.now() - venueStart) / 1000;
 
+  if (controls.measurePerformance) {
+    report.steadyCombat = [];
+    console.log('Starting steady combat measurement');
+    let previousHost = await diagnostics();
+    let previousRtc = await rtc();
+    for (let window = 0; window < 3; window++) {
+      await delay(5000);
+      const host = await diagnostics();
+      const guest = await rtc();
+      const seconds = (guest.timeMs - previousRtc.timeMs) / 1000;
+      report.steadyCombat.push({
+        seconds, hostVblanksPerSecond: (host.vblanks - previousHost.vblanks) / seconds,
+        guestFramesPerSecond: (guest.decodedVideoFrames - previousRtc.decodedVideoFrames) / seconds,
+      });
+      previousHost = host;
+      previousRtc = guest;
+    }
+    console.log('Steady combat', report.steadyCombat);
+  }
   const startHost = await diagnostics();
   const startRtc = await rtc();
   await input(1, 'circle', { hold: 28, axes: [1, 0, 0, 0], during: () => capture('host-movement') });
@@ -209,7 +228,7 @@ async function playBattle(controls) {
 }
 
 async function main() {
-  const { values } = parseArgs({ options: { url: { type: 'string' }, 'retail-menus': { type: 'boolean', default: false } } });
+  const { values } = parseArgs({ options: { url: { type: 'string' }, performance: { type: 'boolean', default: false }, 'retail-menus': { type: 'boolean', default: false } } });
   const publicEntry = values.url && new URL(values.url);
   if (publicEntry) {
     assert.ok(['http:', 'https:'].includes(publicEntry.protocol), 'The player URL must use HTTP or HTTPS');
@@ -407,7 +426,7 @@ async function main() {
       throw new Error(`Timed out waiting for ${name}. Last screen text: ${image.text}`);
     }
 
-    await playBattle({ input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
+    await playBattle({ measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
       rtc: () => rtcStats(guest), report });
     assert.equal(boot.guest.packageRequests, 0, 'The guest must receive the stream without fetching game data');
     assert.deepEqual(boot.isoRequests, [], 'Neither player may request an ISO');

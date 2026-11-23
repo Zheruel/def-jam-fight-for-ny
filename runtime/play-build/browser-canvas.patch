@@ -1,0 +1,13 @@
+--- a/Source/ui_js/Main.cpp
++++ b/Source/ui_js/Main.cpp
+@@ -157,6 +157,10 @@
+ 	attr.majorVersion = 2;
+ 	attr.minorVersion = 0;
+ 	attr.alpha = false;
++	// The final canvas is a fullscreen texture blit. The GS draws geometry into its own FBOs.
++	attr.antialias = false;
++	attr.depth = false;
++	attr.stencil = false;
+ 	// The WebRTC mirror samples completed frames between emulated swaps.
+ 	attr.preserveDrawingBuffer = true;
+ 	g_context = emscripten_webgl_create_context("#outputCanvas", &attr);

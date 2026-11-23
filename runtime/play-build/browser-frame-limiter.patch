@@ -1,0 +1,13 @@
+diff --git a/Source/FrameLimiter.cpp b/Source/FrameLimiter.cpp
+index 0d050fa3..5aecafe5 100644
+--- a/Source/FrameLimiter.cpp
++++ b/Source/FrameLimiter.cpp
+@@ -59,7 +59,7 @@ void CFrameLimiter::EndFrame()
+ 			SetWaitableTimer(m_timer, &ft, 0, NULL, NULL, 0);
+ 			WaitForSingleObject(m_timer, INFINITE);
+ 		}
+-#elif defined(__APPLE__) || defined(__EMSCRIPTEN__)
++#elif defined(__APPLE__)
+ 		//Sleeping for the whole delay on some platforms doesn't provide a good enough resolution
+ 		auto currentTime = std::chrono::high_resolution_clock::now();
+ 		auto targetTime = currentTime + delay;

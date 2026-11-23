@@ -1,0 +1,46 @@
+diff --git a/src/Jitter_CodeGen_Wasm.cpp b/src/Jitter_CodeGen_Wasm.cpp
+index 3f86e4a..9a33b5d 100644
+--- a/src/Jitter_CodeGen_Wasm.cpp
++++ b/src/Jitter_CodeGen_Wasm.cpp
+@@ -169,15 +169,8 @@ CCodeGen_Wasm::CONSTMATCHER CCodeGen_Wasm::g_constMatchers[] =
+ 
+ #include <emscripten.h>
+ // clang-format off
+-EM_JS_DEPS(WasmRegisterExternFunction, "$convertJsFunctionToWasm");
+-EM_JS(int, RegisterExternFunction, (const char* functionName, const char* functionSig), {
+-	let fctName = UTF8ToString(functionName);
+-	let fctSig = UTF8ToString(functionSig);
+-	let fct = Module[fctName];
+-	if(fct === undefined)
+-	{
+-		out(`Warning: Could not find function '${fctName}' (missing export?).`);
+-	}
++EM_JS_DEPS(WasmRegisterExternFunction, "$getWasmTableEntry");
++EM_JS(int, RegisterExternFunction, (uintptr_t functionPtr), {
+ 	if(Module.codeGenImportTable === undefined) {
+ 		out("Creating import table...");
+ 		Module.codeGenImportTable = new WebAssembly.Table({
+@@ -186,12 +179,9 @@ EM_JS(int, RegisterExternFunction, (const char* functionName, const char* functi
+ 		});
+ 		Module.codeGenImportTableNextIndex = 0;
+ 	}
+-	//TODO: Check how we can use the export from the WASM module directly
+-	//instead of having to wrap the wrapper
+-	let wrappedFct = convertJsFunctionToWasm(fct, fctSig);
++	// These helpers already exist in the emulator's Wasm function table.
+ 	let fctId = Module.codeGenImportTableNextIndex++;
+-	Module.codeGenImportTable.set(fctId, wrappedFct);
+-	out(`Registered function '${fctName}(${fctSig})' = > id = ${fctId}.`);
++	Module.codeGenImportTable.set(fctId, getWasmTableEntry(functionPtr));
+ 	return fctId;
+ });
+ // clang-format on
+@@ -205,7 +195,7 @@ void CWasmFunctionRegistry::RegisterFunction(uintptr_t functionPtr, const char*
+ 		assert(fctIterator == m_functions.end());
+ 	}
+ 	WASM_FUNCTION_INFO functionInfo;
+-	functionInfo.id = RegisterExternFunction(functionName, functionSig);
++	functionInfo.id = RegisterExternFunction(functionPtr);
+ 	functionInfo.signature = functionSig;
+ 	m_functions.insert(std::make_pair(functionPtr, functionInfo));
+ }

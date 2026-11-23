@@ -6,6 +6,8 @@ Run `node verification/ps2-match.mjs --url https://zheruel.github.io/def-jam-fig
 
 The default run requires the title to open Battle directly. Use `--retail-menus` to follow the original menu flow with the runtime overlays disabled. The harness assigns both humans, reads the fighter cards to select Blaze and Doc, and verifies Foundation before starting a standard One on One match. It waits for both player names and the live clock before sending movement and attacks.
 
+Add `--performance` to measure three five-second windows after both screens show the fight HUD. Each window reports host emulated VBlanks and decoded guest video frames per second. Run one match at a time on the same machine when comparing builds.
+
 Screen captures and the JSON report are stored under `private/verification/ps2-match/`. The report gives separate counts for emulated VBlanks, sampled GS frames, and frames decoded by the WebRTC guest. Input readback times include the harness polling delay.
 
 ## Native retail reference

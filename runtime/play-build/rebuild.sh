@@ -27,19 +27,41 @@ patch_files=(
   "$runtime_dir/browser-netplay.patch"
   "$runtime_dir/browser-disc-cache.patch"
   "$runtime_dir/browser-webgl-samplers.patch"
+  "$runtime_dir/browser-canvas.patch"
+  "$runtime_dir/browser-frame-limiter.patch"
+  "$runtime_dir/browser-visibility.patch"
   "$runtime_dir/../../ps2/diagnostics/browser-disk-ready.patch"
 )
-for patch_file in "${patch_files[@]}"; do
+apply_patch() {
+  local tree=$1 patch_file=$2 patch_name
   patch_name=${patch_file##*/}
-  if git -C "$source_dir" apply --reverse --check "$patch_file" 2>/dev/null; then
+  if git -C "$tree" apply --reverse --check "$patch_file" 2>/dev/null; then
     echo "$patch_name is already applied."
   else
-    git -C "$source_dir" apply "$patch_file"
+    git -C "$tree" apply "$patch_file"
   fi
-done
+}
+# Later patches touch a few of the same lines. Check their combined result
+# so an already-built source tree can be rebuilt without reversing changes.
+patch_tmp=$(mktemp -d)
+trap 'rm -rf -- "$patch_tmp"' EXIT
+(
+  export GIT_INDEX_FILE="$patch_tmp/index"
+  git -C "$source_dir" read-tree HEAD
+  for patch_file in "${patch_files[@]}"; do
+    git -C "$source_dir" apply --cached "$patch_file"
+  done
+  git -C "$source_dir" diff --cached --binary > "$patch_tmp/combined.patch"
+)
+if ! git -C "$source_dir" apply --reverse --check "$patch_tmp/combined.patch" 2>/dev/null; then
+  for patch_file in "${patch_files[@]}"; do
+    apply_patch "$source_dir" "$patch_file"
+  done
+fi
+apply_patch "$source_dir/deps/CodeGen" "$runtime_dir/codegen-wasm-imports.patch"
 
 emcmake cmake -S "$source_dir" -B "$build_dir/cmake" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DBUILD_PLAY=ON \
   -DBUILD_PSFPLAYER=OFF -DUSE_QT=OFF
-cmake --build "$build_dir/cmake" --target Play --parallel "${PLAY_BUILD_JOBS:-8}"
+cmake --build "$build_dir/cmake" --target Play --parallel "${PLAY_BUILD_JOBS:-2}"
 shasum -a 256 "$build_dir/cmake/Source/ui_js/Play.js" "$build_dir/cmake/Source/ui_js/Play.wasm"

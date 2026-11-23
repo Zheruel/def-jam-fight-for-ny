@@ -4,11 +4,13 @@ The WebAssembly runtime is [Play! 0.77-17-g1f272327](https://github.com/jpd002/P
 
 The browser runtime exposes two independent DualShock 2 ports and an audio stream tapped from the emulator's OpenAL output. The disc reader caches 512 KiB blocks inside WebAssembly to reduce main-thread reads. The browser passes each player's Standard Gamepad button bitmap and four stick axes to `_setPad(port, buttons, lX, lY, rX, rY)`. Ports are zero-based and axes range from −1 to 1. `_getPadReadback(port)` reports the button bitmap applied by the emulation thread. `_getVblanks()` reports the VM’s own vertical blank count. After initialization, `getPlayAudioStream()` exposes audio to WebRTC, `resumePlayAudio()` unlocks playback after user interaction, and `setPlayAudioMuted(true)` mutes local speakers.
 
+The browser build imports compiled CPU helpers directly from the Wasm function table. The output canvas uses a single color buffer for the final blit, while the GS retains its internal render targets. The frame limiter sleeps once per wait. Solo play pauses when its tab is hidden and resumes on return. An online host keeps running for the guest.
+
 ## Rebuild
 
 Activate Emscripten SDK 4.0.1 and install CMake and Ninja. Run `runtime/play-build/rebuild.sh` to check out the pinned source, apply the recorded patches, and build under `private/play-build`. The build writes `Play.js` and `Play.wasm` in `private/play-build/cmake/Source/ui_js`. Copy both files to this directory to install a rebuilt runtime.
 
 | Runtime file | SHA-256 |
 | --- | --- |
-| `Play.js` | `c0a08f61a22acc4c191a7d0feb6aee5928ad3e2c7ac0cbad155a038205c9e630` |
-| `Play.wasm` | `5bf3feca75a1fc1573a44dfbde3a3063d2db6cca4ac0a359ab15e4e7818973c6` |
+| `Play.js` | `e054b0c203f58d10c9283e7e3ee72f6d5bc47e57d84f0855df8638dfeeb22222` |
+| `Play.wasm` | `2a5b2f2455839b6e977e56625e35f25939cc7a883dab06379bac24ecc39ef481` |

@@ -67,6 +67,12 @@ function showStart(title, message) {
   streamButton.hidden = true;
 }
 
+function syncVisibility() {
+  if (playing) runtime.setBackgroundPaused(document.hidden && role !== "host");
+}
+
+document.addEventListener("visibilitychange", syncVisibility);
+
 async function startGame() {
   if (loading || playing || role === "guest") return;
   loading = true;
@@ -76,6 +82,7 @@ async function startGame() {
   try {
     const disc = await runtime.boot();
     playing = true;
+    syncVisibility();
     startPanel.hidden = true;
     status.textContent = "PlayStation 2 · " + disc.gameId;
 
@@ -205,6 +212,7 @@ function leaveRoom() {
   pressedKeys.clear();
   manualPads.delete(2);
   oldMatch?.close();
+  syncVisibility();
   runtime.setPad(2, NEUTRAL_INPUT);
   remote.hidden = true;
   remote.srcObject = null;
@@ -221,6 +229,7 @@ function leaveRoom() {
 hostButton.addEventListener("click", async () => {
   if (role || !playing) return;
   role = "host";
+  syncVisibility();
   const generation = ++roomGeneration;
   try {
     const { hostMatch } = await import(transport);

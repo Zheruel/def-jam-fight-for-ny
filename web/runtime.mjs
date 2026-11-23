@@ -70,6 +70,7 @@ export function makeRuntime({ canvas, onStatus }) {
     boot: async () => start(await openGameAssets()),
     prepareAudio: async () => vm?.resumePlayAudio?.(),
     getAudioStream: audio,
+    setBackgroundPaused: paused => vm?._setBrowserPaused?.(paused),
     async setMuted(muted) {
       await vm?.resumePlayAudio?.();
       vm?.setPlayAudioMuted?.(muted);
