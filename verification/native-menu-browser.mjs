@@ -8,6 +8,9 @@ import { chromium } from "../netplay/node_modules/playwright/index.mjs";
 import { attachNetplay } from "../netplay/server.mjs";
 import { gameServer } from "../tools/serve.mjs";
 import inventory from "../ps2/content/inventory.json" with { type: "json" };
+import lineups from "../port/battle/lineups.json" with { type: "json" };
+import { MODES } from "../port/battle/modes.mjs";
+import { matchTypes } from "../port/menu/launch.mjs";
 
 const server = gameServer();
 attachNetplay(server);
@@ -15,6 +18,13 @@ server.listen(0, "127.0.0.1");
 await once(server, "listening");
 const base = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`;
 let browser;
+const types = matchTypes(MODES, true);
+// Navigates the match type step by the intended type, not by a hard-coded number of key presses.
+const chooseType = async (page, type) => {
+  assert.ok(types.includes(type), `${type} is advertised`);
+  for (let i = 0; i < types.indexOf(type); i++) await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+};
 try {
   browser = await chromium.launch({ headless: true, ...(process.platform === "darwin" && { channel: "chrome" }) });
   const page = await browser.newPage({ viewport: { width: 1024, height: 824 } });
@@ -34,7 +44,7 @@ try {
   await shot("1-fighters");
 
   const roster = JSON.parse(readFileSync(new URL("../port/menu/art/roster.json", import.meta.url), "utf8"));
-  await page.keyboard.press("Enter");   // match type: One on One (the default)
+  await chooseType(page, "1v1");
   await page.waitForTimeout(200);
   const start = ["0x07000030", "0x07000025"].map(h => roster.findIndex(f => f.handle === h));
   // player 1 (WASD + I): two to the right; player 2 (arrows): one to the left; each confirms with their own button
@@ -47,7 +57,9 @@ try {
   // venue: move to a neighbouring pin and take it
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 90000 });
+  await page.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 90000 }).catch(async error => {
+    throw new Error(`match did not start (${page.url()}): ${await page.locator("#status").textContent()} ${errors.join(" | ")}`, { cause: error });
+  });
 
   const query = new URL(page.url()).searchParams;
   assert.equal(query.get("p1"), chosen[0].handle);
@@ -59,29 +71,55 @@ try {
   assert.equal(await page.locator("canvas[aria-label='Choose fighter and venue']").count(), 0, "menu removed");
   await shot("3-match");
 
-  // Free For All: the same menu with four cards; Enter locks in each seat in turn, and only venues with a four-fighter formation are offered.
-  const ffa = await browser.newPage({ viewport: { width: 1024, height: 824 } });
-  ffa.on("pageerror", e => errors.push("ffa: " + e.message));
-  await ffa.goto(base);
-  await ffa.waitForSelector("canvas[aria-label='Choose fighter and venue']");
-  await ffa.waitForFunction(() => document.fonts.check("12px BattleNames"));
-  await ffa.keyboard.press("ArrowRight"); await ffa.keyboard.press("Enter");
-  await ffa.waitForTimeout(800);
-  if (process.env.NATIVE_SCREENSHOT) writeFileSync(`${process.env.NATIVE_SCREENSHOT}/4-ffa.png`, await ffa.screenshot());
-  for (let seat = 0; seat < 4; seat++) await ffa.keyboard.press("Enter");
-  await ffa.waitForTimeout(300);
-  await ffa.keyboard.press("Enter");
-  await ffa.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 120000 });
-  const four = new URL(ffa.url()).searchParams;
-  assert.equal(four.get("mode"), "ffa");
-  const fighters4 = await ffa.evaluate(() => nativeBattle.diagnostics().actors.map(a => a.name));
-  assert.equal(fighters4.length, 4);
-  assert.equal(new Set(fighters4).size, 4, "four distinct fighters");
-  assert.deepEqual([1, 2, 3, 4].map(n => four.get("p" + n)).map(h => inventory.fighters.find(f => f.handle === h).name), fighters4);
+  // A CPU opponent: C makes the last seat the retail CPU, and the match starts with ?cpu=1.
+  const versus = await browser.newPage({ viewport: { width: 1024, height: 824 } });
+  versus.on("pageerror", e => errors.push("cpu: " + e.message));
+  await versus.goto(base);
+  await versus.waitForSelector("canvas[aria-label='Choose fighter and venue']");
+  await versus.waitForFunction(() => document.fonts.check("12px BattleNames"));
+  await chooseType(versus, "1v1");
+  await versus.keyboard.press("c");
+  await versus.keyboard.press("Enter"); await versus.keyboard.press("Enter"); await versus.waitForTimeout(300);
+  await versus.keyboard.press("Enter");
+  await versus.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 90000 }).catch(async error => {
+    throw new Error(`CPU match did not start (${versus.url()}): ${await versus.locator("#status").textContent()} ${errors.join(" | ")}`, { cause: error });
+  });
+  assert.equal(new URL(versus.url()).searchParams.get("cpu"), "1");
+  await versus.close();
+
+  // Multi-fighter modes the page advertises (Free For All with three or four fighters): the same menu with three or four cards; Enter locks in
+  // each seat in turn, and only venues with that mode's formation are offered. A mode the page does not advertise is not offered.
+  const multi = {};
+  for (const mode of ["ffa3", "ffa"].filter(m => types.includes(m))) {
+    const tab = await browser.newPage({ viewport: { width: 1024, height: 824 } });
+    tab.on("pageerror", e => errors.push(mode + ": " + e.message));
+    await tab.goto(base);
+    await tab.waitForSelector("canvas[aria-label='Choose fighter and venue']");
+    await tab.waitForFunction(() => document.fonts.check("12px BattleNames"));
+    await chooseType(tab, mode);
+    await tab.waitForTimeout(800);
+    if (process.env.NATIVE_SCREENSHOT) writeFileSync(`${process.env.NATIVE_SCREENSHOT}/4-${mode}.png`, await tab.screenshot());
+    const seats = MODES[mode].fighters;
+    for (let seat = 0; seat < seats; seat++) await tab.keyboard.press("Enter");
+    await tab.waitForTimeout(300);
+    await tab.keyboard.press("Enter");
+    await tab.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 120000 }).catch(async error => {
+      throw new Error(`${mode} did not start (${tab.url()}): ${await tab.locator("#status").textContent()} ${errors.join(" | ")}`, { cause: error });
+    });
+    const params = new URL(tab.url()).searchParams;
+    assert.equal(params.get("mode"), mode);
+    const names = await tab.evaluate(() => nativeBattle.diagnostics().actors.map(a => a.name));
+    assert.equal(names.length, seats);
+    assert.equal(new Set(names).size, seats, "distinct fighters");
+    assert.deepEqual(Array.from({ length: seats }, (_, i) => params.get("p" + (i + 1))).map(h => inventory.fighters.find(f => f.handle === h).name), names);
+    assert.ok(Object.hasOwn(lineups[params.get("venue")], MODES[mode].formation), "the venue has the mode's formation");
+    multi[mode] = { fighters: names, venue: params.get("venue") };
+    await tab.close();
+  }
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ fighters: names, venue: venue.name, file: venue.file, portraitsFetchedBeforeMatch: portraits().size }));
-  console.log(JSON.stringify({ ffa: fighters4, venue: four.get("venue") }));
-  console.log("The retail selector chose fighters and a venue, one-on-one and Free For All, and started the native match.");
+  console.log(JSON.stringify(multi));
+  console.log("The retail selector chose fighters and a venue, one-on-one and every advertised Free For All size, and started the native match.");
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

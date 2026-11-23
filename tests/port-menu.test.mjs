@@ -5,7 +5,8 @@ import inventory from "../ps2/content/inventory.json" with { type: "json" };
 import lineups from "../port/battle/lineups.json" with { type: "json" };
 import { createSelection, selectionQuery } from "../port/menu/state.mjs";
 import { menuFiles } from "../port/menu/files.mjs";
-import { parseBattleQuery } from "../port/battle/modes.mjs";
+import { MODES, parseBattleQuery } from "../port/battle/modes.mjs";
+import { matchTypes } from "../port/menu/launch.mjs";
 
 const art = name => JSON.parse(readFileSync(new URL("../port/menu/art/" + name, import.meta.url), "utf8"));
 const roster = art("roster.json"), venues = art("venues.json");
@@ -67,4 +68,48 @@ test("a venue's remix shares its pin and cycles with next/previous", () => {
   const before = s.result().venue;
   s.press(0, "next");
   assert.notEqual(s.result().venue, before);
+});
+
+test("match types follow what MODES advertises, in retail order", () => {
+  assert.deepEqual(matchTypes(MODES, true), ["1v1", "team", "ffa3", "ffa"].filter(mode => Object.hasOwn(MODES, mode)), "exactly the advertised modes");
+  assert.ok(matchTypes(MODES, true).includes("1v1"));
+  const all = { "1v1": {}, ffa: {}, team: {}, ffa3: {} };
+  assert.deepEqual(matchTypes(all, true), ["1v1", "team", "ffa3", "ffa"]);
+  assert.deepEqual(matchTypes(all, false), ["1v1", "team"], "Free For All variants follow their availability switch");
+  assert.deepEqual(matchTypes({ "1v1": {} }, true), ["1v1"]);
+});
+
+test("a three fighter and a tag team selection keep distinct seats and their own formation", () => {
+  for (const [mode, seats, formation] of [["ffa3", 3, "FREE FOR ALL 3"], ["team", 4, "2 vs 2 TAG"]]) {
+    const s = createSelection({ roster, venues, seats, mode, picks: [], venueOk: v => Object.hasOwn(lineups[v.file], formation) });
+    assert.equal(s.state.seats.length, seats);
+    assert.equal(s.state.columns, seats === 3 ? 4 : 3);
+    assert.equal(new Set(s.state.seats.map(x => x.cursor)).size, seats);
+    s.state.seats.forEach((_, i) => s.press(i, "confirm"));
+    s.press(0, "confirm");
+    const q = selectionQuery(s.result());
+    assert.equal(q.get("mode"), mode);
+    assert.equal(q.get("p" + seats) !== null, true);
+    assert.ok(Object.hasOwn(lineups[q.get("venue")], formation));
+  }
+});
+
+test("CPU seats are the last ones, always leave a person, and travel as ?cpu=N", () => {
+  const s = createSelection({ ...options, seats: 4, mode: "ffa", picks: [] });
+  assert.equal(s.state.cpu, 0);
+  assert.equal(selectionQuery(s.result()).has("cpu"), false);
+  s.press(0, "cpu");
+  assert.equal(selectionQuery(s.result()).get("cpu"), "1");
+  s.press(0, "cpu"); s.press(0, "cpu");
+  assert.equal(s.state.cpu, 3);
+  s.press(0, "cpu");
+  assert.equal(s.state.cpu, 0, "never all seats");
+  s.toggleCpuFrom(2);
+  assert.equal(s.state.cpu, 2, "seat 3 and 4");
+  s.toggleCpuFrom(2);
+  assert.equal(s.state.cpu, 1, "seat 3 handed back, seat 4 stays");
+  assert.equal(s.toggleCpuFrom(0), false, "the first seat is never a CPU");
+  const query = selectionQuery(s.result());
+  const parsed = parseBattleQuery(query, { fighters: inventory.fighters, venues: inventory.venues, ffa: true });
+  assert.equal(parsed.cpu, 1);
 });

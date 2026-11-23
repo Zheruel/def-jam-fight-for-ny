@@ -2,22 +2,21 @@
 // battle page's own frame. Resolves with the finished selection ({ mode, handles, venue }); keyboard, gamepads and pointer
 // all drive it. The match-type step only appears when more than one type is offered (Free For All is local-only for now).
 import { createSelection, ROWS } from "./state.mjs";
-import { SIZE, drawFighters, drawVenue, drawType, typeRect, thumbRect, seatAt, pinAt } from "./screens.mjs";
+import { SIZE, drawFighters, drawVenue, drawType, typeRect, thumbRect, seatAt, stickerAt, pinAt } from "./screens.mjs";
 import { onArrive } from "./art.mjs";
-import { venueSupports } from "../battle/modes.mjs";
+import { MODES, venueSupports } from "../battle/modes.mjs";
 
 const json = async name => (await fetch(new URL(name, import.meta.url))).json();
-const SEATS = { "1v1": 2, ffa: 4 };
 
 // Keyboard: player 1 WASD + I (cross) / J (triangle) / Q E; player 2 arrows + [ / L / , . ; players 3 and 4 (Free For All)
-// TFGH + Y / R and numpad 8456 + 5 / 7; Enter confirms for whoever is not ready, Escape steps back.
+// TFGH + Y / R and numpad 8456 + 5 / 7; C (player 2: K, pad Square) cycles how many of the last seats the retail CPU plays; Enter confirms for whoever is not ready, Escape steps back.
 const KEYS = [
-  { a: "left", d: "right", w: "up", s: "down", i: "confirm", j: "back", q: "previous", e: "next" },
-  { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", "[": "confirm", l: "back", ",": "previous", ".": "next" },
+  { a: "left", d: "right", w: "up", s: "down", i: "confirm", j: "back", q: "previous", e: "next", c: "cpu" },
+  { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", "[": "confirm", l: "back", ",": "previous", ".": "next", k: "cpu" },
   { f: "left", h: "right", t: "up", g: "down", y: "confirm", r: "back" },
   { 4: "left", 6: "right", 8: "up", 2: "down", 5: "confirm", 7: "back" },
 ];
-const PAD = { 12: "up", 13: "down", 14: "left", 15: "right", 0: "confirm", 1: "back", 3: "back", 4: "previous", 5: "next" };
+const PAD = { 2: "cpu", 12: "up", 13: "down", 14: "left", 15: "right", 0: "confirm", 1: "back", 3: "back", 4: "previous", 5: "next" };
 
 export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null }) {
   const [roster, venues] = await Promise.all([json("art/roster.json"), json("art/venues.json")]);
@@ -34,7 +33,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
   let selection = null, pick = { types, index: 0 };
   if (types.length === 1) start(types[0]);
   function start(mode) {
-    selection = createSelection({ roster, venues, seats: SEATS[mode], mode, picks, venue, venueOk: v => venueSupports(v.file, mode) });
+    selection = createSelection({ roster, venues, seats: MODES[mode].fighters, mode, picks, venue, venueOk: v => venueSupports(v.file, mode) });
   }
   const screen = () => selection ? selection.state.screen : "type";
 
@@ -110,6 +109,8 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
           if (x >= rx && x < rx + rw && y >= ry && y < ry + rh) { if (pick.index === i) send(0, "confirm"); else { pick.index = i; redraw(); } }
         });
       } else if (screen() === "fighters") {
+        const sticker = stickerAt(selection, x, y);
+        if (sticker >= 0) { selection.toggleCpuFrom(sticker); redraw(); return; }   // a sticker turns that seat (and the later ones) over to the CPU
         const seat = seatAt(selection, x), s = selection.state.seats[seat], { columns } = selection.state;
         if (s.ready) { send(seat, "back"); return; }
         const first = selection.scroll(seat) * columns;

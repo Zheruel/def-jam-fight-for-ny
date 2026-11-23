@@ -8,9 +8,9 @@
 export const ROWS = 3;   // the thumbnail box shows 3 rows of faces: 5 columns on the two-player screen, 3 on the four-player one
 export const COLUMNS = 5;   // two-player default
 
-export const ACTIONS = ["left", "right", "up", "down", "confirm", "back", "next", "previous"];
+export const ACTIONS = ["left", "right", "up", "down", "confirm", "back", "next", "previous", "cpu"];
 
-export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? "ffa" : "1v1", picks = [], venue = null, venueOk = () => true }) {
+export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode = seats > 3 ? "ffa" : seats > 2 ? "ffa3" : "1v1", picks = [], venue = null, venueOk = () => true }) {
   // Venues that share a pin on the retail map (a venue and its "intense" remix) are one spot; next/previous cycle them.
   const spots = [];
   for (const v of venues.filter(v => v.pin && venueOk(v))) {
@@ -18,14 +18,14 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
     if (spot) spot.variants.push(v); else spots.push({ pin: v.pin, variants: [v] });
   }
   const found = spots.findIndex(s => s.variants.some(v => v.file === venue));
-  const columns = seats > 2 ? 3 : COLUMNS;
+  const columns = seats > 3 ? 3 : seats > 2 ? 4 : COLUMNS;   // faces per row of the paper box: 5, 4 or 3 on the two, three and four card screens
   const state = {
-    columns, mode, screen: "fighters", roster, spots, variant: Math.max(0, found < 0 ? 0 : spots[found].variants.findIndex(v => v.file === venue)),
+    columns, mode, cpu: Math.max(0, Math.min(seats - 1, cpuSeats)), screen: "fighters", roster, spots, variant: Math.max(0, found < 0 ? 0 : spots[found].variants.findIndex(v => v.file === venue)),
     seats: Array.from({ length: seats }, (_, i) => ({ cursor: Math.max(0, roster.findIndex(f => f.handle === picks[i])), ready: false })),
     venue: Math.max(0, found),
   };
-  // In Free For All every fighter is distinct (the kernel profiles a fighter by its id), so a repeated pick moves on.
-  const taken = (seat, index) => mode === "ffa" && state.seats.some((s, i) => i !== seat && s.cursor === index);
+  // With more than two fighters every fighter is distinct (the kernel profiles a fighter by its id), so a repeated pick moves on.
+  const taken = (seat, index) => seats > 2 && state.seats.some((s, i) => i !== seat && s.cursor === index);
   state.seats.forEach((s, i) => { while (taken(i, s.cursor)) s.cursor = (s.cursor + 1) % roster.length; });
 
   const columnOf = i => i % columns, rowOf = i => Math.floor(i / columns);
@@ -56,8 +56,13 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
 
   const api = {
     state,
+    // The retail CPU plays the last `count` seats (?cpu=N, port/battle/cpu.mjs): at least one person always stays.
+    setCpu(count) { state.cpu = ((count % seats) + seats) % seats; return true; },
+    // Clicking seat i's sticker makes seat i and every later seat CPU, or hands seat i back to a person if it already was the first CPU.
+    toggleCpuFrom(seat) { if (seat < 1) return false; state.cpu = state.cpu === seats - seat ? seats - seat - 1 : seats - seat; return true; },
     // Seat actions on the fighter screen; any seat on the venue screen (the host chooses the venue).
     press(seat, action) {
+      if (action === "cpu" && state.screen === "fighters") return api.setCpu(state.cpu + 1);
       if (state.screen === "fighters") {
         const s = state.seats[seat];
         if (!s) return false;
@@ -91,7 +96,7 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
     pickVenue(index) { if (state.spots[index]) { state.venue = index; state.variant = 0; return true; } return false; },
     result() {
       return {
-        mode: state.mode, handles: state.seats.map(s => roster[s.cursor].handle), venue: state.spots[state.venue].variants[state.variant].file,
+        mode: state.mode, cpu: state.cpu, handles: state.seats.map(s => roster[s.cursor].handle), venue: state.spots[state.venue].variants[state.variant].file,
       };
     },
     // Scroll offset (first visible row) that keeps a seat's cursor on screen.
@@ -105,10 +110,11 @@ export function createSelection({ roster, venues, seats = 2, mode = seats > 2 ? 
 }
 
 // Query string of a finished selection, matching port/battle/modes.mjs.
-export function selectionQuery({ mode, handles, venue }) {
+export function selectionQuery({ mode, handles, venue, cpu = 0 }) {
   const params = new URLSearchParams();
   if (mode !== "1v1") params.set("mode", mode);
   handles.forEach((handle, i) => params.set("p" + (i + 1), handle));
   params.set("venue", venue);
+  if (cpu > 0) params.set("cpu", String(cpu));
   return params;
 }

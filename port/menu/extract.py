@@ -35,6 +35,13 @@ VENUE_ART = {"Carribean Club": 12, "Junkyard (After Hours)": 15, "Subway": 11, "
              "Crow's Office": 26, "Crow's Cage": 10, "Crow's Club": 9, "Construction Site": 19, "DMob Club": 4,
              "Parkade": 17, "The Limit CLub": 2, "DMob Club (Intense)": 5, "Junkyard": 14, "Chopshop": 13,
              "Power Plant": 7, "Gauntlet (Another Lighting)": 21, "Dragon House (Remix)": 8, "Gauntlet": 22}
+# cmusen.loc string numbers of the venue descriptions (3066..3091 are consecutive; 3067 is a title and 3071/3081 describe
+# story-only spots). Venues are matched to them by what each text says.
+VENUE_TEXT = {"Carribean Club": 3080, "Junkyard (After Hours)": 3084, "Subway": 3079, "Club DTP (Intense)": 3086,
+              "Fight Club": 3070, "Warehouse Inferno": 3089, "Lefrak (Remix)": 3075, "Club DTP": 3085, "Blaze's Gym": 3091,
+              "Old School Club": 3078, "Crow's Office": 3090, "Crow's Cage": 3072, "Crow's Club": 3073, "Construction Site": 3076,
+              "DMob Club": 3066, "Parkade": 3077, "The Limit CLub": 3069, "DMob Club (Intense)": 3068, "Junkyard": 3083,
+              "Chopshop": 3082, "Power Plant": 3087, "Gauntlet (Another Lighting)": 3088, "Dragon House (Remix)": 3074, "Gauntlet": 3088}
 STYLES = {"kickboxing": 0x88, "streetfighting": 0x8a, "martialArts": 0x8c, "wrestling": 0x8e, "submissions": 0x90}
 STICKERS = [0x7d, 0x7e, 0x80, 0x81]   # blue, red, green, purple player stickers (chooseF2 texture order)
 THUMB = 40
@@ -76,6 +83,23 @@ class Source:
         parts = self.read(member)
         ssh = next(v for k, v in parts.items() if k.endswith(".ssh"))
         return {k.strip(): v for k, v in textures(ssh).items()}
+
+
+def loc_strings(source) -> list:
+    """The US English front-end text (MISC.VIV cmusen.loc): LOCH, LOCT (hash table), then LOCL = size, 0, count, offsets from
+    the LOCL start, UTF-16 strings. Keys are hashed (not needed: the strings keep their order)."""
+    archive = "/ASSETS/MISC.VIV"
+    raw = source.disc.read(archive, *source.disc.viv_entry(archive, "cmusen.loc"))
+    data = decompress(raw) if raw[:2] == bytes.fromhex("10fb") else raw
+    base = data.index(b"LOCL")
+    count = struct.unpack_from("<I", data, base + 12)[0]
+    out = []
+    for offset in struct.unpack_from(f"<{count}I", data, base + 16):
+        end = base + offset
+        while data[end:end + 2] != b"\0\0":
+            end += 2
+        out.append(data[base + offset:end].decode("utf-16-le"))
+    return out
 
 
 def write(path: Path, data: bytes):
@@ -120,15 +144,20 @@ def export(iso, output: Path):
             f2pic(index, f"style-{style}")
 
         types = source.pictures("screens/battle/support/chooseMatchTypeButtons.big")
-        for tag, name in (("9", "type-1v1"), ("27", "type-ffa"), ("15", "type-bracket")):
+        for tag, name in (("9", "type-1v1"), ("23", "type-team"), ("27", "type-ffa"), ("15", "type-bracket")):
             write(output / f"{name}.png", types[tag])
+        f3 = source.pictures("screens/battle/chooseF3.big")
+        for tag, name in (("343", "select3-bg-0"), ("342", "select3-bg-1"), ("330", "ready3"), ("373", "thumb-paper3")):
+            write(output / f"{name}.png", f3[tag])
         f4 = source.pictures("screens/battle/chooseF4.big")
         for tag, name in (("344", "select4-bg-0"), ("343", "select4-bg-1"), ("338", "ready4"), ("376", "thumb-paper4")):
             write(output / f"{name}.png", f4[tag])
 
         # -- venues (chsVenue + chooseVenueArt + venThumb<feID>) ------------------------------------------------
-        for n in range(1, 8):
-            write(output / f"map-{n}.png", source.pictures("screens/battle/venueMap.big")[str(n)])
+        # battle/map.big is the retail map (red streets, borough names): a 3 x 3 grid of 512/512/336 by 512/512/92 pieces whose
+        # order was recovered by matching edges (see TILES in screens.mjs): 9 7 6 / 5 4 3 / 2 1 8.
+        for tag, tile in source.pictures("screens/battle/map.big").items():
+            write(output / f"map-{tag}.png", tile)
         chs = source.pictures("screens/battle/chsVenue.big")
         for tag, name in (("143", "polaroid-a"), ("150", "polaroid-b"), ("157", "polaroid-c"), ("141", "tape"),
                           ("11", "paper-0"), ("14", "paper-1"), ("19", "paper-2"), ("8", "paper-3"), ("71", "red-0"), ("74", "red-1"),
@@ -136,6 +165,7 @@ def export(iso, output: Path):
             write(output / f"{name}.png", chs[tag])
         art = source.pictures("screens/_art/chooseVenueArt.big")
         venues = []
+        text = loc_strings(source)
         for venue in inventory["venues"]:
             n = VENUE_ART[venue["key"]]
             photo = art[str(206 + 3 * n)]
@@ -143,7 +173,8 @@ def export(iso, output: Path):
             note = f"screens/venuethumbs/venThumb{venue['feID']}.big"
             if source.has(note):
                 write(output / f"notes/{venue['feID']}.png", next(iter(source.pictures(note).values())))
-            venues.append({"file": venue["file"], "handle": venue["handle"], "name": venue["name"], "feID": venue["feID"]})
+            venues.append({"file": venue["file"], "handle": venue["handle"], "name": venue["name"], "feID": venue["feID"],
+                           "description": text[VENUE_TEXT[venue["key"]]].strip()})
         pins = {}
         movie = apt.Apt.parse(source.read("screens/battle/chsVenue.big")["chsVenue.apt"])
         for e in movie.flatten(0, 0):

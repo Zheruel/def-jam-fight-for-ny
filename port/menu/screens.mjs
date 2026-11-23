@@ -15,6 +15,15 @@ const TWO = {
     { sticker: [319, 75], window: [331, 131, 249, 278], name: [386, 61], stats: [464, 157], bars: [517, 161], style: [462, 274], box: [329, 300] },
   ],
 };
+const THREE = {
+  bg: ["select3-bg-0.png", "select3-bg-1.png"], paper: ["thumb-paper3.png", 176, 128], ready: ["ready3.png", 200, 100], name: [208, 100, 0.72],
+  bar: { width: 53, pitch: 18, height: 11 }, labels: [48, 112, 50, 112], cell: { x: 6, y: 7, w: 40, h: 38, size: 36 }, scroller: [160, 6, 5, 112],
+  seats: [
+    { sticker: [39, 77], window: [56, 128, 166, 180], name: [72, 70], stats: [109, 156], bars: [161, 162], style: [106, 272], box: [52, 306] },
+    { sticker: [219, 81], window: [236, 128, 166, 180], name: [250, 78], stats: [290, 160], bars: [341, 166], style: [286, 278], box: [232, 313] },
+    { sticker: [405, 77], window: [420, 128, 166, 180], name: [437, 70], stats: [475, 156], bars: [526, 162], style: [471, 272], box: [416, 307] },
+  ],
+};
 const FOUR = {
   bg: ["select4-bg-0.png", "select4-bg-1.png"], paper: ["thumb-paper4.png", 136, 128], ready: ["ready4.png", 152, 76], name: [208, 100, 0.6],
   bar: { width: 37, pitch: 16.6, height: 10 }, labels: [48, 112, 45, 102], cell: { x: 8, y: 6, w: 38, h: 38, size: 34 }, scroller: [122, 6, 4, 112],
@@ -25,12 +34,16 @@ const FOUR = {
     { sticker: [446, 77], window: [459, 135, 124, 176], name: [461, 75], stats: [496, 173], bars: [543, 179], style: [486, 277], box: [455, 311] },
   ],
 };
-const layoutOf = selection => selection.state.seats.length > 2 ? FOUR : TWO;
+const layoutOf = selection => [TWO, TWO, TWO, THREE, FOUR][selection.state.seats.length];
 const STAT_KEYS = ["upperPower", "lowerPower", "speed", "toughness", "health", "charisma"];
 
 export const thumbRect = (selection, seat, slot) => {
   const L = layoutOf(selection), { columns } = selection.state, [bx, by] = L.seats[seat].box;
   return [bx + L.cell.x + (slot % columns) * L.cell.w, by + L.cell.y + Math.floor(slot / columns) * L.cell.h, L.cell.size, L.cell.size];
+};
+export const stickerAt = (selection, x, y) => {
+  const L = layoutOf(selection);
+  return L.seats.findIndex(g => x >= g.sticker[0] && x < g.sticker[0] + 50 && y >= g.sticker[1] && y < g.sticker[1] + 38);
 };
 export const seatAt = (selection, x) => Math.min(selection.state.seats.length - 1, Math.floor(x / (SIZE.width / selection.state.seats.length)));
 
@@ -65,14 +78,16 @@ export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
   ctx.fillStyle = "#3a4742"; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
   if (left) ctx.drawImage(left, 0, 0);
   if (right) ctx.drawImage(right, 512, 0);
-  title(ctx, selection.state.mode === "ffa" ? "CHOOSE FIGHTERS" : "CHOOSE FIGHTER", [["\u2715", "SELECT"], ["\u25b3", "BACK"]]);
+  title(ctx, selection.state.seats.length > 2 ? "CHOOSE FIGHTERS" : "CHOOSE FIGHTER", [["\u2715", "SELECT"], ["\u25b3", "BACK"]]);
 
+  outlined(ctx, `C  CPU OPPONENTS: ${selection.state.cpu || "OFF"}`, 30, 454, 13, { width: 2.5 });
   const thumbs = have("thumbs.png");
   seats.forEach((seat, i) => {
     const g = L.seats[i], fighter = roster[seat.cursor];
     const sticker = have(`sticker-${i + 1}.png`);
     if (sticker) ctx.drawImage(sticker, g.sticker[0], g.sticker[1], 50, 38);
-    outlined(ctx, `P${i + 1}`, g.sticker[0] + 25, g.sticker[1] + 6, 17, { align: "center", width: 2 });
+    const isCpu = i >= seats.length - selection.state.cpu;
+    outlined(ctx, isCpu ? "CPU" : `P${i + 1}`, g.sticker[0] + 25, g.sticker[1] + 6, isCpu ? 14 : 17, { align: "center", width: 2 });
     // portrait: the head piece over the chest piece, clipped to the card's window
     const [wx, wy, ww, wh] = g.window;
     const [head, chest, name] = fighterPictures(fighter.id).map(have);
@@ -129,8 +144,9 @@ export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
 }
 
 // -- match type screen --------------------------------------------------------------------------------------------------
-const TYPE_ART = { "1v1": ["type-1v1.png", "ONE ON ONE"], ffa: ["type-ffa.png", "FREE FOR ALL"] };
-export const typeRect = (count, slot) => { const width = 190, gap = 40, x0 = (SIZE.width - count * width - (count - 1) * gap) / 2; return [x0 + slot * (width + gap), 130, width, 240]; };
+const TYPE_ART = { "1v1": ["type-1v1.png", "ONE ON ONE"], team: ["type-team.png", "TAG TEAM"], ffa3: ["type-ffa.png", "FREE FOR ALL 3"],
+  ffa: ["type-ffa.png", "FREE FOR ALL"] };
+export const typeRect = (count, slot) => { const width = Math.min(190, Math.floor((SIZE.width - 60) / count) - 30), gap = 30, x0 = (SIZE.width - count * width - (count - 1) * gap) / 2; return [x0 + slot * (width + gap), 130, width, 240]; };
 
 export function drawType(ctx, { types, index }, { time = 0 } = {}) {
   ctx.clearRect(0, 0, SIZE.width, SIZE.height);
@@ -143,22 +159,24 @@ export function drawType(ctx, { types, index }, { time = 0 } = {}) {
     if (chosen) {
       const bracket = have("type-bracket.png");
       ctx.save(); ctx.globalAlpha = 0.7 + 0.3 * Math.sin(time / 140);
-      if (bracket) ctx.drawImage(bracket, 13, 12, 69, 112, x + w / 2 - 95, y - 22, 190, 262);
+      if (bracket) ctx.drawImage(bracket, 13, 12, 69, 112, x + w / 2 - 95 * w / 190, y + h / 2 - 17 - 131 * w / 190, w, 262 * w / 190);
       ctx.restore();
     }
     ctx.save();
-    ctx.translate(x + w / 2, y + h / 2); ctx.rotate(chosen ? 0 : (i % 2 ? 0.03 : -0.03)); ctx.scale(chosen ? 1.06 : 1, chosen ? 1.06 : 1);
+    ctx.translate(x + w / 2, y + h / 2); ctx.rotate(chosen ? 0 : (i % 2 ? 0.03 : -0.03)); ctx.scale((chosen ? 1.06 : 1) * w / 190, (chosen ? 1.06 : 1) * w / 190);
     if (card) ctx.drawImage(card, 0, 0, 60, 84, -75, -122, 150, 210);   // the 128x128 picture holds one 58x82 card
     ctx.restore();
-    outlined(ctx, label, x + w / 2, y + h - 38, 20, { align: "center", fill: chosen ? "#f1e8c8" : "#a8a290", width: 3 });
+    outlined(ctx, label, x + w / 2, y + h - 38, Math.round(20 * Math.max(0.6, w / 190)), { align: "center", fill: chosen ? "#f1e8c8" : "#a8a290", width: 3 });
   });
 }
 
 // -- venue screen ------------------------------------------------------------------------------------------------------
-const MAP = { x: -289, y: -224, width: 1602, height: 1672 };   // the map shape in the movie's map space
-// Tile order found by matching tile edges: the top row runs 4, 3, 2, 1 and the bottom row 7, 6, 5 (venueMap.big sizes).
-const TILES = [[4, 0, 0, 216, 584], [3, 216, 0, 376, 584], [2, 592, 0, 376, 584], [1, 968, 0, 368, 584],
-  [7, 0, 584, 368, 560], [6, 368, 584, 368, 560], [5, 736, 584, 368, 560]];
+// battle/map.big: 3 x 3 pieces (columns 512, 512, 336 wide; rows 512, 512, 92 high), in map space from (0, 0). The order,
+// 9 7 6 / 5 4 3 / 2 1 8, was recovered by matching piece edges and agrees with the geography (Bronx above Brooklyn,
+// Staten Island west, the Long Island shore east).
+const TILES = [[9, 0, 0, 512, 512], [7, 512, 0, 512, 512], [6, 1024, 0, 336, 512],
+  [5, 0, 512, 512, 512], [4, 512, 512, 512, 512], [3, 1024, 512, 336, 512],
+  [2, 0, 1024, 512, 92], [1, 512, 1024, 512, 92], [8, 1024, 1024, 336, 92]];
 const FOCUS = [165, 235];   // where the selected pin sits on screen
 
 export function drawVenue(ctx, selection, { time = 0, camera } = {}) {
@@ -169,12 +187,11 @@ export function drawVenue(ctx, selection, { time = 0, camera } = {}) {
   const cx = camera?.x ?? spot.pin[0], cy = camera?.y ?? spot.pin[1];
   ctx.save();
   ctx.translate(FOCUS[0] - cx, FOCUS[1] - cy);
-  const sx = MAP.width / 1336, sy = MAP.height / 1144;
   for (const [n, x, y, w, h] of TILES) {
     const tile = have(`map-${n}.png`);
-    if (tile) ctx.drawImage(tile, MAP.x + x * sx, MAP.y + y * sy, w * sx + 1, h * sy + 1);
+    if (tile) ctx.drawImage(tile, x, y, w + 0.5, h + 0.5);
   }
-  const pinGrey = have("pin-grey.png"), pinRed = have("pin-red.png");
+  const pinRed = have("pin-red.png");
   spots.forEach((s, i) => {
     const chosen = i === venue, [px, py] = s.pin, v = s.variants[chosen ? variant : 0];
     const note = have(`notes/${v.feID}.png`), paper = have(`${chosen ? "red" : "paper"}-${v.feID % 4}.png`);
@@ -182,10 +199,9 @@ export function drawVenue(ctx, selection, { time = 0, camera } = {}) {
     ctx.translate(px, py);
     if (chosen) ctx.scale(1.18, 1.18);
     ctx.rotate(((v.feID * 7) % 9 - 4) * 0.012);
-    if (paper) ctx.drawImage(paper, -paper.width / 2, -8);
-    if (note) ctx.drawImage(note, -note.width / 2, 4 + (paper ? (paper.height - 12 - note.height) / 2 : 0));
-    const pin = chosen ? pinRed : pinGrey;
-    if (pin) ctx.drawImage(pin, -16, -26, 32, 32);
+    if (paper) ctx.drawImage(paper, -paper.width / 2, -12);
+    if (note) ctx.drawImage(note, -note.width / 2, -4 + (paper ? (paper.height - 12 - note.height) / 2 : 0));
+    if (pinRed) ctx.drawImage(pinRed, -16, -22, 32, 32);   // every pin is red on the retail map
     ctx.restore();
   });
   ctx.restore();
@@ -200,26 +216,32 @@ export function drawVenue(ctx, selection, { time = 0, camera } = {}) {
       ctx.restore();
     });
   }
-  title(ctx, "CHOOSE VENUE", [["△", "BACK"]]);
 
-  // polaroid with the venue's photograph and name
-  const frame = have("polaroid-c.png"), back = have("polaroid-a.png");
-  ctx.save();
-  ctx.translate(480, 200);
-  ctx.rotate(0.035);
-  if (back) ctx.drawImage(back, -118, -128, 236, 236);
-  ctx.rotate(-0.07);
+  // the retail map darkens towards the top and bottom edges
+  const dark = ctx.createLinearGradient(0, 0, 0, SIZE.height);
+  dark.addColorStop(0, "rgba(0,0,0,.82)"); dark.addColorStop(0.16, "rgba(0,0,0,0)"); dark.addColorStop(0.9, "rgba(0,0,0,0)"); dark.addColorStop(1, "rgba(0,0,0,.8)");
+  ctx.fillStyle = dark; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
+  title(ctx, "CHOOSE VENUE", [["\u25b3", "BACK"]]);
+
+  // two polaroids behind, the front one holding the photograph and the venue's name; the description on taped notepaper
+  const [back, middle, frame, tape] = ["polaroid-a.png", "polaroid-b.png", "polaroid-c.png", "tape.png"].map(have);
+  const tilted = (image, x, y, angle) => {
+    if (!image) return;
+    ctx.save(); ctx.translate(x + 128, y + 128); ctx.rotate(angle); ctx.drawImage(image, -128, -128); ctx.restore();
+  };
+  if (tape) ctx.drawImage(tape, 335, 233, 320, 192);
+  tilted(back, 385, 72, 0.045); tilted(middle, 345, 82, -0.04); tilted(frame, 365, 82, 0.01);
   const photo = have(`venues/${current.file}.png`);
-  if (frame) ctx.drawImage(frame, -128, -128);
-  if (photo) ctx.drawImage(photo, -100, -108, 200, 158);
-  ctx.restore();
-  ctx.save();
-  ctx.translate(480, 200); ctx.rotate(-0.035);
-  let size = 22;
+  if (photo) ctx.drawImage(photo, 365 + 21, 82 + 17, 192, 152);
+  let size = 24;
   ctx.font = `${size}px ${FONT}`;
   const wide = ctx.measureText(current.name.toUpperCase()).width;
   if (wide > 200) size = Math.floor(size * 200 / wide);
-  outlined(ctx, current.name.toUpperCase(), 0, 58, size, { align: "center", fill: "#1a1814", stroke: "#e9e5da", width: 3 });
+  outlined(ctx, current.name.toUpperCase(), 493, 82 + 178, size, { align: "center", fill: "#15130f", stroke: "#f2eee4", width: 3 });
+  const lines = wrap(ctx, current.description ?? "", 196, 13);
+  ctx.save();
+  ctx.font = `13px ${FONT}`; ctx.fillStyle = "#26335c"; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  lines.forEach((line, i) => ctx.fillText(line, 483, 318 + i * 17));
   ctx.restore();
   // variants (a venue and its remix share a pin)
   if (spot.variants.length > 1) {
@@ -230,8 +252,21 @@ export function drawVenue(ctx, selection, { time = 0, camera } = {}) {
     outlined(ctx, "Q / E  OTHER LIGHTING", 480, 360, 11, { align: "center", width: 2 });
   }
   const select = have("label-strip.png");
-  if (select) ctx.drawImage(select, 520, 404, 90, 30);
-  outlined(ctx, "SELECT", 568, 409, 14, { align: "center", width: 2 });
+  if (select) ctx.drawImage(select, 498, 386, 90, 30);
+  ctx.save(); ctx.font = `13px ${FONT}`; ctx.fillStyle = "#9fb7e6"; ctx.textBaseline = "top"; ctx.fillText("\u2715", 507, 392); ctx.restore();
+  outlined(ctx, "SELECT", 524, 392, 13, { width: 2 });
+}
+
+function wrap(ctx, text, width, size) {
+  ctx.font = `${size}px ${FONT}`;
+  const lines = [];
+  let line = "";
+  for (const word of text.split(/\s+/)) {
+    const next = line ? line + " " + word : word;
+    if (line && ctx.measureText(next).width > width) { lines.push(line); line = word; } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
 }
 
 // Venue pointer hit-test in screen space: the index of the pin under (x, y) for the current camera.
@@ -240,7 +275,7 @@ export function pinAt(selection, x, y, camera) {
   const cx = camera?.x ?? spots[venue].pin[0], cy = camera?.y ?? spots[venue].pin[1];
   const mx = x - FOCUS[0] + cx, my = y - FOCUS[1] + cy;
   let best = -1, distance = 40;
-  spots.forEach((s, i) => { const d = Math.hypot(s.pin[0] - mx, s.pin[1] + 26 - my); if (d < distance) { distance = d; best = i; } });
+  spots.forEach((s, i) => { const d = Math.hypot(s.pin[0] - mx, s.pin[1] + 22 - my); if (d < distance) { distance = d; best = i; } });
   return best;
 }
 export const FOCUS_POINT = FOCUS;
