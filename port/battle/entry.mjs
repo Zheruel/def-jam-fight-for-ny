@@ -1,5 +1,8 @@
-const code=new URLSearchParams(location.search).get("room");
+const params=new URLSearchParams(location.search),code=params.get("room");
+// A direct link (?p1=&p2=&venue= or ?mode=) starts that match; a bare page opens the retail fighter and venue selector (?menu=1 forces it).
+const direct=!params.has("menu")&&["p1","p2","p3","p4","venue","mode"].some(key=>params.has(key));
 if(!code) {
+  if(!direct) await (await import("../menu/launch.mjs")).chooseMatch(params);
   await import("../viewer/viewer.mjs");
 } else {
   const {battleControls}=await import("./controls.mjs");

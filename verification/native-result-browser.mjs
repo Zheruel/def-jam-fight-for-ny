@@ -12,7 +12,7 @@ const server = gameServer();
 attachNetplay(server);
 server.listen(0,"127.0.0.1");
 await once(server,"listening");
-const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`;
+const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/?p1=0x07000030&p2=0x07000025&venue=V2BG_02A`;   // a direct link skips the menu
 let browser;
 // Pixels of the banner's cream lettering inside the band it is drawn in (screen rows 160..288 of 448).
 // Pixels of the REMATCH? card's cream paper (screen rows 284..444, the middle of the screen).

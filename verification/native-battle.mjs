@@ -8,7 +8,7 @@ const server = gameServer();
 attachNetplay(server);
 server.listen(0,"127.0.0.1");
 await once(server,"listening");
-const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`;
+const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/?p1=0x07000030&p2=0x07000025&venue=V2BG_02A`;   // a direct link skips the menu
 let browser;
 try {
   browser = await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});

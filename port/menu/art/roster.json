@@ -1,0 +1,1246 @@
+[
+ {
+  "id": 0,
+  "handle": "0x07000038",
+  "name": "House",
+  "model": "V2IP_003A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 37,
+   "speed": 23,
+   "toughness": 50,
+   "health": 27,
+   "charisma": 30
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 1,
+  "handle": "0x07000001",
+  "name": "Bo",
+  "model": "V2IP_012A",
+  "stats": {
+   "upperPower": 23,
+   "lowerPower": 30,
+   "speed": 37,
+   "toughness": 50,
+   "health": 47,
+   "charisma": 30
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 2,
+  "handle": "0x0700000A",
+  "name": "Nyne",
+  "model": "V2IP_009A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 33,
+   "speed": 43,
+   "toughness": 33,
+   "health": 30,
+   "charisma": 40
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 3,
+  "handle": "0x07000045",
+  "name": "Trick",
+  "model": "V2IP_013A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 40,
+   "speed": 23,
+   "toughness": 43,
+   "health": 33,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 4,
+  "handle": "0x07000006",
+  "name": "Cruz",
+  "model": "V2IP_007A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 27,
+   "speed": 37,
+   "toughness": 33,
+   "health": 47,
+   "charisma": 27
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 6,
+  "handle": "0x07000043",
+  "name": "Skull",
+  "model": "V2IP_018A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 23,
+   "speed": 33,
+   "toughness": 47,
+   "health": 33,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting",
+   "submissions"
+  ]
+ },
+ {
+  "id": 7,
+  "handle": "0x07000044",
+  "name": "Trejo",
+  "model": "V2IP_112A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 30,
+   "speed": 37,
+   "toughness": 50,
+   "health": 47,
+   "charisma": 23
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 8,
+  "handle": "0x07000039",
+  "name": "Ice-T",
+  "model": "V2IP_132A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 40,
+   "speed": 40,
+   "toughness": 30,
+   "health": 23,
+   "charisma": 50
+  },
+  "styles": [
+   "martialArts",
+   "submissions"
+  ]
+ },
+ {
+  "id": 9,
+  "handle": "0x0700000D",
+  "name": "Solo",
+  "model": "V2IP_011A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 27,
+   "speed": 37,
+   "toughness": 40,
+   "health": 30,
+   "charisma": 47
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts",
+   "submissions"
+  ]
+ },
+ {
+  "id": 10,
+  "handle": "0x07000008",
+  "name": "Meca",
+  "model": "V2IP_201A",
+  "stats": {
+   "upperPower": 33,
+   "lowerPower": 47,
+   "speed": 30,
+   "toughness": 40,
+   "health": 33,
+   "charisma": 33
+  },
+  "styles": [
+   "kickboxing"
+  ]
+ },
+ {
+  "id": 11,
+  "handle": "0x07000046",
+  "name": "Elephant Man",
+  "model": "V2IP_127A",
+  "stats": {
+   "upperPower": 33,
+   "lowerPower": 50,
+   "speed": 43,
+   "toughness": 40,
+   "health": 27,
+   "charisma": 40
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 12,
+  "handle": "0x07000022",
+  "name": "Sean Paul",
+  "model": "V2IP_125A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 47,
+   "speed": 50,
+   "toughness": 27,
+   "health": 47,
+   "charisma": 50
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 13,
+  "handle": "0x07000013",
+  "name": "Chiang",
+  "model": "V2IP_006A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 37,
+   "speed": 50,
+   "toughness": 27,
+   "health": 40,
+   "charisma": 33
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 14,
+  "handle": "0x07000007",
+  "name": "Masa",
+  "model": "V2IP_005A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 47,
+   "speed": 37,
+   "toughness": 40,
+   "health": 27,
+   "charisma": 27
+  },
+  "styles": [
+   "submissions"
+  ]
+ },
+ {
+  "id": 16,
+  "handle": "0x07000002",
+  "name": "WC",
+  "model": "V2IP_303A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 40,
+   "speed": 40,
+   "toughness": 30,
+   "health": 40,
+   "charisma": 40
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 17,
+  "handle": "0x07000034",
+  "name": "Crack",
+  "model": "V2IP_106A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 50,
+   "speed": 23,
+   "toughness": 50,
+   "health": 40,
+   "charisma": 37
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 18,
+  "handle": "0x0700003E",
+  "name": "Baxter",
+  "model": "V2IP_015A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 27,
+   "speed": 33,
+   "toughness": 27,
+   "health": 43,
+   "charisma": 50
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 19,
+  "handle": "0x07000036",
+  "name": "Dan G",
+  "model": "V2IP_004A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 30,
+   "speed": 40,
+   "toughness": 47,
+   "health": 23,
+   "charisma": 47
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 20,
+  "handle": "0x07000003",
+  "name": "Crazy Legs",
+  "model": "V2IP_121A",
+  "stats": {
+   "upperPower": 27,
+   "lowerPower": 47,
+   "speed": 50,
+   "toughness": 30,
+   "health": 23,
+   "charisma": 40
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 21,
+  "handle": "0x0700002A",
+  "name": "Flava Flav",
+  "model": "V2IP_110A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 27,
+   "speed": 50,
+   "toughness": 30,
+   "health": 47,
+   "charisma": 50
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 22,
+  "handle": "0x0700003B",
+  "name": "Magic",
+  "model": "V2IP_128A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 30,
+   "speed": 27,
+   "toughness": 43,
+   "health": 50,
+   "charisma": 50
+  },
+  "styles": [
+   "submissions"
+  ]
+ },
+ {
+  "id": 23,
+  "handle": "0x07000035",
+  "name": "Bubba Sparxxx",
+  "model": "V2IP_107A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 30,
+   "speed": 30,
+   "toughness": 50,
+   "health": 43,
+   "charisma": 30
+  },
+  "styles": [
+   "kickboxing",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 24,
+  "handle": "0x07000017",
+  "name": "Lil' Flip",
+  "model": "V2IP_307A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 27,
+   "speed": 50,
+   "toughness": 37,
+   "health": 47,
+   "charisma": 43
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 25,
+  "handle": "0x0700003D",
+  "name": "Banner",
+  "model": "V2IP_124A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 27,
+   "speed": 23,
+   "toughness": 50,
+   "health": 40,
+   "charisma": 43
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 26,
+  "handle": "0x07000031",
+  "name": "Bless",
+  "model": "V2IP_101A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 47,
+   "speed": 37,
+   "toughness": 23,
+   "health": 40,
+   "charisma": 33
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 27,
+  "handle": "0x0700000C",
+  "name": "Rome",
+  "model": "V2IP_010A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 27,
+   "speed": 37,
+   "toughness": 30,
+   "health": 50,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 28,
+  "handle": "0x07000037",
+  "name": "Havoc",
+  "model": "V2IP_118A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 27,
+   "speed": 43,
+   "toughness": 43,
+   "health": 27,
+   "charisma": 33
+  },
+  "styles": [
+   "martialArts",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 30,
+  "handle": "0x0700001B",
+  "name": "Fam-Lay",
+  "model": "V2IP_120A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 40,
+   "speed": 33,
+   "toughness": 43,
+   "health": 50,
+   "charisma": 27
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 31,
+  "handle": "0x07000019",
+  "name": "Bonecrusher",
+  "model": "V2IP_111A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 23,
+   "speed": 20,
+   "toughness": 50,
+   "health": 40,
+   "charisma": 50
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 32,
+  "handle": "0x07000026",
+  "name": "Slick Rick",
+  "model": "V2IP_130A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 30,
+   "speed": 37,
+   "toughness": 50,
+   "health": 37,
+   "charisma": 37
+  },
+  "styles": [
+   "kickboxing",
+   "submissions"
+  ]
+ },
+ {
+  "id": 33,
+  "handle": "0x07000020",
+  "name": "Baby Chris",
+  "model": "V2IP_122A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 47,
+   "speed": 37,
+   "toughness": 27,
+   "health": 47,
+   "charisma": 30
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 34,
+  "handle": "0x0700002E",
+  "name": "Mack 10",
+  "model": "V2IP_117A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 30,
+   "speed": 30,
+   "toughness": 47,
+   "health": 47,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 35,
+  "handle": "0x0700002B",
+  "name": "Xzibit",
+  "model": "V2IP_115A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 47,
+   "speed": 50,
+   "toughness": 43,
+   "health": 43,
+   "charisma": 30
+  },
+  "styles": [
+   "kickboxing",
+   "submissions"
+  ]
+ },
+ {
+  "id": 36,
+  "handle": "0x07000023",
+  "name": "Warren G",
+  "model": "V2IP_306A",
+  "stats": {
+   "upperPower": 27,
+   "lowerPower": 33,
+   "speed": 50,
+   "toughness": 50,
+   "health": 47,
+   "charisma": 43
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 38,
+  "handle": "0x07000047",
+  "name": "Kimora",
+  "model": "V2IP_407A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 40,
+   "speed": 30,
+   "toughness": 27,
+   "health": 50,
+   "charisma": 47
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 43,
+  "handle": "0x07000014",
+  "name": "Memphis Bleek",
+  "model": "V2IP_103A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 30,
+   "speed": 40,
+   "toughness": 30,
+   "health": 50,
+   "charisma": 43
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 44,
+  "handle": "0x0700001F",
+  "name": "Freeway",
+  "model": "V2IP_301A",
+  "stats": {
+   "upperPower": 27,
+   "lowerPower": 50,
+   "speed": 47,
+   "toughness": 47,
+   "health": 30,
+   "charisma": 33
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 45,
+  "handle": "0x0700001A",
+  "name": "Ghostface Killah",
+  "model": "V2IP_108A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 47,
+   "speed": 27,
+   "toughness": 43,
+   "health": 40,
+   "charisma": 43
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 46,
+  "handle": "0x07000004",
+  "name": "Comp",
+  "model": "V2IP_304A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 43,
+   "speed": 23,
+   "toughness": 50,
+   "health": 27,
+   "charisma": 43
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 47,
+  "handle": "0x07000011",
+  "name": "Capone",
+  "model": "V2IP_105A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 27,
+   "speed": 43,
+   "toughness": 33,
+   "health": 50,
+   "charisma": 30
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 48,
+  "handle": "0x07000009",
+  "name": "NORE",
+  "model": "V2IP_104A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 40,
+   "speed": 27,
+   "toughness": 47,
+   "health": 27,
+   "charisma": 47
+  },
+  "styles": [
+   "streetfighting",
+   "submissions"
+  ]
+ },
+ {
+  "id": 50,
+  "handle": "0x0700002F",
+  "name": "Joe Budden",
+  "model": "V2IP_302A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 37,
+   "speed": 40,
+   "toughness": 30,
+   "health": 43,
+   "charisma": 30
+  },
+  "styles": [
+   "martialArts",
+   "submissions"
+  ]
+ },
+ {
+  "id": 51,
+  "handle": "0x0700001E",
+  "name": "Scarface",
+  "model": "V2IP_116A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 47,
+   "speed": 27,
+   "toughness": 37,
+   "health": 50,
+   "charisma": 37
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 54,
+  "handle": "0x07000024",
+  "name": "Ludacris",
+  "model": "V2IP_123A",
+  "stats": {
+   "upperPower": 27,
+   "lowerPower": 50,
+   "speed": 43,
+   "toughness": 43,
+   "health": 37,
+   "charisma": 50
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 55,
+  "handle": "0x07000025",
+  "name": "Doc",
+  "model": "V2IP_109A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 30,
+   "speed": 50,
+   "toughness": 27,
+   "health": 50,
+   "charisma": 50
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 56,
+  "handle": "0x07000030",
+  "name": "Blaze",
+  "model": "V2IP_113A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 43,
+   "speed": 27,
+   "toughness": 50,
+   "health": 33,
+   "charisma": 47
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 57,
+  "handle": "0x07000010",
+  "name": "Sticky Fingaz",
+  "model": "V2IP_114A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 27,
+   "speed": 40,
+   "toughness": 50,
+   "health": 50,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 58,
+  "handle": "0x07000005",
+  "name": "Crow",
+  "model": "V2IP_126A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 43,
+   "speed": 50,
+   "toughness": 43,
+   "health": 43,
+   "charisma": 50
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 59,
+  "handle": "0x07000032",
+  "name": "D-Mob",
+  "model": "V2IP_014A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 47,
+   "speed": 30,
+   "toughness": 50,
+   "health": 37,
+   "charisma": 37
+  },
+  "styles": [
+   "wrestling",
+   "submissions"
+  ]
+ },
+ {
+  "id": 60,
+  "handle": "0x07000012",
+  "name": "Suspect",
+  "model": "V2IP_501A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 50,
+   "speed": 50,
+   "toughness": 50,
+   "health": 50,
+   "charisma": 50
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 61,
+  "handle": "0x07000018",
+  "name": "Jervis",
+  "model": "V2IP_202A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 33,
+   "speed": 33,
+   "toughness": 47,
+   "health": 33,
+   "charisma": 23
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 62,
+  "handle": "0x0700000F",
+  "name": "Starks",
+  "model": "V2IP_203A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 47,
+   "speed": 33,
+   "toughness": 33,
+   "health": 33,
+   "charisma": 23
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting",
+   "submissions"
+  ]
+ },
+ {
+  "id": 64,
+  "handle": "0x07000015",
+  "name": "Lil' Kim",
+  "model": "V2IP_404A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 27,
+   "speed": 47,
+   "toughness": 43,
+   "health": 27,
+   "charisma": 50
+  },
+  "styles": [
+   "martialArts"
+  ]
+ },
+ {
+  "id": 65,
+  "handle": "0x0700001C",
+  "name": "Shawnna",
+  "model": "V2IP_406A",
+  "stats": {
+   "upperPower": 27,
+   "lowerPower": 50,
+   "speed": 43,
+   "toughness": 40,
+   "health": 23,
+   "charisma": 50
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 67,
+  "handle": "0x07000033",
+  "name": "Cindy J",
+  "model": "V2IP_403A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 27,
+   "speed": 47,
+   "toughness": 33,
+   "health": 30,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 68,
+  "handle": "0x07000049",
+  "name": "Shaniqua",
+  "model": "V2IP_402A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 43,
+   "speed": 30,
+   "toughness": 47,
+   "health": 40,
+   "charisma": 10
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 69,
+  "handle": "0x0700004A",
+  "name": "Carmen Electra",
+  "model": "V2IP_401A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 40,
+   "speed": 30,
+   "toughness": 23,
+   "health": 50,
+   "charisma": 50
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 70,
+  "handle": "0x0700003F",
+  "name": "Lauren",
+  "model": "V2IP_405A",
+  "stats": {
+   "upperPower": 33,
+   "lowerPower": 27,
+   "speed": 40,
+   "toughness": 43,
+   "health": 33,
+   "charisma": 40
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 71,
+  "handle": "0x07000016",
+  "name": "Snowman",
+  "model": "V2IP_002A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 33,
+   "speed": 37,
+   "toughness": 47,
+   "health": 27,
+   "charisma": 30
+  },
+  "styles": [
+   "streetfighting",
+   "martialArts",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 72,
+  "handle": "0x07000021",
+  "name": "Stingray",
+  "model": "V2IP_016A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 27,
+   "speed": 30,
+   "toughness": 30,
+   "health": 43,
+   "charisma": 47
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 73,
+  "handle": "0x0700003A",
+  "name": "Jacob",
+  "model": "V2IP_129A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 37,
+   "speed": 27,
+   "toughness": 47,
+   "health": 47,
+   "charisma": 23
+  },
+  "styles": [
+   "martialArts",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 74,
+  "handle": "0x0700003C",
+  "name": "Manny",
+  "model": "V2IP_008A",
+  "stats": {
+   "upperPower": 37,
+   "lowerPower": 37,
+   "speed": 27,
+   "toughness": 47,
+   "health": 40,
+   "charisma": 30
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
+  "id": 75,
+  "handle": "0x07000029",
+  "name": "Rollins",
+  "model": "V2IP_131A",
+  "stats": {
+   "upperPower": 40,
+   "lowerPower": 43,
+   "speed": 30,
+   "toughness": 50,
+   "health": 50,
+   "charisma": 37
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting",
+   "martialArts",
+   "submissions"
+  ]
+ },
+ {
+  "id": 76,
+  "handle": "0x0700002C",
+  "name": "Pockets",
+  "model": "V2IP_001A",
+  "stats": {
+   "upperPower": 33,
+   "lowerPower": 33,
+   "speed": 47,
+   "toughness": 23,
+   "health": 47,
+   "charisma": 33
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 77,
+  "handle": "0x0700002D",
+  "name": "Prodigy",
+  "model": "V2IP_119A",
+  "stats": {
+   "upperPower": 43,
+   "lowerPower": 43,
+   "speed": 30,
+   "toughness": 37,
+   "health": 30,
+   "charisma": 33
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting",
+   "submissions"
+  ]
+ },
+ {
+  "id": 80,
+  "handle": "0x0700001D",
+  "name": "Sticky Fingaz",
+  "model": "V2IP_114B",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 27,
+   "speed": 40,
+   "toughness": 50,
+   "health": 50,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting"
+  ]
+ },
+ {
+  "id": 81,
+  "handle": "0x07000040",
+  "name": "Blaze",
+  "model": "V2IP_113B",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 43,
+   "speed": 27,
+   "toughness": 50,
+   "health": 33,
+   "charisma": 47
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 82,
+  "handle": "0x07000041",
+  "name": "Blaze",
+  "model": "V2IP_113C",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 43,
+   "speed": 27,
+   "toughness": 50,
+   "health": 33,
+   "charisma": 47
+  },
+  "styles": [
+   "wrestling"
+  ]
+ },
+ {
+  "id": 83,
+  "handle": "0x07000027",
+  "name": "D-Mob",
+  "model": "V2IP_014B",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 47,
+   "speed": 30,
+   "toughness": 50,
+   "health": 37,
+   "charisma": 37
+  },
+  "styles": [
+   "wrestling",
+   "submissions"
+  ]
+ },
+ {
+  "id": 84,
+  "handle": "0x07000028",
+  "name": "D-Mob",
+  "model": "V2IP_014C",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 47,
+   "speed": 30,
+   "toughness": 50,
+   "health": 37,
+   "charisma": 37
+  },
+  "styles": [
+   "wrestling",
+   "submissions"
+  ]
+ }
+]

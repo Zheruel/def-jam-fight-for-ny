@@ -1,0 +1,242 @@
+[
+ {
+  "file": "V2BG_21A",
+  "handle": "0x17000000",
+  "name": "Babylon",
+  "feID": 12,
+  "pin": [
+   598.8,
+   803.1
+  ]
+ },
+ {
+  "file": "V2BG_01B",
+  "handle": "0x17000001",
+  "name": "Hunt's Point After Hours",
+  "feID": 15,
+  "pin": [
+   708.7,
+   349.0
+  ]
+ },
+ {
+  "file": "V2BG_04A",
+  "handle": "0x17000002",
+  "name": "125th Street Station",
+  "feID": 11,
+  "pin": [
+   591.8,
+   403.9
+  ]
+ },
+ {
+  "file": "V2BG_22A",
+  "handle": "0x17000003",
+  "name": "Club DTP",
+  "feID": 27,
+  "pin": [
+   477.6,
+   538.0
+  ]
+ },
+ {
+  "file": "V2BG_02A",
+  "handle": "0x17000004",
+  "name": "The Foundation",
+  "feID": 1,
+  "pin": [
+   641.5,
+   311.0
+  ]
+ },
+ {
+  "file": "V2BG_07A",
+  "handle": "0x17000005",
+  "name": "Red Hook Tire Co.",
+  "feID": 24,
+  "pin": [
+   453.6,
+   746.1
+  ]
+ },
+ {
+  "file": "V2BG_06A",
+  "handle": "0x17000006",
+  "name": "The Heights",
+  "feID": 18,
+  "pin": [
+   734.5,
+   502.0
+  ]
+ },
+ {
+  "file": "V2BG_22B",
+  "handle": "0x17000007",
+  "name": "7th Heaven",
+  "feID": 16,
+  "pin": [
+   477.6,
+   538.0
+  ]
+ },
+ {
+  "file": "V2BG_11A",
+  "handle": "0x17000008",
+  "name": "Stapleton Athletics",
+  "feID": 0,
+  "pin": [
+   296.7,
+   860.0
+  ]
+ },
+ {
+  "file": "V2BG_19A",
+  "handle": "0x17000009",
+  "name": "The Terrordome",
+  "feID": 6,
+  "pin": [
+   781.5,
+   357.0
+  ]
+ },
+ {
+  "file": "V2BG_15A",
+  "handle": "0x1700000A",
+  "name": "Crow's Office",
+  "feID": 26,
+  "pin": [
+   584.6,
+   289.0
+  ]
+ },
+ {
+  "file": "V2BG_14A",
+  "handle": "0x1700000B",
+  "name": "Club Murder",
+  "feID": 10,
+  "pin": [
+   584.6,
+   289.0
+  ]
+ },
+ {
+  "file": "V2BG_23A",
+  "handle": "0x1700000C",
+  "name": "Red Room",
+  "feID": 9,
+  "pin": [
+   550.6,
+   383.0
+  ]
+ },
+ {
+  "file": "V2BG_13A",
+  "handle": "0x1700000D",
+  "name": "The Pit",
+  "feID": 19,
+  "pin": [
+   567.5,
+   614.0
+  ]
+ },
+ {
+  "file": "V2BG_09A",
+  "handle": "0x1700000E",
+  "name": "Club 357",
+  "feID": 4,
+  "pin": [
+   646.8,
+   721.0
+  ]
+ },
+ {
+  "file": "V2BG_17A",
+  "handle": "0x1700000F",
+  "name": "Gun Hill Garage",
+  "feID": 17,
+  "pin": [
+   799.5,
+   254.9
+  ]
+ },
+ {
+  "file": "V2BG_20A",
+  "handle": "0x17000010",
+  "name": "The Limit",
+  "feID": 2,
+  "pin": [
+   772.5,
+   628.0
+  ]
+ },
+ {
+  "file": "V2BG_09B",
+  "handle": "0x17000011",
+  "name": "Club 357 High Stakes",
+  "feID": 5,
+  "pin": [
+   646.8,
+   721.0
+  ]
+ },
+ {
+  "file": "V2BG_01A",
+  "handle": "0x17000012",
+  "name": "Hunt's Point Scrapyard",
+  "feID": 14,
+  "pin": [
+   708.7,
+   349.0
+  ]
+ },
+ {
+  "file": "V2BG_12A",
+  "handle": "0x17000013",
+  "name": "The Chopshop",
+  "feID": 13,
+  "pin": [
+   874.7,
+   659.0
+  ]
+ },
+ {
+  "file": "V2BG_03A",
+  "handle": "0x17000014",
+  "name": "Syn Energy Power Plant",
+  "feID": 7,
+  "pin": [
+   655.6,
+   454.9
+  ]
+ },
+ {
+  "file": "V2BG_10B",
+  "handle": "0x17000015",
+  "name": "The Gauntlet Intense",
+  "feID": 22,
+  "pin": [
+   741.5,
+   242.9
+  ]
+ },
+ {
+  "file": "V2BG_05A",
+  "handle": "0x17000016",
+  "name": "Dragon House",
+  "feID": 8,
+  "pin": [
+   482.8,
+   635.0
+  ]
+ },
+ {
+  "file": "V2BG_10A",
+  "handle": "0x17000017",
+  "name": "The Gauntlet",
+  "feID": 21,
+  "pin": [
+   741.5,
+   242.9
+  ]
+ }
+]

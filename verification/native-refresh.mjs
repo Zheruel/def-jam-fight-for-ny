@@ -18,7 +18,7 @@ try {
       return 1;
     };
   });
-  await page.goto(`http://127.0.0.1:${server.address().port}/`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?p1=0x07000030&p2=0x07000025&venue=V2BG_02A`);   // a direct link skips the menu
   await page.waitForFunction(()=>window.nativeBattle && window.nextMatchFrame);
   for (const hz of [120,144]) {
     const result = await page.evaluate(hz => {

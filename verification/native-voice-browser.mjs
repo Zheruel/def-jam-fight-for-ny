@@ -6,7 +6,7 @@ import {chromium} from "../netplay/node_modules/playwright/index.mjs";
 import {gameServer} from "../tools/serve.mjs";
 import inventory from "../ps2/content/inventory.json" with {type:"json"};
 const server=gameServer();server.listen(0,"127.0.0.1");await once(server,"listening");
-const url=new URL(process.argv[2]??("http://127.0.0.1:"+server.address().port+"/"));
+const url=new URL(process.argv[2]??("http://127.0.0.1:"+server.address().port+"/?p1=0x07000030&p2=0x07000025&venue=V2BG_02A"));
 url.searchParams.set("mode","ffa");
 [5,10,11,16].forEach((id,i)=>url.searchParams.set("p"+(i+1),inventory.fighters.find(f=>f.fighterXml.coreID===id).handle));
 const browser=await chromium.launch({channel:process.platform==="darwin"?"chrome":undefined,headless:true});
