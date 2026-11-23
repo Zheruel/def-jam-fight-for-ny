@@ -23,7 +23,7 @@ Open [the local player](http://127.0.0.1:8174). A fresh checkout fetches game co
 
 The host browser runs the original game code in a patched Play! WebAssembly runtime. The launcher redirects the retail front end to Battle mode and applies the unlock patch in memory. The asset manifest maps reads to individually verified, compressed blocks. GitHub Pages serves the player, runtime and manifest. A dedicated branch holds the game data. [Runtime and rebuild instructions](runtime/play-build/README.md) · [Content packaging](tools/game-assets.md)
 
-The unlock inventory contains **75 fighter records and 24 venue records**, including internal character variants. Menu coverage, sustained full-speed combat and scene-by-scene visual parity are still being tested. [Retail inventory](ps2/content/inventory.json)
+The unlocked retail Battle lists contain **74 fighter entries** (including variants) and **24 venues**. The underlying profile contains 75 fighter records, including the story protagonist. Full-speed combat and scene-by-scene visual parity are still being tested. [Retail inventory](ps2/content/inventory.json)
 
 ## Verification
 

@@ -1,9 +1,9 @@
 """Battle-only patch for Def Jam: Fight for NY, US PS2 (SLUS-21004).
 
-Patches are either hand-written bytes
-placed at a fixed offset (BytesPatch), or same-size string edits inside RefPack-compressed
-front-end screens (VivStringPatch), which are computed from the retail disc when a manifest
-or an image is built. Retail bytes are only ever recorded as SHA-256 hashes.
+Patches are either hand-written bytes placed at a fixed offset (BytesPatch), or same-size
+string edits inside RefPack-compressed front-end screens (VivStringPatch), which are
+computed from the retail disc when a manifest or an image is built. Each patch is checked
+against the SHA-256 of the retail bytes it replaces.
 
     python3 ps2/battle/battle_patch.py verify   private/ps2/reference.iso
     python3 ps2/battle/battle_patch.py manifest private/ps2/reference.iso
