@@ -6,9 +6,9 @@ import struct
 import sys
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
-from extract import Source, apt
+from extract import Source, apt, decompress, loc_strings
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "fighters"))
 from retail import Elf
@@ -19,14 +19,13 @@ DETAIL_FRAMES = (0, 1, 2, 4, 5, 6, 7, 9, 10)
 ICON_FRAMES = (0, 1, 4, 6, 7, 8, 11, 12, 13)
 
 
-def export(source, output):
-    archive = "screens/battle/cmtype.big"
+def movie_shapes(source, archive):
+    stem = Path(archive).stem
     parts = source.read(archive)
-    movie = apt.Apt.parse(parts["cmtype.apt"])
-    geometry = Elf(parts["cmtype.o"])
+    movie = apt.Apt.parse(parts[stem + ".apt"])
+    geometry = Elf(parts[stem + ".o"])
     models = {int(name.split(":::")[1]): address for name, address, _ in geometry.symbols if name.startswith("__Model:::")}
     pictures = {tag: Image.open(io.BytesIO(png)).convert("RGBA") for tag, png in source.pictures(archive).items()}
-    output.mkdir(parents=True, exist_ok=True)
 
     def shape(character):
         left, top, right, bottom = map(round, movie.bounds(character))
@@ -53,6 +52,73 @@ def export(source, output):
         image.alpha_composite(art, (x,y))
         return [x,y,right-x,bottom-y]
 
+    return movie, shape, draw
+
+
+def export_rules(source, output):
+    movie, shape, draw = movie_shapes(source, "screens/battle/rules.big")
+    text = loc_strings(source)
+    elements = movie.flatten()
+    fields = {entry["path"]: entry for entry in elements if entry["kind"] == "text"}
+    icons = {"standard": 15, "votes": 7, "no-submissions": 11}
+    faces = {}
+    for field in fields.values():
+        face = movie.cstring(movie.u32(movie.characters[field["font"]] + 8))
+        member = {"Arial": "AachenStd-Bold.ttf", "TradeBld": "TradeBld.ttf", "TradeCon": "TradeCon.ttf"}[face]
+        archive = "/FONTS/FONTS.VIV"
+        data = source.disc.read(archive, *source.disc.viv_entry(archive, member))
+        if data.startswith(bytes.fromhex("10fb")):
+            data = decompress(data)
+        faces[field["character"]] = ImageFont.truetype(io.BytesIO(data), round(field["size"]))
+
+    def label(image, field, words):
+        x, y, right, bottom = field["rect"]
+        centered = field["align"] == 2
+        font = faces[field["character"]]
+        color = "#%06x" % (field["color"] & 0xffffff)
+        lines = [""]
+        for word in words.split():
+            line = (lines[-1] + " " + word).strip()
+            if lines[-1] and font.getlength(line) > right-x:
+                lines.append(word)
+            else:
+                lines[-1] = line
+        pen = ImageDraw.Draw(image)
+        for n, line in enumerate(lines):
+            pen.text(((x+right)/2 if centered else x, y+2+n*font.size), line, font=font,
+                     fill=color, anchor="ma" if centered else "la")
+
+    for rule, title, description in (("standard", 189, 190), ("votes", 184, 185), ("no-submissions", 186, 187)):
+        art = Image.new("RGBA", (294, 292))
+        for item in elements:
+            if item["kind"] != "image":
+                continue
+            character = item["character"]
+            if character not in icons.values() or character == icons[rule]:
+                draw(art, item)
+                continue
+            # The icon sprites' first placement multiplies by (0,0,0,204) and adds (50,50,50,0).
+            # The selected frame restores the unmodified texture.
+            x, y, right, bottom = map(round, item["rect"])
+            silhouette = Image.new("RGBA", (right-x, bottom-y), (50,50,50))
+            alpha = shape(character).getchannel("A").resize(silhouette.size, Image.Resampling.LANCZOS)
+            silhouette.putalpha(alpha.point(lambda a: round(a*204/255)))
+            art.alpha_composite(silhouette, (x, y))
+        label(art, fields["/19"], "SELECT")
+        label(art, fields["/30"], text[188])
+        label(art, fields["/31"], text[title])
+        label(art, fields["/32"], text[description])
+        art.save(output / f"rules-{rule}.png", optimize=True)
+    for mode, index in (("1v1", 2016), ("team", 2073), ("ffa", 2037)):
+        title = Image.new("RGBA", (294, 55))
+        label(title, fields["/matchType"], text[index])
+        title.save(output / f"rules-title-{mode}.png", optimize=True)
+
+
+def export(source, output):
+    movie, shape, draw = movie_shapes(source, "screens/battle/cmtype.big")
+    output.mkdir(parents=True, exist_ok=True)
+    export_rules(source, output)
     root = movie.frames(0)[0]
     elements = movie.flatten()
     wall = Image.new("RGBA", movie.size)
