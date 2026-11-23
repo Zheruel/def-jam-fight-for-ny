@@ -97,7 +97,7 @@ try {
   await run.waitFrames(60);
   if(process.env.EXPERIMENT) {   // a RAM-poke experiment instead of the dumps: see verification/special-experiments.mjs
     const {experiments}=await import("./special-experiments.mjs");
-    await experiments[process.env.EXPERIMENT](run,{outDir,type,args:(process.env.ARGS??"").split(",").filter(Boolean).map(Number)});
+    await experiments[process.env.EXPERIMENT](run,{outDir,type,read,dump,args:(process.env.ARGS??"").split(",").filter(Boolean).map(Number)});
     console.log("DONE");
     process.exit(0);
   }
