@@ -107,6 +107,13 @@ Retail keeps weapons in a manager (`0x133180` returns `0x472144` in a battle): 1
 - Weapons in flight (`holder -2`) and respawns are not drawn: retail computes their path in `0x1c33a0`.
 - `scenery.json` now carries `stageWeapon` (the `<stageweapon>` block: drop list, weak/strong catch, durability steps, drop interval seconds, simultaneous limit, pass weights) and `droppedWeaponModels`, which `loadScenery` fetches.
 
+## Venue hazards (subway train, Red Hook, Crow's Office)
+
+`hazard.mjs` documents and drives the retail rules for venues 4 (125th Street Station), 7 (Red Hook) and 17 (Crow's Office); the header lists the recovered flags and routines.
+
+- Knockouts: `0x30bb40` marks the loser with `0x10`/`0x4`/`0x20` and `G+448` with `8`/`4`/`0x10` in those venues only; the referee `0x2e6260` turns the mark into result type `0x100`/`0x80`/`0x200`. In the scripted match Red Hook marks `0x4` (loser in state 114); the other venues, and Red Hook with the other victim, take the generic `0x1`. What selects the branch is not isolated. Calling `0x30bb40` by hand sets the flags but does not end the round, so it is not a trigger.
+- Subway train (verified, `hazard.test.mjs`): the train object is outside the kernel and talks through `0x4c2178` (bit 0 live, bit 1 coming, bit 2 hits). `createTrain(kernel).warn()/strike()` run the retail consumer `0x2e78d0`. A marked fighter (hazard state, or the word at actor+932 below -1) goes to state 19 and loses, the other wins with all health; `finishKind` reports `"hazard"`. `fight.rematch()` resets it. A pad-driven fighter never reaches the pit with the Foundation's pad script, so the pit condition is set directly.
+
 ## Near crowd (not done)
 
 `nearCrowd` slots (`crowd_act1/act2/stand1_*`) are full V2CM spectators. Recovered so far: the models decode with `port/fighters/retail.py` once its parent table knows the 13-bone crowd rig (`root, L_Leg1, L_Leg2, eff5, R_Leg1, R_Leg2, eff4, Chest, Head, R_Arm1, R_Arm2, L_Arm1, L_Arm2`); a person is several parts (`M1` upper body, `M2` legs, `M3`, `M4_nn` hair/hats) textured by one `cm_m`/`cm_f` skin atlas with clothing layers (`V2CM_M1_02..08.ssh`, one 8-bit layer plus eight `plNN` palettes) stomped onto it. The `animcr*.o` banks hold two objects per clip (`_s`, `_t`) and load into the offline sampler with `port/animation/extract.py`'s packer, but the channel-to-bone mapping is unresolved, so sampled poses do not fit the crowd skeleton.
