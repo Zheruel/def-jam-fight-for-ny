@@ -6,7 +6,8 @@ export const REMATCH_DELAY = 120;
 
 export function resultLines(outcome, names) {
   if (!outcome?.over) return null;
-  const lines = [{ text: outcome.method === "ko" ? "K.O." : "TIME", x: 320, y: 4, size: 64, family: "names", align: "center" }];
+  // A hazard finish (the subway train) leaves the loser knocked out, so it reads as a K.O.; only a time-up reads TIME.
+  const lines = [{ text: outcome.method === "time" ? "TIME" : "K.O.", x: 320, y: 4, size: 64, family: "names", align: "center" }];
   if (outcome.result) {
     const { minutes, seconds } = outcome.clock;
     lines.push({ text: outcome.draw ? "DRAW" : `${String(names[outcome.winner] ?? "").toUpperCase()} WINS`, x: 320, y: 72, size: 22, family: "names", align: "center" });

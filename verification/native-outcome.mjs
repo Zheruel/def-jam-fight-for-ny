@@ -120,7 +120,7 @@ const timed=[[[300,100],true,0],[[100,300],true,1],[[100,300],false,null]].map((
 // Venue rules: 0x30b928 applies the same under-10% knockdown rule on most venues but has its own branches for 125th Street
 // Station (4), Red Hook (7) and Crow's Office (17); run the real arena and collision for a spread of venues.
 const foundation=match, venues=[];
-for(const id of [1,4,17,11]) {
+for(const id of [1,4,7,17,11]) {
   const venue=inventory.venues.find(v=>v.coreID===id);
   const collision=Uint8Array.from(readFileSync(new URL(`../port/collision/venues/${venue.file}.cli`,import.meta.url))).buffer;
   match=await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),{venue,collision},packed("kernel/match-rules.gz"),animation);
@@ -132,6 +132,11 @@ for(const id of [1,4,17,11]) {
   venues.push({venue:venue.name,finishTick:r.finishTick});
 }
 match=foundation;
+
+// A hazard finish (subway train) is a knockout on the banner, not a time-up.
+const hazard=resultLines({...timed[0].outcome,method:"hazard"},timed[0].names);
+assert.equal(hazard[0].text,"K.O.");
+assert.ok(hazard.some(l=>l.text===`${timed[0].names[0].toUpperCase()} WINS`));
 
 // Rematch restores a clean match.
 match.rematch();
