@@ -13,6 +13,11 @@ function particleFiles() {
   return Object.values(scenery).filter(venue => venue.particles).flatMap(venue =>
     ["particles.json", "particles.png"].map(name => `port/scenery/${venue.dir}/${name}`));
 }
+// A venue's animated texture planes (texanim.py): Red Hook's flames.
+function texanimFiles() {
+  return Object.values(scenery).filter(venue => venue.texanim).flatMap(venue =>
+    ["texanim.json", "texanim.png"].map(name => `port/scenery/${venue.dir}/${name}`));
+}
 
 function peopleFiles() {
   const used = Object.values(scenery).filter(venue => venue.people).map(venue =>
@@ -25,10 +30,10 @@ function peopleFiles() {
 // Runtime files shared by the local native port and the Pages deployment.
 export const portFiles = [
   ...menuFiles,
-  "port/scenery/scenery.mjs", "port/scenery/people.mjs", "port/scenery/particles.mjs", "port/scenery/occlusion.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/train.mjs", "port/scenery/events.json", "port/scenery/index.json",
+  "port/scenery/scenery.mjs", "port/scenery/people.mjs", "port/scenery/particles.mjs", "port/scenery/occlusion.mjs", "port/scenery/texanim.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/train.mjs", "port/scenery/events.json", "port/scenery/index.json",
   "port/scenery/weapons/index.json",
   ...Object.values(weapons.models).map(({file}) => "port/scenery/weapons/" + file),
-  "port/scenery/foundation/crowd.bin.gz", ...peopleFiles(), ...particleFiles(), "port/scenery/crowd/icrowd01.crowd.gz",
+  "port/scenery/foundation/crowd.bin.gz", ...peopleFiles(), ...particleFiles(), ...texanimFiles(), "port/scenery/crowd/icrowd01.crowd.gz",
   ...Object.values(scenery).flatMap(({dir,props,trains=[],cars=[]}) => {
     const folder = "port/scenery/" + dir + "/";
     const files = [folder + "scenery.json", folder + "lighting.json", ...trains.map(name => folder + "trains/" + name + ".skin.gz"), ...cars.map(file => folder + file)];

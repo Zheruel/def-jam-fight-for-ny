@@ -506,7 +506,8 @@
   "undecodedProps": [
    "V2BG_07A_E"
   ],
-  "particles": 33
+  "particles": 33,
+  "texanim": 68
  },
  "V2BG_09A": {
   "dir": "V2BG_09A",

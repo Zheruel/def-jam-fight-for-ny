@@ -13,6 +13,7 @@ import { irradiance, irradianceGLSL, sampleIrradiance } from "./irradiance.mjs";
 import { bankPose, loadPeople, skinPalette, POSE_FLOATS } from "./people.mjs";
 import { createParticles, trainLights } from "./particles.mjs";
 import { createFader, eyeOf } from "./occlusion.mjs";
+import { createTexAnim } from "./texanim.mjs";
 
 
 const U32 = 4;
@@ -89,7 +90,12 @@ export async function loadScenery(venue, { signal, base = new URL("./", import.m
     ? { manifest: JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("particles.json", dir), signal))),
         png: await fetchPacked(new URL("particles.png", dir), signal) }
     : null;
-  return { manifest, props, crowd, weapons, people, particles };
+  // Animated texture planes (Red Hook's flames, texanim.py).
+  const texanim = manifest.texanim
+    ? { manifest: JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("texanim.json", dir), signal))),
+        png: await fetchPacked(new URL("texanim.png", dir), signal) }
+    : null;
+  return { manifest, props, crowd, weapons, people, particles, texanim };
 }
 
 // Euler placement from the stage XML: degrees, applied X then Y then Z (all retail Foundation
@@ -236,8 +242,9 @@ async function texture(gl, png) {
  *                   false hides it (e.g. after the retail break animation removes it)
  *   crowd           false hides the instanced crowd; otherwise tick/excited drive its frame
  */
-export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null, particles = null }, { lighting = null, lightScale = 1 } = {}) {
+export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null, particles = null, texanim = null }, { lighting = null, lightScale = 1 } = {}) {
   const state = { props: null, crowd: null, weapons: null, people: null };
+  const stageTexAnim = texanim ? await createTexAnim(gl, texanim.manifest, texanim.png) : null;
   const stageParticles = particles ? await createParticles(gl, particles.manifest, particles.png) : null;
   let drawWeapon = () => {};
   const identity = placementMatrix({translate:[0,0,0], rotate:[0,0,0]});
@@ -394,7 +401,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
   gl.bindVertexArray(null);
 
   function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, people: showPeople = true, particleEvents = [], fire = null, particles: showParticles = true, sight = [], occlusion = false, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
-    // Spectators (and the instanced crowd) standing between the camera and a fighter fade out, see occlusion.mjs.
+    // Opt-in (retail has no such rule): spectators and the instanced crowd standing between the camera and a fighter fade out, see occlusion.mjs.
     const eye = occlusion && sight.length ? eyeOf(viewProjection) : null;
     if (state.props) {
       const { prog, vao, textures, uniform } = state.props;
@@ -474,9 +481,10 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       // Weapons the match holds or has dropped: a model and a world matrix (column-major, translation last).
       for (const { model, matrix } of dynamicWeapons) drawWeapon(model, matrix, [matrix[12], matrix[13], matrix[14]]);
     }
+    if (stageTexAnim && showParticles) stageTexAnim.draw(viewProjection, { tick, fire });
     if (stageParticles && showParticles) {
       const train = dynamicWeapons.find(w => w.train);
-      stageParticles.update({ tick, events: particleEvents, fire,
+      stageParticles.update({ tick, events: particleEvents,
         lights: trainLights(manifest.subway, particles.manifest.effects, train, train?.phase) });
       stageParticles.draw(viewProjection);
     }

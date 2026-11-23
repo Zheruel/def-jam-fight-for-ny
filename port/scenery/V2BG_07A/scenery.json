@@ -714,5 +714,6 @@
    "V2BG07A1_nis"
   ]
  },
- "particles": true
+ "particles": true,
+ "texanim": true
 }

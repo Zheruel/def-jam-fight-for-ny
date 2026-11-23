@@ -66,16 +66,6 @@ test("a burst is deterministic and bounded; the simulation draws the same sprite
   assert.equal(sim.count, 0, "every sprite dies");
 });
 
-test("the fire keeps the sprite count bounded and fades with its intensity", () => {
-  const { effects } = effectsOf("V2BG_07A");
-  const sim = createSimulation(effects);
-  for (let i = 0; i < 600; i++) { sim.fire(infernoFire(i * 1.2)); sim.step(); }
-  const full = sim.count;
-  assert.ok(full > 100 && full < 3000, String(full));
-  for (let i = 0; i < 200; i++) { sim.fire({ intensity: 0, radius: 37 }); sim.step(); }
-  assert.equal(sim.count, 0);
-});
-
 test("train lights follow the car (world = car matrix x car-local point)", () => {
   const manifest = JSON.parse(readFileSync(new URL("V2BG_04A/scenery.json", here), "utf8"));
   const { effects } = effectsOf("V2BG_04A");

@@ -976,6 +976,9 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
     # particles.py writes <dir>/particles.{json,png} (the stage's JDI effects)
     if (OUTPUT.parent / directory(venue) / "particles.json").exists():
         scenery["particles"] = True
+    # texanim.py writes <dir>/texanim.{json,png} (animated flame planes, Red Hook only)
+    if (OUTPUT.parent / directory(venue) / "texanim.json").exists():
+        scenery["texanim"] = True
     files["scenery.json"] = (json.dumps(scenery, indent=1, ensure_ascii=False) + "\n").encode()
     return files
 
@@ -1020,6 +1023,9 @@ def main(argv: list[str] | None = None) -> int:
         effects = OUTPUT.parent / directory(venue) / "particles.json"
         if effects.exists():
             index[venue]["particles"] = len(json.loads(effects.read_text())["effects"])
+        planes = OUTPUT.parent / directory(venue) / "texanim.json"
+        if planes.exists():
+            index[venue]["texanim"] = len(json.loads(planes.read_text())["planes"])
         for name, blob in built.items():
             path = OUTPUT.parent / directory(venue) / name
             path.parent.mkdir(parents=True, exist_ok=True)

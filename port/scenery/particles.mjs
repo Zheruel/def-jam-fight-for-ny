@@ -1,14 +1,14 @@
 // Native stage particles: the sprite effects of a venue's JDI (see particles.py), drawn as camera-facing quads.
 //
 //   const particles = await createParticles(gl, manifest, atlasPng);
-//   particles.update({ tick, events, fire, train });       // once per frame, before draw
+//   particles.update({ tick, events, lights });       // once per frame, before draw
 //   particles.draw(viewProjection);
 //
 // What is VERIFIED against the retail data: the effect table (names, sprite sheet, tiles, start/end colours, lifetimes),
 // the train lights' colours and attachment points, the Inferno clock (0x4c1930, +1.2 a frame) and the formulas the
 // retail code derives from it. What is INFERRED, from the field values and the retail screenshots, and tuned by eye: how
-// the remaining fields move a sprite (speeds, sizes, counts), where the Inferno flames stand, and the blend modes.
-// See the README ("Stage particles").
+// the remaining fields move a sprite (speeds, sizes, counts) and the blend modes. Red Hook's fire ring is not here: it is
+// the animated texture planes of texanim.py (texanim.mjs). See the README ("Stage particles").
 const TICK = 1 / 60;
 const MAX = 6000;
 const SIZE = { glow: 40, flame: 26, smoke: 30, debris: 2.6, spark: 3 };
@@ -84,7 +84,7 @@ function program(gl) {
 export function createSimulation(effects, { seed = 1 } = {}) {
   const rand = random(seed);
   const live = [];
-  let tick = 0, fireEmitters = null, fireAt = 0, lastFire = null;
+  let tick = 0;
   const lightList = [];
 
   const frame = (def, age, life) => def.tiles[Math.min(def.tiles.length - 1, Math.floor(def.tiles.length * age / Math.max(life, 1)))] ?? [0, 0, 0.25];
@@ -111,44 +111,11 @@ export function createSimulation(effects, { seed = 1 } = {}) {
     return total;
   }
 
-  /** Persistent flame emitters for the Inferno: an annulus of flames around the arena and tall ones on the pillars. */
-  function fire(state) {
-    lastFire = state;
-    if (!fireEmitters) {
-      const r = random(7);
-      fireEmitters = [];
-      for (let i = 0; i < 90; i++) {
-        const a = (i + r() * 0.8) / 90 * Math.PI * 2;
-        fireEmitters.push({ angle: a, phase: Math.floor(r() * 12), scale: 0.8 + r() * 0.6, spread: r() });
-      }
-    }
-  }
-
-  function spawnFire() {
-    if (!lastFire || lastFire.intensity <= 0.02) return;
-    // Two sprite families of the stage's own sheet: the flame column (fx_plfire, sheet column 1) and the flame blob (fx_fobj,
-    // column 0). Retail tints them orange (fx_fobj start colour 216 153 63); the rest of the look is tuned by eye.
-    const tongue = effects.fx_plfire1 ?? effects.fx_fobj1, blob = effects.fx_fobj2 ?? tongue;
-    if (!tongue) return;
-    const radius = lastFire.radius + 8;
-    for (const e of fireEmitters) {
-      if ((tick + e.phase) % 12 !== 0) continue;
-      const wide = rand() < 0.35, def = wide ? blob : tongue;
-      const r = radius + (e.spread - 0.3) * 22;
-      live.push({ name: "fire", kind: "flame", def, life: 60 + Math.floor(rand() * 40), age: 0, tile: 0, fire: true,
-        tint: [0.9, 0.42 + rand() * 0.2, 0.1 + rand() * 0.08], boost: wide ? 0.35 : 0.6,
-        p: [Math.cos(e.angle) * r, 0, Math.sin(e.angle) * r * 0.85],
-        v: [(rand() - 0.5) * 0.02, 0.14 + rand() * 0.1, (rand() - 0.5) * 0.02], g: 0,
-        size: (wide ? 20 : 26) * e.scale * lastFire.intensity, spin: 0, rot: 0 });
-    }
-  }
-
   /** Head and tail lights of the subway car: glow sprites at the attachment points while the car is in the tunnel. */
   function lights(list) { lightList.length = 0; lightList.push(...(list ?? [])); }
 
   function step() {
     tick++;
-    spawnFire();
     for (let i = live.length - 1; i >= 0; i--) {
       const q = live[i];
       q.age++;
@@ -167,11 +134,10 @@ export function createSimulation(effects, { seed = 1 } = {}) {
     for (const q of live) {
       const t = q.age / q.life, def = q.def;
       const col = lerp(def.start, def.end, Math.min(1, t * 1.2)).map(v => v / 255);
-      if (q.tint) { col[0] = q.tint[0]; col[1] = q.tint[1]; col[2] = q.tint[2]; col[3] = q.boost; }
-      let a = col[3] * (q.tint ? 1 : def.opacity || 1);
+      let a = col[3] * (def.opacity || 1);
       if (q.kind === "flame" || q.kind === "smoke") a *= Math.min(1, t * 6) * (1 - t) ** 0.8;
       else a *= t > 0.7 ? (1 - t) / 0.3 : 1;
-      const tile = q.fire ? frame(def, q.age, 24) : frame(def, q.age, q.life);
+      const tile = frame(def, q.age, q.life);
       const growth = q.kind === "flame" || q.kind === "smoke" ? 0.6 + t * 0.8 : 1;
       (def.blend === 1 || q.kind === "flame" ? additive : alpha).push([q.p[0], q.p[1], q.p[2], q.size * growth, col[0], col[1], col[2], a, tile[0], tile[1], tile[2], q.rot]);
     }
@@ -179,7 +145,7 @@ export function createSimulation(effects, { seed = 1 } = {}) {
     return { additive, alpha };
   }
 
-  return { burst, fire, lights, step, sprites, get count() { return live.length; }, get tick() { return tick; }, clear() { live.length = 0; } };
+  return { burst, lights, step, sprites, get count() { return live.length; }, get tick() { return tick; }, clear() { live.length = 0; } };
 }
 
 /** Light sprites for the train: both ends are attached to the car (car-local points from the manifest, world = car matrix x point). */
@@ -234,10 +200,9 @@ export async function createParticles(gl, manifest, atlasPng, { seed = 1 } = {})
   return {
     sim,
     /** Advance to `tick` (one sim step per tick, at most 6 per call) and route what the environment emitted. */
-    update({ tick, events = [], fire = null, lights = null }) {
+    update({ tick, events = [], lights = null }) {
       if (ticked === null || tick < ticked) { sim.clear(); ticked = tick; }
       for (const e of events) if (e.particle) sim.burst(e.particle, e.position ?? [0, 0, 0], e.rotation);
-      if (fire) sim.fire(fire);
       sim.lights(lights);
       for (let n = Math.min(6, tick - ticked); n > 0; n--) sim.step();
       ticked = tick;
