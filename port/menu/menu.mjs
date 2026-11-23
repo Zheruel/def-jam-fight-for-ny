@@ -42,7 +42,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
   session?.use({ canvas, seats: 0, cpu: 0 });
   if (types.length === 1) start(types[0]);
   function start(mode) {
-    selection = createSelection({ roster, venues, seats: MODES[mode].fighters, mode, picks, venue, venueOk: v => venueSupports(v.file, mode) });
+    selection = createSelection({ roster, venues, seats: MODES[mode].fighters, mode, rule: pick.state.rule, picks, venue, venueOk: v => venueSupports(v.file, mode) });
     session?.use({ canvas, seats: selection.state.seats.length, cpu: 0 });
   }
   // A match type with fewer seats than a guest's slot would leave that guest without one: the type wall stays.
@@ -66,7 +66,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     return false;
   };
   Object.defineProperty(window, "nativeMenu", { configurable: true, get: () => ({
-    screen: screen(), type: pick.state.mode, size: pick.state.size, cpu: selection?.state.cpu ?? 0,
+    screen: screen(), rule: pick.state.rule, popup: pick.state.choosingRules ? "rules" : pick.state.size ? "size" : null, type: pick.state.mode, size: pick.state.size, cpu: selection?.state.cpu ?? 0,
     seats: selection?.state.seats.map((s, i) => ({ handle: roster[s.cursor].handle, ready: s.ready, remote: remote(i) })) ?? [],
   }) });
   const screen = () => selection ? selection.state.screen : "type";

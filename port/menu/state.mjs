@@ -5,12 +5,14 @@
 //   screen   = "fighters" | "venue" | "done"
 //   result() = { mode, handles, venue } in the shape of the battle page's query (?mode=&p1=..&venue=)
 
+import { MODES } from "../battle/modes.mjs";
+
 export const ROWS = 3;   // the thumbnail box shows 3 rows of faces: 5 columns on the two-player screen, 3 on the four-player one
 export const COLUMNS = 5;   // two-player default
 
 export const ACTIONS = ["left", "right", "up", "down", "confirm", "back", "next", "previous", "cpu"];
 
-export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode = seats > 3 ? "ffa" : seats > 2 ? "ffa3" : "1v1", picks = [], venue = null, venueOk = () => true }) {
+export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, rule = "standard", mode = seats > 3 ? "ffa" : seats > 2 ? "ffa3" : "1v1", picks = [], venue = null, venueOk = () => true }) {
   // Venues that share a pin on the retail map (a venue and its "intense" remix) are one spot; next/previous cycle them.
   const spots = [];
   for (const v of venues.filter(v => v.pin && venueOk(v))) {
@@ -67,7 +69,14 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
       if (state.screen === "fighters") {
         const s = state.seats[seat];
         if (!s) return false;
-        if (action === "confirm") { s.ready = true; if (state.seats.every(x => x.ready)) state.screen = mode === "team" ? "teams" : "venue"; return true; }
+        if (action === "confirm") {
+          s.ready = true;
+          if (state.seats.every(x => x.ready)) {
+            if (mode === "team") state.screen = "teams";
+            else state.screen = MODES[mode]?.venues?.length === 1 ? "done" : "venue";
+          }
+          return true;
+        }
         if (action === "back") { if (s.ready) { s.ready = false; return true; } return false; }
         if (s.ready) return false;
         if (action === "left") moveFighter(seat, -1, 0);
@@ -125,6 +134,7 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
     pickVenue(index) { if (state.spots[index]) { state.venue = index; state.variant = 0; return true; } return false; },
     result() {
       return {
+        ...(rule !== "standard" && {rule}),
         ...(mode === "team" && {teamOrder: state.teamOrder.slice()}),
         mode: state.mode, cpu: state.cpu, handles: state.seats.map(s => roster[s.cursor].handle), venue: state.spots[state.venue].variants[state.variant].file,
       };
@@ -140,12 +150,13 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
 }
 
 // Query string of a finished selection, matching port/battle/modes.mjs.
-export function selectionQuery({ mode, handles, venue, cpu = 0, teamOrder }) {
+export function selectionQuery({ mode, handles, venue, cpu = 0, teamOrder, rule }) {
   const params = new URLSearchParams();
   if (mode !== "1v1") params.set("mode", mode);
   handles.forEach((handle, i) => params.set("p" + (i + 1), handle));
   params.set("venue", venue);
   if (teamOrder?.length === 4 && teamOrder.some((seat, i) => seat !== i)) params.set("teams", teamOrder.map(i => i + 1).join(""));
+  if (rule && rule !== "standard") params.set("rules", rule);
   if (cpu > 0) params.set("cpu", String(cpu));
   return params;
 }

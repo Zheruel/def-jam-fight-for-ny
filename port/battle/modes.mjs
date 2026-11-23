@@ -5,6 +5,7 @@
 //   ?venue=V2BG_xx    venue file; ffa needs a venue with a "FREE FOR ALL 4" formation
 //   ?room=CODE        join a hosted match as a guest (the host's shared match view)
 //   ?seat=2..4        optional guest seat to take (1-based player number; default: the next open one)
+//   ?rules=votes|no-submissions    optional rules for one-on-one, Team and Free For All
 //   ?teams=1324       in Team Match, player seats in team placement order (default 1234)
 //   ?cpu=N            the last N seats are retail CPU opponents (default 0: a seat nobody holds is never filled in on
 //                     its own). N is 0..fighters-1, so one seat always belongs to a person; the people sit in seats
@@ -61,9 +62,12 @@ export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
   const cpu = Number(params.get("cpu") ?? 0);
   const cpuCount = Number.isInteger(cpu) && cpu >= 0 && cpu < count ? cpu : 0;
   const seat = Number(params.get("seat"));
+  const rule = params.get("rules");
+  const customRule = !MODES[mode].venues && ["votes", "no-submissions"].includes(rule);
   const order = params.get("teams") ?? "";
   const hasOrder = mode === "team" && /^[1-4]{4}$/.test(order) && new Set(order).size === 4;
   return {
+    ...(customRule && {rule}),
     ...(hasOrder && {teamOrder: [...order].map(n => Number(n) - 1)}),
     mode, handles, venue: venue.file, room: params.get("room") || null, cpu: cpuCount,
     seat: Number.isInteger(seat) && seat >= 2 && seat <= count - cpuCount ? seat : null,

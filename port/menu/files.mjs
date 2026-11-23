@@ -6,6 +6,7 @@ export const menuFiles = [
   ...["choose-match-type", "choose-fighter", "choose-teams", "choose-venue", "select", "back"].map(name => "port/menu/art/header/" + name + ".png"),
   "port/menu/match-types.mjs",
   ...["layout.json", "wall.webp", "lock.png", "highlight.png", "size-paper.png", "size-highlight.png",
+    "rules-standard.png", "rules-votes.png", "rules-no-submissions.png", "rules-title-1v1.png", "rules-title-team.png", "rules-title-ffa.png",
     "1v1.png", "team.png", "ffa.png", "window.png", "subway.png", "demolition.png", "inferno.png", "cage.png", "ringout.png"
   ].map(file => "port/menu/art/match-type/" + file),
   "port/menu/state.mjs", "port/menu/art.mjs", "port/menu/screens.mjs", "port/menu/menu.mjs", "port/menu/launch.mjs", "port/menu/art/roster.json",

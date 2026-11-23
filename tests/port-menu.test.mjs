@@ -141,20 +141,67 @@ test("the multiplayer selector keeps the displayed fighter when other seats occu
 
 test("the retail wall opens the Free For All size prompt and locks unsupported events", () => {
   const pick = matchTypeSelection(["1v1", "team", "ffa3", "ffa", "subway"]);
+  pick.press("confirm");
   assert.equal(pick.press("confirm"), "1v1");
   pick.press("right");
+  pick.press("confirm");
   assert.equal(pick.press("confirm"), "team");
   pick.press("right"); pick.press("confirm"); pick.press("back");
   assert.equal(pick.state.mode, "ffa");
   assert.equal(pick.state.size, null);
-  pick.press("confirm"); pick.press("left");
+  pick.press("confirm"); pick.press("confirm"); pick.press("left");
   assert.equal(pick.press("confirm"), "ffa3");
   pick.press("down");
+  assert.equal(pick.state.mode, "demolition");
+  pick.press("left"); pick.press("left");
   assert.equal(pick.state.mode, "window");
   assert.equal(pick.press("confirm"), undefined);
   pick.press("right");
   assert.equal(pick.press("confirm"), "subway");
   pick.point(250, 150);
   pick.point(250, 150);
+  pick.press("confirm");
   assert.equal(pick.point(260, 225), "ffa");
+});
+
+test("each specialty goes directly from its fighters to the fixed arena", () => {
+  for (const [mode, format] of Object.entries(MODES).filter(([, f]) => f.venues?.length === 1)) {
+    const venue = format.venues[0];
+    const select = createSelection({ ...options, mode, venue, venueOk: v => v.file === venue });
+    select.press(0, "confirm");
+    select.press(1, "confirm");
+    assert.equal(select.state.screen, "done");
+    assert.equal(select.result().venue, venue);
+  }
+});
+
+test("choose rules with a controller or pointer, and keep the choice through the FFA size prompt", () => {
+  const pick = matchTypeSelection(["1v1", "team", "ffa", "ffa3", "subway"]);
+  pick.press("confirm");
+  assert.equal(pick.state.choosingRules, true);
+  pick.press("right");
+  assert.equal(pick.state.rule, "votes");
+  assert.equal(pick.press("confirm"), "1v1");
+  pick.press("right"); pick.press("right"); pick.press("confirm");
+  assert.equal(pick.state.rule, "standard");
+  pick.point(291, 245);
+  assert.equal(pick.state.rule, "no-submissions");
+  pick.point(291, 245);
+  assert.equal(pick.state.size, "ffa");
+  pick.press("back");
+  assert.equal(pick.state.choosingRules, true);
+  pick.press("confirm"); pick.press("left");
+  assert.equal(pick.press("confirm"), "ffa3");
+  assert.equal(pick.state.rule, "no-submissions");
+});
+
+test("share links preserve the selected rules and force standard rules for specialty events", () => {
+  const options = {fighters: inventory.fighters, venues: inventory.venues, ffa: true};
+  for (const mode of ["1v1", "team", "ffa3", "ffa"]) for (const rule of ["votes", "no-submissions"]) {
+    const choice = selectionQuery({mode, handles: [], venue: "V2BG_02A", rule});
+    assert.equal(parseBattleQuery(choice, options).rule, rule);
+    choice.set("rules", "invalid");
+    assert.equal(parseBattleQuery(choice, options).rule, undefined);
+  }
+  assert.equal(parseBattleQuery(new URLSearchParams("mode=subway&rules=votes"), options).rule, undefined);
 });

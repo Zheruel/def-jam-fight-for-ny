@@ -178,7 +178,7 @@ export function drawTeams(ctx, {state}) {
 }
 
 // -- match type screen --------------------------------------------------------------------------------------------------
-export function drawType(ctx, { mode, size, enabled }) {
+export function drawType(ctx, { mode, size, enabled, choosingRules, rule }) {
   const image = (name, ...dimensions) => {
     const bitmap = have(`match-type/${name}`);
     if (bitmap) ctx.drawImage(bitmap, ...dimensions);
@@ -193,6 +193,10 @@ export function drawType(ctx, { mode, size, enabled }) {
   image("highlight.png", Math.round(x+w/2-55), Math.round(y+h/2-64));
   image(`${mode}.png`, ...typeLayout.details[mode]);
   title(ctx, "CHOOSE MATCH TYPE", ["SELECT", "BACK"]);
+  if (choosingRules) {
+    image(`rules-${rule}.png`, 69, 138);
+    image(`rules-title-${mode}.png`, 69, 138);
+  }
   if (size) {
     image("size-paper.png", 66, 125);
     image("size-highlight.png", size === "ffa3" ? 92 : 206, 202);

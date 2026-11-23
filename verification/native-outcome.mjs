@@ -21,6 +21,32 @@ const fighters=ids.map(id=>{
 const animation=await createMatchAnimation(sampler,shared,ids.map(id=>packed(`animation/banks/wres${String(id).padStart(3,"0")}.gz`)));
 let match=await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),null,packed("kernel/match-rules.gz"),animation);
 
+// Retail cold starts at the Foundation: Standard = 0x10007 / timer 0, Crowd Votes = 0x10007 / 1,
+// No Submissions = 0x10005 / 0. Exercise a full five minutes on the actual referee clock and rematch.
+for (const [rule, flags, timer] of [["votes",0x10007,1],["no-submissions",0x10005,0]]) {
+  const variant = await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),
+    null,packed("kernel/match-rules.gz"),animation,rule);
+  assert.equal(variant.diagnostics().ruleFlags, flags);
+  assert.equal(variant.diagnostics().timerSetting, timer);
+  if (timer) {
+    let result;
+    const idle = fighters.map(() => ({buttons:0, x:0, z:0}));
+    for (let tick = 0; tick < 18500; tick++) {
+      variant.tick(idle);
+      result = variant.outcome();
+      if (result.result) break;
+    }
+    assert.ok(result.result);
+    assert.equal(result.method, "time");
+    assert.deepEqual(result.clock, {minutes:5, seconds:0});
+  }
+  variant.rematch();
+  assert.equal(variant.diagnostics().ruleFlags, flags);
+  assert.equal(variant.diagnostics().timerSetting, timer);
+  assert.equal(variant.outcome().phase, 1);
+}
+match.rematch();
+
 const ACTOR=[0x4bc170,0x4bd468], buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
 const word=a=>match.memory.getUint32(a,true), scalar=a=>match.memory.getFloat32(a,true);
 

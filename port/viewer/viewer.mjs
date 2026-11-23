@@ -479,7 +479,7 @@ async function display(leave) {
     // Explicit CPU seats only (?cpu=N, the last N seats): the retail AI plays them and no controller or guest can.
     selected.forEach((f,i)=>{ f.cpu = (query.teamOrder?.[i] ?? i) >= count - query.cpu; });
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count,cpu:query.cpu});
-    fight = await loadFoundationFight(selected,arena,mode);
+    fight = await loadFoundationFight(selected,arena,mode,query.rule);
     if(voicePlayer)fight.setVoicePlayer(voicePlayer);
     camera = battleCamera(fight.kernel, arena.file);
     const cpuNote = query.cpu ? " · "+query.cpu+(query.cpu>1?" CPU opponents":" CPU opponent") : "";

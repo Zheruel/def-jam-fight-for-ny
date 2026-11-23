@@ -12,7 +12,7 @@ import { copyDecisions, neutralPad, withCpuPages, writeSeatTypes } from "./cpu.m
 const actorAddress = slot => 0x4bc170 + slot * 0x12f8;
 const rad = Math.PI / 180;
 
-export async function loadFoundationFight(fighters,venue,format) {
+export async function loadFoundationFight(fighters,venue,format,rule) {
   const mode=MODES[format] ?? Object.values(MODES).find(m=>m.fighters===fighters.length && (!format || m.formation===format));
   if(mode?.fighters!==fighters.length) throw RangeError("No Battle start for "+fighters.length+" fighters in "+format);
   const [source,seed,arena,rules,animation]=await Promise.all([
@@ -22,7 +22,7 @@ export async function loadFoundationFight(fighters,venue,format) {
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
     loadMatchAnimation(fighters),
   ]);
-  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters,mode.start),arena,rules,animation);
+  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters,mode.start),arena,rules,animation,rule);
   const clips=signatureClipIds(fight.memory,fighters.length);
   animation.setSignatures(new Map(await Promise.all(clips.map(async clip=>[
     clip,await fetchPacked(new URL(`../animation/banks/special${clip}.gz`,import.meta.url))
@@ -44,7 +44,7 @@ export function signatureClipIds(memory,count=2) {
   return [...ids];
 }
 
-export async function createFoundationFight(fighters,source,seed,arena,rules,animation) {
+export async function createFoundationFight(fighters,source,seed,arena,rules,animation,rule = "standard") {
   if(fighters.length<2 || fighters.length>4) throw RangeError("Battle requires two to four fighters");
   const actors=fighters.map((_,slot)=>actorAddress(slot));
   let memory, outcome, voice;
@@ -129,6 +129,10 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       const page = file.getUint32(at,true);
       bytes.set(new Uint8Array(seed,at+4,4096),page*4096);
     }
+    // Observed after choosing each rule in the PS2 front end: Crowd Votes selects the
+    // five-minute timer. No Submissions clears bit 1 while keeping the formation.
+    if (rule === "votes") memory.setUint32(0x4bbd30, 1, true);
+    if (rule === "no-submissions") memory.setUint16(0x4bbd2c, memory.getUint16(0x4bbd2c, true) & ~2, true);
     if(rules) loadMatchRules(kernel,rules);
     writeSeatTypes(memory,fighters);
     animation?.reset();
@@ -180,7 +184,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     ticks++;
   }
   function diagnostics() {
-    return {ticks,voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
+    return {ticks,rule,ruleFlags:word(0x4bbd2c),timerSetting:word(0x4bbd30),voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
       eliminated:Boolean(memory.getUint16(a+0x932,true)&0x200),score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
   }

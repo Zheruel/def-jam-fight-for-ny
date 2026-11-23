@@ -20,14 +20,22 @@ const base = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`;
 let browser;
 const types = matchTypes(MODES, true);
 // Navigates the match type step by the intended type, not by a hard-coded number of key presses.
-const chooseType = async (page, type) => {
+const chooseType = async (page, type, rule = "standard") => {
   assert.ok(types.includes(type), `${type} is advertised`);
   const rows = [["1v1", "team", "ffa"], ["window", "subway", "demolition", "inferno"], ["cage", "ringout"]];
   const card = type === "ffa3" ? "ffa" : type;
   const row = rows.findIndex(cards => cards.includes(card));
-  for (let i = 0; i < row; i++) await page.keyboard.press("ArrowDown");
-  for (let i = 0; i < rows[row].indexOf(card); i++) await page.keyboard.press("ArrowRight");
+  if (row > 0) await page.keyboard.press("ArrowDown");
+  const column = rows[row].indexOf(card) + (row === 2 ? 1 : 0);
+  for (let i = 0; i < column; i++) await page.keyboard.press("ArrowRight");
+  if (row === 2) await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
+  if (!MODES[type].venues) {
+    await page.waitForFunction(() => window.nativeMenu?.popup === "rules");
+    for (let i = 0; i < ["standard", "votes", "no-submissions"].indexOf(rule); i++) await page.keyboard.press("ArrowRight");
+    assert.equal(await page.evaluate(() => nativeMenu.rule), rule);
+    await page.keyboard.press("Enter");
+  }
   if (type.startsWith("ffa")) {
     if (type === "ffa3") await page.keyboard.press("ArrowLeft");
     await page.keyboard.press("Enter");
@@ -52,7 +60,7 @@ try {
   await shot("1-fighters");
 
   const roster = JSON.parse(readFileSync(new URL("../port/menu/art/roster.json", import.meta.url), "utf8"));
-  await chooseType(page, "1v1");
+  await chooseType(page, "1v1", "no-submissions");
   await page.waitForTimeout(200);
   const start = ["0x07000030", "0x07000025"].map(h => roster.findIndex(f => f.handle === h));
   // player 1 (WASD + I): two to the right; player 2 (arrows): one to the left; each confirms with their own button
@@ -70,6 +78,8 @@ try {
   });
 
   const query = new URL(page.url()).searchParams;
+  assert.equal(query.get("rules"), "no-submissions");
+  assert.equal(await page.evaluate(() => nativeBattle.diagnostics().ruleFlags), 0x10005);
   assert.equal(query.get("p1"), chosen[0].handle);
   assert.equal(query.get("p2"), chosen[1].handle);
   const venue = inventory.venues.find(v => v.file === query.get("venue"));
@@ -85,7 +95,7 @@ try {
   await versus.goto(base);
   await versus.waitForSelector("canvas[aria-label='Choose fighter and venue']");
   await versus.waitForFunction(() => document.fonts.check("12px BattleNames"));
-  await chooseType(versus, "1v1");
+  await chooseType(versus, "1v1", "votes");
   await versus.keyboard.press("c");
   await versus.keyboard.press("Enter"); await versus.keyboard.press("Enter"); await versus.waitForTimeout(300);
   await versus.keyboard.press("Enter");
@@ -93,6 +103,8 @@ try {
     throw new Error(`CPU match did not start (${versus.url()}): ${await versus.locator("#status").textContent()} ${errors.join(" | ")}`, { cause: error });
   });
   assert.equal(new URL(versus.url()).searchParams.get("cpu"), "1");
+  assert.equal(new URL(versus.url()).searchParams.get("rules"), "votes");
+  assert.equal(await versus.evaluate(() => nativeBattle.diagnostics().timerSetting), 1);
   await versus.close();
 
   // Multi-fighter modes the page advertises (Free For All with three or four fighters): the same menu with three or four cards; Enter locks in
@@ -115,8 +127,10 @@ try {
       await tab.keyboard.press("ArrowRight");
       for (let i = 0; i < 3; i++) await tab.keyboard.press("Enter");
     }
-    await tab.waitForTimeout(300);
-    await tab.keyboard.press("Enter");
+    if (!MODES[mode].venues) {
+      await tab.waitForTimeout(300);
+      await tab.keyboard.press("Enter");
+    }
     await tab.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 120000 }).catch(async error => {
       throw new Error(`${mode} did not start (${tab.url()}): ${await tab.locator("#status").textContent()} ${errors.join(" | ")}`, { cause: error });
     });
