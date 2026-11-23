@@ -7,7 +7,7 @@
   },
   "scripts": {
     "start": "node tools/serve.mjs",
-    "test": "node --test tests/*.test.mjs ps2/battle/tests/*.test.mjs ps2/content/tests/*.test.mjs port/combat/*.test.mjs port/assets/*.test.mjs port/motion/*.test.mjs",
+    "test": "node --test tests/*.test.mjs ps2/battle/tests/*.test.mjs ps2/content/tests/*.test.mjs port/combat/*.test.mjs port/assets/*.test.mjs port/motion/*.test.mjs port/collision/*.test.mjs",
     "disc": "python3 tools/disc.py private/ps2/reference.iso --output private/ps2/reference.json",
     "setup": "npm ci --prefix netplay",
     "test:netplay": "npm --prefix netplay test",
