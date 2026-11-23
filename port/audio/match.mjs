@@ -14,7 +14,7 @@
 
 import { combatManifest, loadAnimTags, mixLevels, venueManifest } from "./venue.mjs";
 
-export const ACTORS = [0x4bc170, 0x4bd468];
+export const ACTORS = [0x4bc170, 0x4bd468, 0x4be760, 0x4bfa58]; // 0x12f8 apart; a match uses the first fighters.length
 const FRAME = 0x9c, BANK = 0x84, LOCAL = 0x88, MOTION = 0x8c;
 
 // Events whose module lives in the common banks (WCommon1/2, Chops, Spec_*), by event name.
@@ -66,7 +66,7 @@ export function createWalker(tags) {
   };
 }
 
-export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, play, actors = ACTORS, seed = 1, record = true }) {
+export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, play, actors = ACTORS.slice(0, fighters.length), seed = 1, record = true }) {
   let random = mulberry32(seed);
   const walkers = actors.map(() => createWalker(tags));
   const eventModules = new Map(); // `${bank}\0${event}` -> modules

@@ -8,20 +8,25 @@ const keyPads = [
 const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p.buttons)]));
 // Standard Gamepad order to PS2 pad bits, as read by the retail Battle update.
 const gamepadBits=[0x4000,0x2000,0x8000,0x1000,0x0400,0x0800,0x0100,0x0200,1,8,2,4,0x10,0x40,0x80,0x20];
-export function battleControls(redraw,audio) {
+// seats: 2 for one-on-one, 4 for Free For All. Seat 0 is the host's; seats 1..seats-1 go to guests, to a local
+// gamepad of the same number, or (seats 0 and 1) to the keyboard. A seat with none of those holds still.
+export function battleControls(redraw,audio,{seats=2}={}) {
   let remote = {}, room, guest = false, poll=0, lastPacket="";
-  const pads = [null,null];
+  const pads = Array(seats).fill(null);
   let state = "local";
   const button = id => document.getElementById(id);
   function input(slot) {
     if (pads[slot]) return pads[slot];
     if (slot >= 1 && remote[slot]) return remote[slot];
-    const config=keyPads[slot];
-    const controller=Array.from(navigator.getGamepads?.()??[]).filter(p=>p?.connected)[guest ? 0 : slot];
+    return read(keyPads[slot], slot);
+  }
+  // A guest always plays from its own first controller and the second keyboard map, whichever seat it holds.
+  function read(config, gamepad) {
+    const controller=Array.from(navigator.getGamepads?.()??[]).filter(p=>p?.connected)[gamepad];
     let buttons=0;
-    Object.entries(config.buttons).forEach(([key,mask])=>{if(keys.has(key)) buttons|=mask;});
+    Object.entries(config?.buttons??{}).forEach(([key,mask])=>{if(keys.has(key)) buttons|=mask;});
     controller?.buttons.forEach((b,i)=>{if(b.pressed) buttons|=gamepadBits[i]??0;});
-    const [x,z,rx,rz]=config.axes.map(([negative,positive],i)=>{
+    const [x,z,rx,rz]=(config?.axes??[[],[],[],[]]).map(([negative,positive],i)=>{
       const axis=controller?.axes[i]??0;
       return Number(keys.has(positive))-Number(keys.has(negative)) || (Math.abs(axis)>0.15 ? axis : 0);
     });
@@ -30,7 +35,7 @@ export function battleControls(redraw,audio) {
   }
   function send() {
     if (!guest || !room) return;
-    const p = input(1);
+    const p = pads[1] ?? read(keyPads[1], 0);
     const axes = [p.x,p.z,p.rx??0,p.rz??0];
     const packet=[p.buttons,...axes].join(",");
     if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes});
@@ -57,7 +62,9 @@ export function battleControls(redraw,audio) {
       button("network").textContent = error?.message ?? (next==="connected" ? "Connected" : next);
     };
     if (join) {
+      const seat = Number(new URLSearchParams(location.search).get("seat"));
       room = await transport.joinMatch({...options,code:button("code").value,video:button("remote"),
+        ...(Number.isInteger(seat) && seat >= 2 && seat <= 4 ? {slot:seat-1} : {}),
         onState,onPlaybackBlocked:()=>button("remote").controls = true});
       lastPacket="";
       const scan=()=>{if(guest){send();poll=requestAnimationFrame(scan);}};
@@ -67,7 +74,11 @@ export function battleControls(redraw,audio) {
       document.querySelector("canvas").hidden = true;
     } else {
       room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),audioStream:audio?.stream(),onState,
-        onInput(p,slot){remote[slot]={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};}});
+        players:seats,
+        onInput(p,slot){remote[slot]={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};},
+        // A seat whose guest left goes back to the local controls instead of holding the last remote state.
+        onPeer({slot,state}){ if(state==="open") delete remote[slot]; },
+        onSlots(list){ const out=button("seats"); if(out) out.textContent=list.map(s=>"P"+(s.slot+1)+" "+s.state).join(" · "); }});
       button("code").value = room.code;
       const invite=new URL(location.href);
       invite.searchParams.set("room",room.code);
@@ -92,10 +103,10 @@ export function battleControls(redraw,audio) {
     cancelAnimationFrame(poll); room?.close(); guest=false; remote={}; room=undefined; state="local";
     button("host").disabled=button("join").disabled=false;
     button("leave").hidden=true; button("remote").hidden=true; document.querySelector("canvas").hidden=false;
-    button("network").textContent=""; button("code").value=""; button("invite").hidden=true;
+    button("network").textContent=""; if(button("seats")) button("seats").textContent=""; button("code").value=""; button("invite").hidden=true;
     button("sound").hidden=false; audio?.setActive(true); redraw();
   };
-  return { inputs:() => [input(0),input(1)], isGuest:()=>guest, connection:()=>state,
+  return { inputs:() => Array.from({length:seats},(_,slot)=>input(slot)), isGuest:()=>guest, connection:()=>state,
     setInput(slot,value) { pads[slot]=value; if (guest) send(); },
     release() { keys.clear(); pads.fill(null); if (guest) send(); } };
 }

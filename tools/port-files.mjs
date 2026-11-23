@@ -35,6 +35,6 @@ export const portFiles = [
   "port/hud/blazin.png","port/hud/mainBarContainer_1.png", "port/hud/momentumBar.png", "port/hud/names.ttf", "port/hud/numbers.ttf",
   "port/battle/index.html", "port/battle/controls.mjs", "port/battle/outcome.mjs", "port/battle/fight.mjs",
   "port/kernel/runtime.mjs", "port/kernel/battle.wasm.gz", "port/kernel/foundation-start.gz",
-  "port/battle/setup.mjs", "port/battle/lineups.json", "ps2/content/inventory.json",
+  "port/battle/setup.mjs", "port/battle/modes.mjs", "port/battle/lineups.json", "ps2/content/inventory.json",
   "port/assets/combat.mjs", "port/assets/combat-data.mjs", "port/combat/combat.mjs",
 ];

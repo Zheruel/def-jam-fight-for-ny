@@ -2,6 +2,9 @@ import { shadowProjection } from "../render/shadow.mjs";
 import { irradianceGLSL, loadLighting, sampleIrradiance } from "../scenery/irradiance.mjs";
 import { loadPoseBank, capturedIdles, poseIndex } from "../motion/pose-bank.mjs";
 import { createBattleLineup } from "../battle/setup.mjs";
+import { MODES, freeForAllAvailable, parseBattleQuery, venueSupports } from "../battle/modes.mjs";
+import { rematchChoice } from "../hud/rematch.mjs";
+import { REMATCH_DELAY } from "../hud/result.mjs";
 import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
 import inventory from "../../ps2/content/inventory.json" with { type: "json" };
 
@@ -108,11 +111,23 @@ async function display() {
 
   const battle = document.body.hasAttribute("data-battle");
   const stepMs = 1000/60;
-  let fight, controls, camera, hud, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
+  let fight, controls, camera, hud, rematch, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
   let scenery, lighting, combatAudio, environment;
   const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
-  const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
+  const params=new URLSearchParams(location.search);
+  const ffaAllowed = battle && freeForAllAvailable();
+  const query = battle ? parseBattleQuery(params,{fighters:inventory.fighters,venues:inventory.venues,ffa:ffaAllowed}) : null;
+  const mode = query?.mode ?? "1v1", count = MODES[mode].fighters;
+  const selectors = [1,2,3,4].slice(0,count).map(n=>document.querySelector("#player"+n));
+  // Free For All is a local preview until the four-body match is verified; published pages keep one-on-one only.
+  const modeSelect = document.querySelector("#mode");
+  if(modeSelect) {
+    modeSelect.hidden = !ffaAllowed;
+    modeSelect.value = mode;
+  }
+  document.querySelectorAll("#player3,#player4").forEach(select=>select.hidden = mode !== "ffa");
+  document.body.dataset.mode = mode;
   const pose = gl.createBuffer();
   const bind = new Float32Array(128 * 16);
   for (let i = 0; i < bind.length; i += 16) bind[i] = bind[i+5] = bind[i+10] = bind[i+15] = 1;
@@ -129,20 +144,28 @@ async function display() {
   }
   selectors[0].value = "0x07000030";
   selectors[1].value = "0x07000025";
-  const params=new URLSearchParams(location.search);
-  if(battle) selectors.forEach((s,i)=>{
-    const handle=params.get("p"+(i+1));
-    if(inventory.fighters.some(f=>f.handle===handle)) s.value=handle;
-  });
+  if(battle) selectors.forEach((s,i)=>{ s.value=query.handles[i]; });
+  // One fighter per seat in Free For All: a fighter another seat holds (or a namesake) cannot be picked again.
+  function distinctFighters() {
+    if(mode !== "ffa") return;
+    const held = selectors.map(s=>inventory.fighters.find(f=>f.handle===s.value));
+    selectors.forEach((select,i)=>{
+      for(const option of select.options) {
+        const f=inventory.fighters.find(entry=>entry.handle===option.value);
+        option.disabled = held.some((other,j)=>j!==i && (other.fighterXml.coreID===f.fighterXml.coreID || other.name===f.name));
+      }
+    });
+  }
+  distinctFighters();
   const venue = document.querySelector("#venue");
   for (const item of [...inventory.venues].sort((a,b) => a.name.localeCompare(b.name))) {
     const option = new Option(item.name, item.file);
     option.dataset.handle = item.handle;
     venue.add(option);
   }
-  const requestedVenue = battle && new URLSearchParams(location.search).get("venue");
-  const arena = inventory.venues.find(v=>v.file===requestedVenue) ?? inventory.venues.find(v=>v.file==="V2BG_02A");
+  const arena = inventory.venues.find(v=>v.file===(battle ? query.venue : "V2BG_02A")) ?? inventory.venues.find(v=>v.file==="V2BG_02A");
   venue.value = arena.file;
+  if(battle) for(const option of venue.options) option.disabled = !venueSupports(option.value,mode);
   const uniform = key => gl.getUniformLocation(program, key);
   const right = uniform("right"), up = uniform("up"), forward = uniform("forward"), scale = uniform("scale");
   const skinned = uniform("skinned"), origin = uniform("origin"), heading = uniform("heading");
@@ -158,8 +181,8 @@ async function display() {
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let lineup;
   function updateLineup() {
-    if (selected.length === 2) lineup = createBattleLineup(venue.selectedOptions[0].dataset.handle,
-      "SINGLE",selected.map(s => s.handle));
+    if (selected.length === count) lineup = createBattleLineup(venue.selectedOptions[0].dataset.handle,
+      MODES[mode].formation,selected.map(s => s.handle));
   }
   let scheduled = 0, started = performance.now();
   function frame(now) {
@@ -248,7 +271,7 @@ async function display() {
         const live = fight?.states[i];
         gl.bufferSubData(gl.UNIFORM_BUFFER,0,live?.skin ?? (clip ? clip.poses[index] : bind));
         const [x,z] = lineup.participants[i].position;
-        const target = lineup.participants[1-i].position;
+        const target = lineup.participants[(i+1)%lineup.participants.length].position;
         if (live) {
           if (lighting) gl.uniform3fv(lightCoefficients,sampleIrradiance(lighting,live.position,coefficients));
           gl.uniform3fv(origin,live.position);
@@ -278,7 +301,7 @@ async function display() {
         }
         body.draw(live?.damage??0);
       });
-      if (matchState) hud(matchState);
+      if (matchState) hud({...matchState,rematch});
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
       if (animate && !document.hidden && !scheduled) scheduled = requestAnimationFrame(frame);
     }
@@ -354,6 +377,12 @@ async function display() {
     destination.searchParams.set("p"+(i+1),s.value);
     location.assign(destination);
   }));
+  modeSelect?.addEventListener("change",()=>{
+    const destination=new URL(location.href);
+    destination.searchParams.set("mode",modeSelect.value);
+    // Seats and the venue list differ by mode; the parser fills in what the new mode needs.
+    location.assign(destination);
+  });
   venue.addEventListener("change", () => {
     if (!battle) return select();
     const destination=new URL(location.href);
@@ -361,7 +390,7 @@ async function display() {
     location.assign(destination);
   });
   await Promise.all([select(), chooseFighters()]);
-  if (battle && selected.length === 2 && scene) {
+  if (battle && selected.length === count && scene) {
     const { loadFoundationFight } = await import("../battle/fight.mjs");
     const { battleControls } = await import("../battle/controls.mjs");
     const { battleCamera } = await import("../battle/camera.mjs");
@@ -388,19 +417,19 @@ async function display() {
       fetch(new URL("../scenery/events.json",import.meta.url)).then(r=>r.json())]);
     environment = createEnvironment(stage.manifest,events.names,{weaponModels:events.weaponModels});
     hud=await createHud(gl);
-    controls = battleControls(() => { previousFrame=undefined; draw(); },audio);
+    controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count});
     fight = await loadFoundationFight(selected,arena);
     camera = battleCamera(fight.kernel, arena.file);
-    status.textContent = "WASD and arrows to move · Controls below";
+    const hint = mode === "ffa" ? "Free For All · WASD, arrows, gamepads 3–4 and guests · Controls below" : "WASD and arrows to move · Controls below";
+    status.textContent = hint;
     document.getElementById("restart").onclick = () => {
-      controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
-      status.textContent = "WASD and arrows to move · Controls below";
+      rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      status.textContent = hint;
     };
-    // Enter starts the rematch once the result banner has offered it.
-    addEventListener("keydown",event=>{
-      const result = fight.outcome();
-      if (event.key === "Enter" && result.result && result.ticksSinceOver >= 120) document.getElementById("restart").click();
-    });
+    // Once the result hold is over the retail REMATCH? card takes left/right (or A/D) and Enter: YES restarts the match.
+    rematch = rematchChoice(() => { const result = fight.outcome(); return result.result && result.ticksSinceOver >= REMATCH_DELAY; },
+      () => document.getElementById("restart").click());
+    addEventListener("keydown",event => { if (rematch.key(event)) { event.preventDefault(); draw(); } });
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
       ...fight.diagnostics(), renderedFrames, paused, network:controls.connection(), environment:environment?.state(), music:music?.tune }) });
     draw();

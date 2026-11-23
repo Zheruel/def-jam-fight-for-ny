@@ -5,7 +5,7 @@ if(!code) {
   const {battleControls}=await import("./controls.mjs");
   document.querySelector("#status").textContent="Arrow keys to move · K to kick";
   document.querySelector("#code").value=code;
-  for(const id of ["venue","player1","player2"]) document.getElementById(id).hidden=true;
+  for(const id of ["venue","mode","player1","player2","player3","player4"]) document.getElementById(id).hidden=true;
   document.querySelector("header span").hidden=true;
   document.querySelector("#host").hidden=true;
   document.querySelector("#restart").hidden=true;
