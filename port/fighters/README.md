@@ -75,7 +75,7 @@ the procedural waist/head aim (below).
 
 * **Animations.** `animbank.py` resolves the bank structure: `BASE00.VIV` and each `WRES_ALL.VIV` member are an ELF split into `.ord` + `.orl`, with five objects (`_d/_f/_h/_s/_t`) per clip and the list of channels (skeleton indices) it drives. Idle clips A112 (Blaze) and A117 (Doc) drive 50 and 58 of 67 and 65 skeleton channels; other clips use shorter prefixes (29–49 channels), so they run on a smaller skeleton whose bone mapping onto the 94-bone rig is not stored in the bank. The key streams are compressed (16-bit values centered on 0x8000, float tables, byte indices, a clip length such as `8.5` as a float) and the sampling rules were not recovered, so no clip is exported; arbitrary-frame sampling needs the sampler (EE 0x1a2f38/0x1a2fe8, scratchpad animation buffer). Strike poses need live captures mid-attack.
 * **Textures.** Parts are not yet matched to the `.ssh` textures.
-* **Eyes and effects.** Sprite packets (eyes, sparkle) are skipped; `skippedPackets` is not exported.
+* **Eye reflections and sparkle.** Eye geometry and diffuse textures are decoded. The eye shader uses 56 output slots per stream, with UV and normal data at VU addresses 60 and 116. The browser uses the fighter lighting shader for these surfaces. The environment reflection and jewellery sparkle passes remain incomplete.
 
 ## Bone world matrices and procedural aim
 

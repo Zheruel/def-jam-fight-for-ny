@@ -226,9 +226,10 @@ def decode_packet(data: bytes, part: dict):
             batch["bounds"] += data[at:at + 4]
         elif kind == 0xD and address == 4:
             batch["a"] = struct.unpack_from(f"<{4 * count}H", data, at)
-        elif kind == 0xD and address == 64:
+        # The eye shader reserves 56 slots per stream. The body shader reserves 60.
+        elif kind == 0xD and address in (60, 64):
             batch["b"] = struct.unpack_from(f"<{4 * count}h", data, at)
-        elif kind == 0xC and address == 124:
+        elif kind == 0xC and address in (116, 124):
             batch["c"] = struct.unpack_from(f"<{4 * count}I", data, at)
             batch["count"] = count
             batches.append(batch)

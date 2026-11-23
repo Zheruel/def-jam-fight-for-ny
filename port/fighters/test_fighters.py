@@ -68,6 +68,18 @@ class FighterModelTests(unittest.TestCase):
             self.assertAlmostEqual(got, want, places=5)
         self.assertEqual(self.blaze["uvs"][:2], [2768 / 4096, 696 / 4096])
 
+    def test_eye_surfaces_bind_to_individual_eye_bones(self):
+        for model in (self.blaze, self.doc):
+            eye_bones = {i for i, bone in enumerate(model["bones"]) if bone["name"] in ("L_Eye", "R_Eye")}
+            vertices = {joint: [] for joint in eye_bones}
+            for v in range(model["counts"]["vertices"]):
+                joint = model["joints"][4 * v]
+                if joint in vertices and model["weights"][4 * v] > 0.99:
+                    vertices[joint].append(v)
+            for joint, indices in vertices.items():
+                self.assertGreater(len(indices), 25, model["bones"][joint]["name"])
+                self.assertGreater(len({tuple(model["uvs"][2*v:2*v+2]) for v in indices}), 8)
+
     def test_skeleton_is_a_bind_pose_tree(self):
         for model in (self.blaze, self.doc):
             bones = model["bones"]
