@@ -3,6 +3,7 @@ import { loadMatchRules, initializeFighterProfile } from "./roster.mjs";
 import { installArena,loadArena } from "./arena.mjs";
 import { instantiateBattle } from "../kernel/runtime.mjs";
 import { poseIndex } from "../motion/pose-bank.mjs";
+import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
 
 const ACTOR = [0x4bc170,0x4bd468];
@@ -25,7 +26,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   const scalar = address => memory.getFloat32(address,true);
   const readVector = address => [scalar(address),scalar(address+4),scalar(address+8)];
   const states = fighters.map(({body,bank,model}) => ({ bones: body.bones, bank, model,
-    position: [0,0,0], yaw: 0, root: [0,0,0,0], skin: null, aim: new Map() }));
+    position: [0,0,0], yaw: 0, root: [0,0,0,0], skin: null, aim: new Map(), damage: 0 }));
   function clip(slot,bank,local) {
     const action = bank === 0 ? 10000 + local : local;
     // BASE00 is the shared action bank. Both body rigs have identical body
@@ -50,13 +51,22 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     sample, place,
     duration(slot,bank,index) { return animation ? animation.duration(slot,bank,index) : clip(slot,bank,index).end; },
     rootYaw(slot) { return states[slot].root[3]; },
+    damage(slot,level) { states[slot].damage = level; },
     rotateBone(slot,id,address) {
-      // Recorded poses include the reference match's procedural aim. Keep the
-      // new aim request available until incremental rotation sampling is ported.
-      states[slot].aim.set(id,readVector(address));
+      const euler = readVector(address);
+      // The sampler's pose array is edited in place, as retail 0x132ab8 does; recorded captures can only keep the request.
+      if(animation) animation.rotate(states[slot],slot,id,euler);
+      else states[slot].aim.set(id,euler);
     },
     writeBone(slot,id,address) {
-      const state = states[slot], index = word(0x3ccdb8 + (id-1)*4);
+      const state = states[slot];
+      if(state.world) {
+        // Retail 0x132a28: bone world matrix x actor matrix (yaw about +Y, then position).
+        const m = boneWorldMatrix(state,state.entries,actorMatrix(state.position,state.yaw),id,state.world);
+        for(let i=0;i<16;i++) memory.setFloat32(address+i*4,m[i],true);
+        return;
+      }
+      const index = word(0x3ccdb8 + (id-1)*4);
       const bind = state.bones[index].bindWorld;
       const start = index*16, cosine = Math.cos(state.yaw*rad), sine = Math.sin(state.yaw*rad);
       for (let row=0;row<4;row++) {
@@ -100,6 +110,10 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       sample(i,word(a+0x84),word(a+0x88),scalar(a+0x9c));
       pads[i] = 0x4bbfb0 + word(0x4bbd48+i*4)*32;
       states[i].aim.clear();
+      states[i].damage = 0;
+      states[i].settled = [...states[i].position];
+      states[i].pending = null;
+      states[i].final = null;
     });
     ticks = 0;
   }
@@ -114,6 +128,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       memory.setFloat32(p+12,z,true);
     });
     kernel.tick();
+    states.forEach((state,slot) => animation?.finish(state,slot));
     ticks++;
   }
   function diagnostics() {
