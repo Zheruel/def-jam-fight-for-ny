@@ -50,6 +50,26 @@ const { skin, world, entries } = readPose(new DataView(eeRam), model, slot);   /
 
 `poses/*.json` (`def-jam-fny-fighter-pose/1`) are examples exported by `export-poses.mjs`: Blaze idle A112 frame 16, Doc idle A117 frame 18, both actors in the second snapshot, and the bind reference. `node --test port/fighters/pose.test.mjs`.
 
+## Offline sampler and motion banks
+
+`sampler/` runs the recompiled retail `0x132b48(slot, bank, clip, out, -1, time)` natively on a RAM snapshot (`build.py` builds
+`private/fighter-sampler/sampler`; `harness.cpp` also exposes root offset, root yaw `0x132c38` and the duration service `0x132c60`).
+`sampler/bank.py` samples every clip on an adaptive grid and bakes `def-jam-fny-motion-bank/2` (quantized quaternion keyframes in 1/64-frame
+time, constant/keyed translations, root x/y/z/yaw track; format in its docstring). Clip `end` is always the retail `0x132c60` result,
+never detected from the pose.
+
+```sh
+python3 port/fighters/sampler/bank.py private/verification/ps2-match/run-BjNMn0/fighter-ram-0.bin build/fighter-banks [--only base00]
+```
+
+`motion.mjs`: `new MotionBank(index, arrayBuffer, rig)`, `bank.sample(engineClip, frame, out = Float32Array(94*12), {loop}) -> {x, y, z, yaw}`
+(synchronous; `out` is the engine pose layout read by `pose.mjs`). Clip ids are engine ids: bank 0 = BASE00 index, bank 1 = WRES index + 1000 x slot.
+Shared BASE00 clips take the sampling fighter's own rest translations from its rig. Checked-in fixtures: `motions/` (10 clips).
+
+Validation: bank vs native sampler at 120 random times per clip: max 0.0003-0.002 (one half-frame root step 0.04); idle clips match the recorded
+retail poses on all settled frames; strikes/hits match outside blend windows. Not reproduced: the 12-frame blend, HELD bones (fingers/lips/brows),
+head/bone 13 look-at residual (procedural rig, see below), non-unit engine quaternions are normalized.
+
 ## Not recovered
 
 * **Animations.** `animbank.py` resolves the bank structure: `BASE00.VIV` and each `WRES_ALL.VIV` member are an ELF split into `.ord` + `.orl`, with five objects (`_d/_f/_h/_s/_t`) per clip and the list of channels (skeleton indices) it drives. Idle clips A112 (Blaze) and A117 (Doc) drive 50 and 58 of 67 and 65 skeleton channels; other clips use shorter prefixes (29–49 channels), so they run on a smaller skeleton whose bone mapping onto the 94-bone rig is not stored in the bank. The key streams are compressed (16-bit values centered on 0x8000, float tables, byte indices, a clip length such as `8.5` as a float) and the sampling rules were not recovered, so no clip is exported; arbitrary-frame sampling needs the sampler (EE 0x1a2f38/0x1a2fe8, scratchpad animation buffer). Strike poses need live captures mid-attack.
