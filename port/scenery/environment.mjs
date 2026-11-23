@@ -16,6 +16,7 @@
 
 import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
 import { placementMatrix } from "./scenery.mjs";
+import { createSubwayTrain } from "./train.mjs";
 
 export const EVENT_QUEUE = 0x476e28;
 export const QUEUE_RECORDS = 2;
@@ -100,6 +101,7 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
   const propStates = new Map((manifest.props ?? []).map(p => [p.name, new Set(p.states)]));
   const placed = new Map((manifest.weapons ?? []).map(w => [short(w.name), w]));
   const hidden = new Set(manifest.hiddenWeapons ?? []);
+  const train = manifest.subway ? createSubwayTrain(manifest.subway) : null;
   let props, weapons, running, emitted, ignored, clock, live = null;
 
   function reset() {
@@ -110,6 +112,7 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
     ignored = [];
     clock = 0;
     live = null;
+    train?.reset();
   }
   reset();
 
@@ -240,6 +243,7 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
       const events = drainEventQueue(memory);
       for (const e of events) trigger(e.id, e);
       step(frames);
+      train?.update(memory, clock);
       live = { slots: readWeaponSlots(memory, weaponModels), fighters };
       return events;
     },
@@ -270,12 +274,15 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
           if (matrix) dynamicWeapons.push({ slot: w.slot, model: w.model, holder: w.holder, matrix });
         }
       }
+      const car = train?.car();
+      if (car) dynamicWeapons.push(car);
       return { props: { ...props }, weapons: out, hiddenWeapons: revealed, dynamicWeapons };
     },
     // Every weapon slot the match has live right now: what is held, resting or flying.
     get weaponSlots() { return live ? live.slots : []; },
     // Sounds, particles and light changes the events asked for since the last call.
-    effects() { const out = emitted; emitted = []; return out; },
+    effects() { const out = [...emitted, ...(train?.effects() ?? [])]; emitted = []; return out; },
+    get train() { return train; },
     get running() { return running.map(e => e.name); },
     get ignored() { return ignored; },
     get clock() { return clock; },

@@ -564,6 +564,58 @@ def weapon_table(xml: bytes) -> dict[str, dict]:
     return rows
 
 
+def subway_match(stage_xml: str) -> dict | None:
+    """The 125th Street Station's <subwaymatch>: the train car models, the track span and the glow lights."""
+    try:
+        body = section(stage_xml, "subwaymatch")
+    except ValueError:
+        return None
+    lights = []
+    for text in values(body, "trainlight"):
+        name, *numbers = [part.strip() for part in text.split(",")]
+        lights.append({"name": name, "translate": [float(v) for v in numbers[:3]], "rotate": [float(v) for v in numbers[3:6]]})
+    return {"objects": values(body, "object"), "width": float(values(body, "width")[0]),
+            "length": float(values(body, "length")[0]), "lights": lights,
+            "off": [v.strip() for v in values(section(stage_xml, "defaultparticles"), "off")]}
+
+
+def train_decode_packet(data: bytes, part: dict, cache: dict = {}):
+    """weapon_decode_packet, but a stage model's weight table is sent once: later packets reuse the first one."""
+    table, batches, batch = None, [], None
+    for code in retail.vif_codes(data, part["packet"], part["qwc"]):
+        if "unpack" not in code:
+            continue
+        kind, address, at, count = code["unpack"], code["address"], code["data"], code["count"]
+        if kind == 0xC and not code["tops"] and address == 4:
+            table = cache["table"] = [struct.unpack_from("<4I", data, at + 16 * i) for i in range(count)]
+        elif kind == 0xC and address == 0:
+            batch = {"header": struct.unpack_from("<4I", data, at), "bounds": b""}
+        elif kind == 0xE and address in (1, 2, 3):
+            batch["bounds"] += data[at:at + 4]
+        elif kind == 0xD and address == 4:
+            batch["a"] = struct.unpack_from(f"<{4 * count}H", data, at)
+        elif kind == 0xD and not code["unsigned"]:
+            batch["b"] = struct.unpack_from(f"<{4 * count}h", data, at)
+        elif kind == 0xC and code["tops"] and address > 4:
+            batch["c"] = struct.unpack_from(f"<{4 * count}I", data, at)
+            batch["count"] = count
+            batches.append(batch)
+    table = table or cache.get("table")
+    return (table, batches) if table is not None and batches else None
+
+
+def train_models(disc: Disc, venue: str, names: list[str]) -> dict[str, bytes]:
+    """Each subway car as a DJF1 skinned mesh (one bone, drawn in its bind pose like a weapon), textured from the venue's .ssh."""
+    import export_fighters
+    original = retail.decode_packet, export_fighters.read_member
+    retail.decode_packet = train_decode_packet
+    export_fighters.read_member = lambda d, name: (None, member(d, STAGE, venue + ".ssh" if name.endswith(".ssh") else name), None)
+    try:
+        return {name: export_fighters.pack(disc, name[:-2] if name.endswith(".o") else name) for name in names}
+    finally:
+        retail.decode_packet, export_fighters.read_member = original
+
+
 def build_weapons(iso: Path) -> dict[str, bytes]:
     disc = Disc(str(iso))
     try:
@@ -661,6 +713,15 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
                    f"{venue}.ssh": sha256(ssh_blob)}
         objects, decoded, skipped, object_sources = venue_props(disc, venue, objects_xml)
         sources.update(object_sources)
+        subway = optional(subway_match, objects_xml, default=None)
+        trains = {}
+        if subway:
+            trains = train_models(disc, venue, subway["objects"])
+            raw = gzip.decompress(trains[subway["objects"][0]])
+            subway["bounds"] = json.loads(raw[8:8 + U32.unpack_from(raw, 4)[0]])["bounds"]
+            skipped = [x for x in skipped if x["name"] not in subway["objects"]]
+            for name in subway["objects"]:
+                sources[name + ".o"] = sha256(member(disc, STAGE, name + ".o"))
         props = props_header = None
         if objects:
             props, props_header = pack_props(objects, decoded, textures(ssh_blob))
@@ -734,6 +795,8 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
         "propsFile": "props.scene.gz" if props else None,
         "instancedCrowd": None,
     }
+    if subway:
+        scenery["subway"] = subway
     files = {"scenery.json": None}
     if lighting:
         scenery["lighting"] = {"file": "lighting.json", "settings": [x["name"] for x in lighting]}
@@ -741,6 +804,8 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
                                              separators=(",", ":")) + "\n").encode()
     if props:
         files["props.scene.gz"] = props
+    for name, blob in trains.items():
+        files[f"trains/{name}.skin.gz"] = blob
     if crowd_header:
         scenery["instancedCrowd"] = {"model": CROWD_MODEL, "layout": layout_name,
                                      "frames": crowd_header["frames"], "loops": crowd_header["loops"],
@@ -785,6 +850,8 @@ def main(argv: list[str] | None = None) -> int:
                         "nearCrowdPositions": len(manifest["nearCrowd"]),
                         "lighting": manifest.get("lighting", {}).get("settings", []),
                         "undecodedProps": [p["name"] for p in manifest["undecodedProps"]]}
+        if manifest.get("subway"):
+            index[venue]["trains"] = manifest["subway"]["objects"]
         for name, blob in built.items():
             path = OUTPUT.parent / directory(venue) / name
             path.parent.mkdir(parents=True, exist_ok=True)

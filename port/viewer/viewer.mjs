@@ -112,7 +112,7 @@ async function display() {
   const battle = document.body.hasAttribute("data-battle");
   const stepMs = 1000/60;
   let fight, controls, camera, hud, rematch, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
-  let scenery, lighting, combatAudio, environment;
+  let scenery, lighting, combatAudio, environment, trainAudio;
   const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
   const params=new URLSearchParams(location.search);
@@ -196,7 +196,7 @@ async function display() {
         while (carry >= stepMs) {
           fight.tick(controls.inputs());
           combatAudio?.tick(fight);
-          if(environment) { environment.update(fight.memory,1,fight.states); const effects=environment.effects(); combatAudio?.environment?.(effects); }
+          if(environment) { environment.update(fight.memory,1,fight.states); const effects=environment.effects(); combatAudio?.environment?.(effects); trainAudio?.effects(effects); }
           camera.step();
           carry -= stepMs;
           advanced = true;
@@ -421,9 +421,10 @@ async function display() {
     fight = await loadFoundationFight(selected,arena);
     camera = battleCamera(fight.kernel, arena.file);
     const hint = mode === "ffa" ? "Free For All · WASD, arrows, gamepads 3–4 and guests · Controls below" : "WASD and arrows to move · Controls below";
+    if(stage.manifest.subway) { const {createTrainAudio}=await import("../scenery/train.mjs"); trainAudio=createTrainAudio(audio,{fighters:selected.map(f=>f.record.fighterXml)}); }
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
-      rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = hint;
     };
     // Once the result hold is over the retail REMATCH? card takes left/right (or A/D) and Enter: YES restarts the match.

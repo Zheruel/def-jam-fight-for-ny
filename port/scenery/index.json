@@ -244,7 +244,8 @@
    "V2BG04A5_nis",
    "V2BG04A6_nis"
   ],
-  "undecodedProps": [
+  "undecodedProps": [],
+  "trains": [
    "V2BG_04A_H",
    "V2BG_04A_I",
    "V2BG_04A_J",

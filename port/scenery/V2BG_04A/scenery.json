@@ -20,6 +20,11 @@
    "V2BG_04A_O.o": "6a61541eba03e823a47c980da43669cccf87501df22b2d1d0b8ebce090d6adea",
    "V2BG_04A_P.o": "5845cee1774754fc36a9ebd73d11d5ed0c7f004baf4f52675e475b6dc5ad6e13",
    "V2BG_04A_T.o": "56f3e1b026084904d78ad158070ed25a4a9f18399366398ca03408683f9340f4",
+   "V2BG_04A_H.o": "19a78add23dd4f33aa077c9f017c8f30b01581f1bc091b76f15b2da584dda6d1",
+   "V2BG_04A_I.o": "816d98709fde556bf42e290cf3d9641cc664c6be2529c60b4a557f8c935ce331",
+   "V2BG_04A_J.o": "5c9f7d2882c2ed27d2317b7856d83b19f4da0c8bcccedc663795a91418fac7eb",
+   "V2BG_04A_K.o": "8cc478fb05c6b96b732d8956b3b9e83ff41179c50215e971a65a5778dc1b7251",
+   "V2BG_04A_L.o": "8adcf8e9a90853b32bace9b3c29f3caa8da7006c1d799ef57fed29d9ab028ad1",
    "V2BG04A0.irr": "1744a6064dbd191297845bb250c5d2974dbde23a513191791c82c65a01610adc",
    "V2BG04A1.irr": "b737018d57da31de48a567eb2ef6d08911f9be99cc08756178e29c1a95819c94",
    "V2BG04A2.irr": "00cc164522eb81a9692d119db96975a805fb176aecdfc8f5efaee44e4a74d9ce",
@@ -236,28 +241,7 @@
    }
   }
  ],
- "undecodedProps": [
-  {
-   "name": "V2BG_04A_H",
-   "reason": "V2BG_04A_H: unexpected position payload"
-  },
-  {
-   "name": "V2BG_04A_I",
-   "reason": "V2BG_04A_I: unexpected position payload"
-  },
-  {
-   "name": "V2BG_04A_J",
-   "reason": "V2BG_04A_J: unexpected position payload"
-  },
-  {
-   "name": "V2BG_04A_K",
-   "reason": "V2BG_04A_K: unexpected position payload"
-  },
-  {
-   "name": "V2BG_04A_L",
-   "reason": "V2BG_04A_L: unexpected position payload"
-  }
- ],
+ "undecodedProps": [],
  "unmatchedPlacements": [],
  "venueMorphs": [
   "V2BG_04A1",
@@ -905,6 +889,89 @@
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
  "instancedCrowd": null,
+ "subway": {
+  "objects": [
+   "V2BG_04A_H",
+   "V2BG_04A_I",
+   "V2BG_04A_J",
+   "V2BG_04A_K",
+   "V2BG_04A_L"
+  ],
+  "width": 180.0,
+  "length": 10.0,
+  "lights": [
+   {
+    "name": "fx_trainF1",
+    "translate": [
+     88.7,
+     4.08,
+     -72.2
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     -90.0
+    ]
+   },
+   {
+    "name": "fx_trainF2",
+    "translate": [
+     88.7,
+     4.08,
+     -54.8
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     -90.0
+    ]
+   },
+   {
+    "name": "fx_trainR1",
+    "translate": [
+     -88.94,
+     9.2,
+     -71.24
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "name": "fx_trainR2",
+    "translate": [
+     -88.94,
+     9.2,
+     -55.56
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "off": [
+   "fx_trainF1",
+   "fx_trainF2",
+   "fx_trainR1",
+   "fx_trainR2"
+  ],
+  "bounds": {
+   "min": [
+    -90.94012451171875,
+    -11.22983455657959,
+    -79.60001373291016
+   ],
+   "max": [
+    90.94012451171875,
+    30.39754295349121,
+    -48.10000991821289
+   ]
+  }
+ },
  "lighting": {
   "file": "lighting.json",
   "settings": [

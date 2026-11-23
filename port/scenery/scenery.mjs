@@ -70,6 +70,10 @@ export async function loadScenery(venue, { signal, base = new URL("./", import.m
   await Promise.all(wanted.map(async model => {
     weapons.set(model, parseSkinned(await fetchPacked(new URL(`weapons/${model}.skin.gz`, base), signal)));
   }));
+  // The subway's cars (venue 4) are one-bone meshes in the venue's own directory and are drawn like weapons.
+  await Promise.all((manifest.subway?.objects ?? []).map(async model => {
+    weapons.set(model, parseSkinned(await fetchPacked(new URL(`trains/${model}.skin.gz`, dir), signal)));
+  }));
   return { manifest, props, crowd, weapons };
 }
 
