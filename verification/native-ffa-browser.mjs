@@ -230,7 +230,7 @@ try {
   }
   const seat = new URL(invite); seat.searchParams.set("seat", "3");
   const returning = await open(seat.href);
-  await returning.waitForFunction(() => nativeBattle.diagnostics().network === "connected", undefined, { timeout: 60000 });
+  await returning.waitForFunction(() => window.nativeBattle?.diagnostics().network === "connected", undefined, { timeout: 60000 });
   await ffa.waitForFunction(() => document.querySelector("#seats").textContent === "P1 host · P2 connected · P3 connected · P4 connected", undefined, { timeout: 30000 });
   await fresh(ffa);
   const before = await positions(ffa);
