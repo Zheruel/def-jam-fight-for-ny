@@ -52,7 +52,12 @@ def instances(ram: bytes) -> list[dict]:
         if reference - current != 2 * (previous - current) or not 0 < current < len(ram) - 13 * ENTRY * 3:
             continue
         found.append({"name": match.group()[:-1].decode(), "record": record, "object": obj,
-                      "current": current, "previous": previous, "reference": reference})
+                      "current": current, "previous": previous, "reference": reference,
+                      "group": struct.unpack_from("<I", ram, record + 0x84)[0]})
+    # The three crowd classes (modular part sets) are told apart by address; their order is the class number.
+    order = {group: k for k, group in enumerate(sorted({f["group"] for f in found}))}
+    for each in found:
+        each["class"] = order[each["group"]]
     return found
 
 
@@ -166,6 +171,7 @@ def export(ram: bytes) -> dict:
             raise ValueError(each["name"] + ": reference pose differs")
     trim = lambda pose: [[round(v, 6) for v in (*e[4:8], *e[8:11])] for e in pose]
     return {"bones": BONES, "parents": PARENTS, "bind": trim(reference),
+            "classes": {each["name"]: each["class"] for each in found},
             "instances": {each["name"]: trim(read_pose(ram, each["current"])) for each in found}}
 
 
