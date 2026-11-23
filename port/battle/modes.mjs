@@ -19,8 +19,8 @@ export const MODES = Object.freeze({
 export const DEFAULT_FIGHTERS = ["0x07000030", "0x07000025", "0x0700000A", "0x07000011"];
 export const DEFAULT_VENUE = "V2BG_02A";
 
-// Free For All stays off in published builds until the four-body seed and page E2E pass.
-export const FREE_FOR_ALL_PUBLIC = false;
+// Both the Pages build and local server serve the verified four-actor start.
+export const FREE_FOR_ALL_PUBLIC = true;
 export function freeForAllAvailable(location = globalThis.location) {
   if (FREE_FOR_ALL_PUBLIC) return true;
   return ["localhost", "127.0.0.1", "[::1]"].includes(location?.hostname);

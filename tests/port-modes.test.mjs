@@ -32,8 +32,8 @@ test("Free For All needs a venue with the formation and is off unless allowed", 
   assert.equal(parse("mode=ffa&venue=V2BG_09A").venue, "V2BG_09A");
   assert.equal(parse("mode=ffa", false).mode, "1v1");
   assert.equal(parse("mode=ffa", false).handles.length, 2);
-  assert.equal(FREE_FOR_ALL_PUBLIC, false);
-  assert.equal(freeForAllAvailable({ hostname: "someone.github.io" }), false);
+  assert.equal(FREE_FOR_ALL_PUBLIC, true);
+  assert.equal(freeForAllAvailable({ hostname: "someone.github.io" }), true);
   assert.equal(freeForAllAvailable({ hostname: "127.0.0.1" }), true);
 });
 

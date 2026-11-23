@@ -396,9 +396,14 @@ async function display() {
     const { battleCamera } = await import("../battle/camera.mjs");
     const { createHud } = await import("../hud/hud.mjs");
     const { venueAudio } = await import("../audio/venue.mjs");
-    let music;
+    let music, voicePlayer;
     const audio = venueAudio(arena.file,{onStart: async () => {
       // First gesture: the retail battle music joins the same bus (and so the guests' stream) as the cues.
+      import("../audio/voice.mjs").then(async ({loadVoicePlayer})=>{
+        voicePlayer=await loadVoicePlayer(audio);
+        fight?.setVoicePlayer(voicePlayer);
+      })
+        .catch(error=>console.error("Could not start fighter voices",error));
       import("../audio/music.mjs").then(async ({createMusic}) => { music = createMusic(audio); await music.start(); })
         .catch(error => console.error("Could not start battle music",error));
       try {
@@ -416,12 +421,13 @@ async function display() {
     const [{createEnvironment},events] = await Promise.all([import("../scenery/environment.mjs"),
       fetch(new URL("../scenery/events.json",import.meta.url)).then(r=>r.json())]);
     environment = createEnvironment(stage.manifest,events.names,{weaponModels:events.weaponModels});
+    if(stage.manifest.subway) { const {createTrainAudio}=await import("../scenery/train.mjs"); trainAudio=createTrainAudio(audio,{fighters:selected.map(f=>f.record.fighterXml)}); }
     hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count});
     fight = await loadFoundationFight(selected,arena);
+    if(voicePlayer)fight.setVoicePlayer(voicePlayer);
     camera = battleCamera(fight.kernel, arena.file);
     const hint = mode === "ffa" ? "Free For All · WASD, arrows, gamepads 3–4 and guests · Controls below" : "WASD and arrows to move · Controls below";
-    if(stage.manifest.subway) { const {createTrainAudio}=await import("../scenery/train.mjs"); trainAudio=createTrainAudio(audio,{fighters:selected.map(f=>f.record.fighterXml)}); }
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
       rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
