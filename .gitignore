@@ -1,0 +1,12 @@
+/private/
+/build/
+/node_modules/
+__pycache__/
+*.iso
+*.gcm
+*.rvz
+*.gci
+*.sav
+*.dtm
+*.dol
+.DS_Store
