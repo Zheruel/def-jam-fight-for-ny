@@ -11,6 +11,8 @@
 import { fetchPacked } from "../viewer/scene.mjs";
 import { irradiance, irradianceGLSL, sampleIrradiance } from "./irradiance.mjs";
 import { bankPose, loadPeople, skinPalette, POSE_FLOATS } from "./people.mjs";
+import { createParticles, trainLights } from "./particles.mjs";
+import { createFader, eyeOf } from "./occlusion.mjs";
 
 
 const U32 = 4;
@@ -82,7 +84,12 @@ export async function loadScenery(venue, { signal, base = new URL("./", import.m
   }));
   // Venues with retail near-crowd positions list `people` in index.json (crowd_bank.py); the Foundation's own folder is "foundation/".
   const people = manifest.people ? await loadPeople(dir, { signal, parseSkinned }) : null;
-  return { manifest, props, crowd, weapons, people };
+  // The venue's JDI particle effects (particles.py): the effect table and its sprite sheet.
+  const particles = manifest.particles
+    ? { manifest: JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("particles.json", dir), signal))),
+        png: await fetchPacked(new URL("particles.png", dir), signal) }
+    : null;
+  return { manifest, props, crowd, weapons, people, particles };
 }
 
 // Euler placement from the stage XML: degrees, applied X then Y then Z (all retail Foundation
@@ -117,12 +124,12 @@ void main() {
   gl_Position = viewProjection * model * vec4(position, 1.0);
 }`;
 const CROWD_VERTEX = `#version 300 es
-in vec2 uv; in vec4 instance; in vec2 style; in vec3 shade;
+in vec2 uv; in vec4 instance; in vec2 style; in vec3 shade; in float fade;
 uniform highp usampler2D frames;   // 16-bit XYZ per vertex (x) per retail frame (y)
 uniform mat4 viewProjection; uniform vec3 scale;
 uniform vec2 loop;                 // first frame, frame count of the active cycle
 uniform float tick;
-out vec2 texcoord; out vec3 tint;
+out vec2 texcoord; out vec3 tint; out float shown;
 void main() {
   float frame = loop.x + mod(floor(tick) + style.y, loop.y);
   vec3 raw = vec3(texelFetch(frames, ivec2(gl_VertexID, int(frame)), 0).rgb);
@@ -131,7 +138,7 @@ void main() {
   p = vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z) + instance.xyz;
   // The 256x256 atlas holds four outfits; the model's UVs cover the lower-right one (variant 4).
   float v = mod(style.x - 1.0, 4.0);   // variant 5 (rare, other venues) is not decoded: wrap onto the atlas
-  texcoord = uv - vec2(mod(v, 2.0) < 0.5 ? 0.5 : 0.0, v < 1.5 ? 0.5 : 0.0); tint = shade;
+  texcoord = uv - vec2(mod(v, 2.0) < 0.5 ? 0.5 : 0.0, v < 1.5 ? 0.5 : 0.0); tint = shade; shown = fade;
   gl_Position = viewProjection * vec4(p, 1.0);
 }`;
 const WEAPON_VERTEX = `#version 300 es
@@ -154,6 +161,26 @@ void main() {
   vec3 k = lit ? clamp(irradiance(normalize(world)) * lightScale, 0.0, 1.5) : vec3(1.0);
   color = vec4(texel.rgb * k, 1.0);
 }`;
+// Screen-door fade (occlusion.mjs): a 4 x 4 ordered dither against the figure's visibility, no blending or sorting.
+const DITHER = `
+const float bayer[16] = float[16](0.,8.,2.,10., 12.,4.,14.,6., 3.,11.,1.,9., 15.,7.,13.,5.);
+float dither() {
+  ivec2 p = ivec2(gl_FragCoord.xy) & 3;
+  return (bayer[p.y * 4 + p.x] + 0.5) / 16.0;
+}`;
+const CROWD_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 texcoord; in vec3 tint; in float shown;
+uniform sampler2D diffuse;
+out vec4 color;
+` + DITHER + `
+void main() {
+  vec4 texel = texture(diffuse, texcoord);
+  if (texel.a < 0.01 || shown <= dither()) discard;
+  color = vec4(texel.rgb * tint, 1.0);
+}`;
+const PEOPLE_FRAGMENT = WEAPON_FRAGMENT.replace("uniform sampler2D diffuse;", "uniform sampler2D diffuse; uniform float fade;")
+  .replace("void main() {", DITHER + "\nvoid main() {\n  if (fade <= dither()) discard;");
 const PEOPLE_VERTEX = `#version 300 es
 in vec3 position; in vec3 normal; in vec2 uv; in uvec4 joints; in vec4 weights;
 uniform mat4 viewProjection; uniform mat4 model; uniform mat4 bones[13];
@@ -209,8 +236,9 @@ async function texture(gl, png) {
  *                   false hides it (e.g. after the retail break animation removes it)
  *   crowd           false hides the instanced crowd; otherwise tick/excited drive its frame
  */
-export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null }, { lighting = null, lightScale = 1 } = {}) {
+export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null, particles = null }, { lighting = null, lightScale = 1 } = {}) {
   const state = { props: null, crowd: null, weapons: null, people: null };
+  const stageParticles = particles ? await createParticles(gl, particles.manifest, particles.png) : null;
   let drawWeapon = () => {};
   const identity = placementMatrix({translate:[0,0,0], rotate:[0,0,0]});
   const placements = new Map(manifest.props.map(p => [p.name, p.placement ? placementMatrix(p.placement) : identity]));
@@ -242,7 +270,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     state.props = { prog, vao, vbo, ibo, textures, uniform: uniforms(prog, ["viewProjection","model"]) };
   }
   if (crowd) {
-    const prog = program(gl, CROWD_VERTEX);
+    const prog = program(gl, CROWD_VERTEX, CROWD_FRAGMENT);
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const uv = gl.createBuffer(), ibo = gl.createBuffer(), instances = gl.createBuffer();
@@ -280,7 +308,16 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     gl.uniform3fv(uniform.scale, crowd.mesh.scale);
     gl.uniform1i(uniform.frames, 1);
     gl.uniform1i(uniform.diffuse, 0);
-    state.crowd = { prog, vao, uv, ibo, instances, frames, atlas, count: list.length, uniform };
+    // Per-instance visibility (occlusion.mjs), refreshed every frame.
+    const fadeBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, fadeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(list.length).fill(1), gl.DYNAMIC_DRAW);
+    const fadeAt = gl.getAttribLocation(prog, "fade");
+    gl.enableVertexAttribArray(fadeAt);
+    gl.vertexAttribPointer(fadeAt, 1, gl.FLOAT, false, 4, 0);
+    gl.vertexAttribDivisor(fadeAt, 1);
+    state.crowd = { prog, vao, uv, ibo, instances, frames, atlas, count: list.length, uniform, fadeBuffer,
+      fader: createFader(list.map(i => i.translate)) };
   }
   if (weapons.size) {
     const prog = program(gl, WEAPON_VERTEX, WEAPON_FRAGMENT);
@@ -324,7 +361,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     };
   }
   if (people) {
-    const prog = program(gl, PEOPLE_VERTEX, WEAPON_FRAGMENT);
+    const prog = program(gl, PEOPLE_VERTEX, PEOPLE_FRAGMENT);
     const classes = [];
     for (const data of people.classes) {
       const vao = gl.createVertexArray();
@@ -344,18 +381,21 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     }
     const outfits = new Map();
     for (const [key, png] of people.outfits) outfits.set(key, await texture(gl, png));
-    const uniform = uniforms(prog, ["viewProjection","model","bones","irradianceCoefficients","lit","lightScale","diffuse"]);
+    const uniform = uniforms(prog, ["viewProjection","model","bones","irradianceCoefficients","lit","lightScale","diffuse","fade"]);
     gl.useProgram(prog);
     gl.uniform1i(uniform.lit, lighting ? 1 : 0);
     gl.uniform1f(uniform.lightScale, lightScale);
     gl.uniform1i(uniform.diffuse, 0);
     const spectators = people.manifest.spectators.map(s => ({
       ...s, matrix: placementMatrix(s), light: lighting ? sampleIrradiance(lighting, s.translate) : null }));
-    state.people = { prog, classes, outfits, uniform, spectators, bank: people.bank, pose: new Float32Array(POSE_FLOATS), palette: new Float32Array(13 * 16) };
+    state.people = { prog, classes, outfits, uniform, spectators, bank: people.bank, pose: new Float32Array(POSE_FLOATS), palette: new Float32Array(13 * 16),
+      fader: createFader(spectators.map(s => s.translate)) };
   }
   gl.bindVertexArray(null);
 
-  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, people: showPeople = true, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
+  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, people: showPeople = true, particleEvents = [], fire = null, particles: showParticles = true, sight = [], occlusion = true, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
+    // Spectators (and the instanced crowd) standing between the camera and a fighter fade out, see occlusion.mjs.
+    const eye = occlusion && sight.length ? eyeOf(viewProjection) : null;
     if (state.props) {
       const { prog, vao, textures, uniform } = state.props;
       gl.useProgram(prog);
@@ -375,13 +415,15 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       }
     }
     if (state.crowd && showCrowd) {
-      const { prog, vao, frames, atlas, count, uniform } = state.crowd;
+      const { prog, vao, frames, atlas, count, uniform, fadeBuffer, fader } = state.crowd;
       const [from, to] = excited ? crowd.mesh.loops.excited : crowd.mesh.loops.idle;
       gl.useProgram(prog);
       gl.uniformMatrix4fv(uniform.viewProjection, false, viewProjection);
       gl.uniform2f(uniform.loop, from, to - from);
       gl.uniform1f(uniform.tick, tick);
       gl.bindVertexArray(vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, fadeBuffer);
+      gl.bufferSubData(gl.ARRAY_BUFFER, 0, fader.update(eye, sight));
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, frames);
       gl.activeTexture(gl.TEXTURE0);
@@ -389,11 +431,14 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       gl.drawElementsInstanced(gl.TRIANGLES, crowd.mesh.indices, gl.UNSIGNED_SHORT, 0, count);
     }
     if (state.people && showPeople) {
-      const { prog, classes, outfits, uniform, spectators, bank, pose, palette } = state.people;
+      const { prog, classes, outfits, uniform, spectators, bank, pose, palette, fader } = state.people;
+      const fades = fader.update(eye, sight);
       gl.useProgram(prog);
       gl.uniformMatrix4fv(uniform.viewProjection, false, viewProjection);
       gl.activeTexture(gl.TEXTURE0);
-      for (const spectator of spectators) {
+      for (const [n, spectator] of spectators.entries()) {
+        if (fades[n] <= 0) continue;
+        gl.uniform1f(uniform.fade, fades[n]);
         const model = classes[spectator.class];
         // Each spectator plays its track from its own offset (`phase`, game ticks) so rows do not move in lockstep.
         skinPalette(bankPose(bank, spectator.trackIndex, tick + spectator.phase, pose), model.bones, palette);
@@ -428,6 +473,12 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       for (const { car, matrix, light } of placedCars) drawWeapon(car.name, matrix, car.placement.translate, light, choice);
       // Weapons the match holds or has dropped: a model and a world matrix (column-major, translation last).
       for (const { model, matrix } of dynamicWeapons) drawWeapon(model, matrix, [matrix[12], matrix[13], matrix[14]]);
+    }
+    if (stageParticles && showParticles) {
+      const train = dynamicWeapons.find(w => w.train);
+      stageParticles.update({ tick, events: particleEvents, fire,
+        lights: trainLights(manifest.subway, particles.manifest.effects, train, train?.phase) });
+      stageParticles.draw(viewProjection);
     }
     gl.bindVertexArray(null);
   }

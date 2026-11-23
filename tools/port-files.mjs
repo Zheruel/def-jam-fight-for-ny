@@ -8,6 +8,12 @@ import { menuFiles } from "../port/menu/files.mjs";
 import inventory from "../ps2/content/inventory.json" with { type: "json" };
 
 // Spectators (crowd_bank.py): each venue's people.json, the shared pose bank, and the class meshes and atlases the manifests use.
+// A venue's stage particle effects (particles.py): the effect table and its sprite sheet.
+function particleFiles() {
+  return Object.values(scenery).filter(venue => venue.particles).flatMap(venue =>
+    ["particles.json", "particles.png"].map(name => `port/scenery/${venue.dir}/${name}`));
+}
+
 function peopleFiles() {
   const used = Object.values(scenery).filter(venue => venue.people).map(venue =>
     ({ folder: "port/scenery/" + venue.dir + "/", ...JSON.parse(readFileSync(new URL("../port/scenery/" + venue.dir + "/people.json", import.meta.url), "utf8")) }));
@@ -19,10 +25,10 @@ function peopleFiles() {
 // Runtime files shared by the local native port and the Pages deployment.
 export const portFiles = [
   ...menuFiles,
-  "port/scenery/scenery.mjs", "port/scenery/people.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/train.mjs", "port/scenery/events.json", "port/scenery/index.json",
+  "port/scenery/scenery.mjs", "port/scenery/people.mjs", "port/scenery/particles.mjs", "port/scenery/occlusion.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/train.mjs", "port/scenery/events.json", "port/scenery/index.json",
   "port/scenery/weapons/index.json",
   ...Object.values(weapons.models).map(({file}) => "port/scenery/weapons/" + file),
-  "port/scenery/foundation/crowd.bin.gz", ...peopleFiles(), "port/scenery/crowd/icrowd01.crowd.gz",
+  "port/scenery/foundation/crowd.bin.gz", ...peopleFiles(), ...particleFiles(), "port/scenery/crowd/icrowd01.crowd.gz",
   ...Object.values(scenery).flatMap(({dir,props,trains=[],cars=[]}) => {
     const folder = "port/scenery/" + dir + "/";
     const files = [folder + "scenery.json", folder + "lighting.json", ...trains.map(name => folder + "trains/" + name + ".skin.gz"), ...cars.map(file => folder + file)];

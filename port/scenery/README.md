@@ -137,6 +137,19 @@ Retail keeps weapons in a manager (`0x133180` returns `0x472144` in a battle): 1
 - **Left to the far crowd**: seated, dancing and gym spectators (`sit*`, `dancer*`, `gym*`), whose clips were never recorded. `act3`, `act4`, `stand2`, `stand4` are assumed to share the standing clips.
 - Coverage: 20 venues, 14 to 35 spectators each (the Foundation and Club Murder, Gun Hill, The Pit and Club 357 draw all their positions; the Gauntlet, Club DTP and 7th Heaven lose their seated rows).
 
+## Stage particles (JDI, all 24 venues) and crowd occlusion
+
+`particles.py` reads each stage's `V2BG_<id>.jdi` and writes `<venue>/particles.json` (every effect's decoded parameters, `index.json` counts them) and `particles.png` (the stage's 256 x 256 sprite sheet). `particles.mjs` simulates and draws them as camera-facing sprites (additive for blend 1 and flames, alpha otherwise, depth-tested, no depth writes); `scenery.mjs` loads and draws them last in `render()`. Wiring: `environment.state()` returns `particleEvents` (the stage XML `<particle>` events since the last frame: name, position, rotation), `fire` (Red Hook only, from the retail fire clock) and `sight` (fighter positions); the subway lights come from the train car. No change to the viewer.
+
+| | |
+|---|---|
+| **Verified** | the JDI layout (every file parses the same way); the sprite sheet; the colours of each effect (start/end RGBA at +0x44/+0x4c: the train's white head lights `247 255 251` and red tail lights `229 0 1`, the fobj flames' orange `216 153 63`); each effect's tile list (u, v, size at +0xc8/+0xcc); the Inferno's fire clock and radius/intensity formulas (retail 0x2dea90: the clock gains 1.2 a frame, full until 7200, then dying over 4500; radius `37 + 20 x intensity`); the lights' car-local attachment points (world = car matrix x point). |
+| **Inferred (tuned by eye)** | everything that moves a sprite: speeds, sizes, counts, gravity, lifetimes' pacing, blend modes beyond additive/alpha; the glass shard look (no retail frame of the sprites); the Inferno flame placement and brightness (Red Hook's own flame effect `fx_fireG2` is not in the stage's JDI, so the flame look uses `fx_plfire`/`fx_fobj` sprites; the ring of flames at the fire radius is placed against `private/verification/special/inferno/050-fight-start.png`); the light sprite size. |
+
+The Inferno fire is drawn whenever Red Hook is loaded, because the native page does not set the backend match type 7 (the kernel's fire clock runs on the venue alone).
+
+**Crowd occlusion** (`occlusion.mjs`): retail has no rule for it (every crowd record has alpha 1.0, even a spectator 1.6 units from the Gun Hill camera; the crowd update at 0x17dfa0 only turns heads toward the nearest fighter within 25 units), and its picture shows front-row backs at the fight start. So the port only fades what covers a fighter: a spectator (or an instanced crowd figure) whose body passes within 3.5..7 units of the camera's sight line to a fighter (stopping 8 short of him), or that is within 9..14 of the eye, is dithered out over a few frames. No retail Foundation, Cage, Gun Hill or Dragon House start or later frame hides anyone.
+
 ## Subway train (venue 4)
 
 `train.mjs`, `V2BG_04A/trains/`, `train.test.mjs`, `train-browser.mjs`.

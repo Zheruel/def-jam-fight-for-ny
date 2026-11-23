@@ -954,5 +954,6 @@
    "V2BG15A0_nis",
    "V2BG15A1_nis"
   ]
- }
+ },
+ "particles": true
 }

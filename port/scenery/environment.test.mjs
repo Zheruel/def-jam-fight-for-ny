@@ -21,7 +21,7 @@ test("event table: 468 retail names, the Foundation's are 25..44 in script order
 
 test("a pillar breaks in three stages and the third drops its hidden weapon", () => {
   const env = createEnvironment(manifest, names);
-  assert.deepEqual(env.state(), { props: {}, weapons: {}, hiddenWeapons: [], dynamicWeapons: [] });
+  assert.deepEqual(env.state(), { props: {}, weapons: {}, hiddenWeapons: [], dynamicWeapons: [], particleEvents: [], fire: null, sight: [] });
   env.trigger("02A_1A");
   assert.equal(env.state().props.V2BG_02A_D, "break1");
   env.trigger("02A_1B");

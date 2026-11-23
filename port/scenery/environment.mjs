@@ -17,6 +17,7 @@
 import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
 import { placementMatrix } from "./scenery.mjs";
 import { createSubwayTrain } from "./train.mjs";
+import { infernoFire } from "./particles.mjs";
 
 export const EVENT_QUEUE = 0x476e28;
 export const QUEUE_RECORDS = 2;
@@ -103,14 +104,19 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
     .map(p => [p.name, new Set([...p.states, ...(p.hidden ?? [])])]));
   const placed = new Map((manifest.weapons ?? []).map(w => [short(w.name), w]));
   const hidden = new Set(manifest.hiddenWeapons ?? []);
+  const redHook = manifest.venue === "V2BG_07A";
   const train = manifest.subway ? createSubwayTrain(manifest.subway) : null;
   let props, weapons, running, emitted, ignored, clock, live = null;
+  // What the particle renderer needs: stage particles started since the last draw, and the Inferno's fire.
+  let visual = [], fire = null;
 
   function reset() {
     props = {};
     weapons = new Map();   // short name -> {gone, translate, rotate, motion}
     running = [];
     emitted = [];
+    visual = [];
+    fire = null;
     ignored = [];
     clock = 0;
     live = null;
@@ -149,7 +155,11 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
   function execute(event, command) {
     const { kind, args } = command;
     const at = clock;
-    const emit = extra => emitted.push({ at, event: event.name, kind, ...extra });
+    const emit = extra => {
+      const effect = { at, event: event.name, kind, ...extra };
+      emitted.push(effect);
+      if (effect.particle && kind === "particle") visual.push(effect);
+    };
     switch (kind) {
       case "geometry": {
         const [object, state] = args;
@@ -246,6 +256,9 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
       for (const e of events) trigger(e.id, e);
       step(frames);
       train?.update(memory, clock);
+      // Red Hook's venue clock (0x4c1930) runs the Inferno's fire (0x2dea90) in the native kernel whenever the venue is loaded (the
+      // page does not set the backend match type 7, so the venue is the only switch), so the fire is drawn whenever it burns.
+      fire = redHook ? infernoFire(memory.getFloat32(0x4c1930, true)) : null;
       live = { slots: readWeaponSlots(memory, weaponModels), fighters };
       return events;
     },
@@ -278,7 +291,11 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, wea
       }
       const car = train?.car();
       if (car) dynamicWeapons.push(car);
-      return { props: { ...props }, weapons: out, hiddenWeapons: revealed, dynamicWeapons };
+      const particleEvents = visual;
+      visual = [];
+      // sight: where the fighters stand, for the renderer's crowd occlusion fade (occlusion.mjs).
+      const sight = (live?.fighters ?? []).map(f => f.position);
+      return { props: { ...props }, weapons: out, hiddenWeapons: revealed, dynamicWeapons, particleEvents, fire, sight };
     },
     // Every weapon slot the match has live right now: what is held, resting or flying.
     get weaponSlots() { return live ? live.slots : []; },

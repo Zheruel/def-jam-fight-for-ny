@@ -990,5 +990,6 @@
    "V2BG04A5_nis",
    "V2BG04A6_nis"
   ]
- }
+ },
+ "particles": true
 }

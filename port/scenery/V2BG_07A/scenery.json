@@ -713,5 +713,6 @@
    "V2BG07A0_nis",
    "V2BG07A1_nis"
   ]
- }
+ },
+ "particles": true
 }

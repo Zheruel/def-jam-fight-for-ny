@@ -973,6 +973,9 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
     # crowd_bank.py writes <dir>/people.json (retail-rig spectators); the manifest only records that it is there
     if (OUTPUT.parent / directory(venue) / "people.json").exists():
         scenery["people"] = True
+    # particles.py writes <dir>/particles.{json,png} (the stage's JDI effects)
+    if (OUTPUT.parent / directory(venue) / "particles.json").exists():
+        scenery["particles"] = True
     files["scenery.json"] = (json.dumps(scenery, indent=1, ensure_ascii=False) + "\n").encode()
     return files
 
@@ -1013,6 +1016,10 @@ def main(argv: list[str] | None = None) -> int:
         shown = OUTPUT.parent / directory(venue) / "people.json"
         if shown.exists():
             index[venue]["people"] = len(json.loads(shown.read_text())["spectators"])
+        # particles.py writes <dir>/particles.{json,png}; the index records the effect count
+        effects = OUTPUT.parent / directory(venue) / "particles.json"
+        if effects.exists():
+            index[venue]["particles"] = len(json.loads(effects.read_text())["effects"])
         for name, blob in built.items():
             path = OUTPUT.parent / directory(venue) / name
             path.parent.mkdir(parents=True, exist_ok=True)

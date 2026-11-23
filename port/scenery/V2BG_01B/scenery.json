@@ -338,5 +338,6 @@
    "V2BG01B",
    "V2BG01B_nis"
   ]
- }
+ },
+ "particles": true
 }

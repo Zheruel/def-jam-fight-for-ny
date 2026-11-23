@@ -167,5 +167,6 @@
    "V2BG11A_nis"
   ]
  },
- "people": true
+ "people": true,
+ "particles": true
 }
