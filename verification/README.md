@@ -13,3 +13,5 @@ Screen captures and the JSON report are stored under `private/verification/ps2-m
 ## Native retail reference
 
 The optional `sh verification/check-ps2-reference.sh` checks the archived PS2 ISO, firmware, signed ARMSX2 build, and its isolated profile without opening a window. The prior native boot reached the game’s memory card prompt at 59.9 FPS and identified `SLUS-21004`, game ELF CRC `4538436F`, and the USA v2.00 BIOS. Its log and screenshot are in `private/verification/ps2/`. [ARMSX2 build](https://github.com/ARMSX2/ARMSX2/releases/tag/nightly-20261122) · [PCSX2 game record](https://wiki.pcsx2.net/SLPM-66463)
+
+Add `--trace` to record both fighters' retail action IDs, motion indices, clip frames, positions, damage channels and controller inputs during the live fight. The harness instruments its own headless host and saves the samples in `combat-trace.json` alongside the screenshots. Run `python3 verification/motion-fixture.py path/to/run` to reproduce the compact motion-selection fixture from a complete VBlank sequence.

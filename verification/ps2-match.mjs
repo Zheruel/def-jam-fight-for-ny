@@ -12,6 +12,8 @@ import { chromium } from '../netplay/node_modules/playwright/index.mjs';
 import { attachNetplay } from '../netplay/server.mjs';
 import { gameServer } from '../tools/serve.mjs';
 
+import { exposeReferenceMemory, startRetailTrace } from "./retail-combat-trace.mjs";
+
 const run = promisify(execFile);
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifactRoot = join(root, 'private/verification/ps2-match');
@@ -173,6 +175,7 @@ async function playBattle(controls) {
   const firstGuestFrame = await waitScreen('guest-fight-ready', activeFight, { side: 'guest', timeout: 45_000 });
   report.secondsFromFighterSelectionToFight = (performance.now() - venueStart) / 1000;
 
+  if (controls.beginTrace) await controls.beginTrace();
   if (controls.measurePerformance) {
     report.steadyCombat = [];
     console.log('Starting steady combat measurement');
@@ -228,7 +231,7 @@ async function playBattle(controls) {
 }
 
 async function main() {
-  const { values } = parseArgs({ options: { url: { type: 'string' }, performance: { type: 'boolean', default: false }, 'retail-menus': { type: 'boolean', default: false } } });
+  const { values } = parseArgs({ options: { trace: { type: "boolean", default: false }, url: { type: 'string' }, performance: { type: 'boolean', default: false }, 'retail-menus': { type: 'boolean', default: false } } });
   const publicEntry = values.url && new URL(values.url);
   if (publicEntry) {
     assert.ok(['http:', 'https:'].includes(publicEntry.protocol), 'The player URL must use HTTP or HTTPS');
@@ -276,6 +279,7 @@ async function main() {
     const context = { viewport: { width: 1280, height: 960 } };
     const host = await browser.newPage(context);
     const guest = await browser.newPage(context);
+    if (values.trace) await exposeReferenceMemory(host);
     const errors = [];
     const boot = report.boot = {
       host: { automatic: true, packageRequests: 0 },
@@ -426,8 +430,13 @@ async function main() {
       throw new Error(`Timed out waiting for ${name}. Last screen text: ${image.text}`);
     }
 
-    await playBattle({ measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
+    await playBattle({ beginTrace: values.trace ? () => host.evaluate(startRetailTrace) : null, measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
       rtc: () => rtcStats(guest), report });
+    if (values.trace) {
+      const samples = await host.evaluate(() => window.finishRetailTrace());
+      assert.ok(samples.length > 30, "Too few reference samples");
+      await writeFile(join(out, "combat-trace.json"), JSON.stringify({ match: report.match, samples }));
+    }
     assert.equal(boot.guest.packageRequests, 0, 'The guest must receive the stream without fetching game data');
     assert.deepEqual(boot.isoRequests, [], 'Neither player may request an ISO');
     assert.deepEqual(boot.fileChoosers, [], 'Neither player may open a file chooser');
