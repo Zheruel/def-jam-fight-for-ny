@@ -68,7 +68,7 @@ export async function createHud(gl) {
         if(hp>0)ctx.drawImage(green,0,0,hp,8,...anchors.pos_p1_healthBar,hp,8);
         if(mp>0)ctx.drawImage(gold,0,0,mp,8,...anchors.pos_p1_momentumBar,mp,8);
         ctx.restore();
-        label(i?"DOC":"BLAZE",...anchors["text_"+id+"_name"],14,"names",i?"right":"left");
+        label(actors[i].name.toUpperCase(),...anchors["text_"+id+"_name"],14,"names",i?"right":"left");
         label(String(score),...anchors["text_"+id+"_totalscore"],18,"numbers",i?"right":"left");
       }
       const clock=[Math.floor(second/60),second%60].map(n=>String(n).padStart(2,"0")).join(":");

@@ -8,7 +8,7 @@ const server = gameServer();
 attachNetplay(server);
 server.listen(0,"127.0.0.1");
 await once(server,"listening");
-const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/port/battle/index.html`;
+const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`;
 let browser;
 try {
   browser = await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});
@@ -98,6 +98,10 @@ try {
   const babylon=await host.evaluate(()=>nativeBattle.diagnostics());
   assert.ok(!babylon.paused);
   assert.ok(babylon.actors.every(actor=>Math.abs(actor.position[2]+12)<1),"Babylon's starting line has Z = -12");
+  await host.selectOption("#player1","0x07000000");
+  await host.waitForFunction(()=>window.nativeBattle?.diagnostics().actors[0].name==="Erick Sermon" && nativeBattle.diagnostics().ticks>=15);
+  assert.equal(await host.locator("#venue").inputValue(),"V2BG_21A");
+  assert.ok(requests.every(path=>!path.includes("Play.wasm")&&!path.includes("/blocks/")));
 } finally {
   await browser?.close();
   await new Promise(resolve=>server.close(resolve));

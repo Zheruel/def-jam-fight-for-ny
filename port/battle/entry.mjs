@@ -3,9 +3,10 @@ if(!code) {
   await import("../viewer/viewer.mjs");
 } else {
   const {battleControls}=await import("./controls.mjs");
-  document.querySelector("#status").textContent="Left arrow to advance Doc · K to kick";
+  document.querySelector("#status").textContent="Arrow keys to move · K to kick";
   document.querySelector("#code").value=code;
-  document.querySelector("#venue").hidden=true;
+  for(const id of ["venue","player1","player2"]) document.getElementById(id).hidden=true;
+  document.querySelector("header span").hidden=true;
   document.querySelector("#host").hidden=true;
   document.querySelector("#restart").hidden=true;
   const sound=document.querySelector("#sound"),video=document.querySelector("#remote");

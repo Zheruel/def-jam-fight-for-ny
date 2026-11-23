@@ -36,7 +36,8 @@ export function gameServer(directory = root, { reference = false } = {}) {
       } catch { fail(503); }
       return;
     }
-    if (name === '/') name = '/web/index.html';
+    if (name === '/' || name === '/index.html') name = '/web/launch.html';
+    if (name === '/reference.html') name = '/web/index.html';
     if (reference && name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
     else if (!nativeRoutes.has(name) && !/^\/(game-assets\/(manifest\.json|blocks\/[0-9a-f]{64}\.gz)$|web\/|runtime\/play-build\/|netplay\/(client\.mjs|peerjs\.mjs|vendor\/[a-zA-Z0-9._-]+)$|ps2\/battle\/(overlay\.mjs|battle-patch\.json)$|ps2\/content\/unlock-disc-patch\.json$)/.test(name)) return fail(404);
     if (name.split('/').some(part => part.startsWith('.')) || /[\\\0]/.test(name)) return fail(404);

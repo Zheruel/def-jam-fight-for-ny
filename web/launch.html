@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Def Jam: Fight for NY</title><script>
+const entry = new URL(location.href);
+const path = entry.searchParams.has("join") ? "./reference.html" : "./port/battle/index.html";
+const game = new URL(path,entry);
+game.search = entry.search;
+game.hash = entry.hash;
+location.replace(game);
+</script></head><body><a href="./port/battle/index.html">Open Battle</a></body></html>

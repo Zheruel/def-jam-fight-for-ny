@@ -28,7 +28,7 @@ export async function instantiateBattle(source, engine) {
         case 0x132a28: return engine.writeBone(arg(5),arg(6),arg(4),memory);
         case 0x132b48:
         case 0x132bb8: {
-          const offset = engine.sample(arg(4),arg(5),arg(6),float(12),target === 0x132bb8 ? float(13) : 1);
+          const offset = engine.sample(arg(4),arg(5),arg(6),float(12),target === 0x132bb8 ? float(13) : undefined,arg(8)|0);
           for (let i=0;i<3;i++) memory.setFloat32(arg(7)+i*4,offset[i],true);
           return;
         }

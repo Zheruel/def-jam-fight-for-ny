@@ -57,7 +57,9 @@ if (makeSeed) {
   const pages = fight.observedPages;
   assert.ok(pages.some(Boolean),"Rebuild the kernel with --track");
   for (const a of [0x4bbd48,0x3ccdb8,0x4bbfb0,0x4bc030]) pages[a>>>12]=1;
-  for (let a=0x4bc000;a<0x4c2000;a+=4096) pages[a>>>12]=1;
+  // Include the retail state dispatch, move variants and tuning tables for inputs outside the reference exchange.
+  for(const [start,end] of [[0x378000,0x405000],[0x4bb000,0x4d1000]])
+    for(let a=start;a<end;a+=4096) pages[a>>>12]=1;
   const compact = [];
   for (let page=0;page<0x1fe0;page++) if (pages[page]) {
     const tag = Buffer.alloc(4);

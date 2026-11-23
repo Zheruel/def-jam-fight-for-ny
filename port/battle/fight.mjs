@@ -1,4 +1,5 @@
-import { loadMatchRules } from "./roster.mjs";
+import { loadMatchAnimation } from "../animation/match.mjs";
+import { loadMatchRules, initializeFighterProfile } from "./roster.mjs";
 import { installArena,loadArena } from "./arena.mjs";
 import { instantiateBattle } from "../kernel/runtime.mjs";
 import { poseIndex } from "../motion/pose-bank.mjs";
@@ -8,16 +9,17 @@ const ACTOR = [0x4bc170,0x4bd468];
 const rad = Math.PI / 180;
 
 export async function loadFoundationFight(fighters,venue) {
-  const [source,seed,arena,rules]=await Promise.all([
+  const [source,seed,arena,rules,animation]=await Promise.all([
     fetchPacked(new URL("../kernel/battle.wasm.gz",import.meta.url)),
     fetchPacked(new URL("../kernel/foundation-start.gz",import.meta.url)),
     venue.file==="V2BG_02A" ? null : loadArena(venue),
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
+    loadMatchAnimation(fighters),
   ]);
-  return createFoundationFight(fighters,source,seed,arena,rules);
+  return createFoundationFight(fighters,source,seed,arena,rules,animation);
 }
 
-export async function createFoundationFight(fighters,source,seed,arena,rules) {
+export async function createFoundationFight(fighters,source,seed,arena,rules,animation) {
   let memory;
   const word = address => memory.getUint32(address,true);
   const scalar = address => memory.getFloat32(address,true);
@@ -32,11 +34,12 @@ export async function createFoundationFight(fighters,source,seed,arena,rules) {
     if (!match) throw new Error(`Motion ${action} is still being recovered for ${states[slot].model}.`);
     return match;
   }
-  function sample(slot,bank,local,frame) {
-    const state = states[slot], animation = clip(slot,bank,local);
-    const index = poseIndex(animation,frame);
-    state.skin = animation.poses[index];
-    state.root = animation.roots[index];
+  function sample(slot,bank,local,frame,blend,transition) {
+    if(animation) return animation.sample(states[slot],slot,bank,local,frame,blend,transition);
+    const state = states[slot], capture = clip(slot,bank,local);
+    const index = poseIndex(capture,frame);
+    state.skin = capture.poses[index];
+    state.root = capture.roots[index];
     return state.root;
   }
   function place(slot,position,angles) {
@@ -45,7 +48,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules) {
   }
   const engine = {
     sample, place,
-    duration(slot,bank,index) { return clip(slot,bank,index).end; },
+    duration(slot,bank,index) { return animation ? animation.duration(slot,bank,index) : clip(slot,bank,index).end; },
     rootYaw(slot) { return states[slot].root[3]; },
     rotateBone(slot,id,address) {
       // Recorded poses include the reference match's procedural aim. Keep the
@@ -85,6 +88,12 @@ export async function createFoundationFight(fighters,source,seed,arena,rules) {
       bytes.set(new Uint8Array(seed,at+4,4096),page*4096);
     }
     if(rules) loadMatchRules(kernel,rules);
+    animation?.reset();
+    if(animation) fighters.forEach((f,slot)=>{
+      initializeFighterProfile(kernel,slot,f.record);
+      const idle=kernel.call(0x2ff908,ACTOR[slot],1,0,0);
+      kernel.call(0x2e4808,ACTOR[slot],idle,0,0);
+    });
     if(arena) installArena(kernel,arena,ACTOR);
     ACTOR.forEach((a,i) => {
       place(i,a+0xc4,a+0xd0);
@@ -108,7 +117,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules) {
     ticks++;
   }
   function diagnostics() {
-    return {ticks,actors: ACTOR.map(a=>({action:word(a+0x80),state:word(a+0x30),
+    return {ticks,actors: ACTOR.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
       score:word(a+0x480),momentum:scalar(a+0x364)}))};
   }

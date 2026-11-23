@@ -107,6 +107,11 @@ async function display() {
   }
   selectors[0].value = "0x07000030";
   selectors[1].value = "0x07000025";
+  const params=new URLSearchParams(location.search);
+  if(battle) selectors.forEach((s,i)=>{
+    const handle=params.get("p"+(i+1));
+    if(inventory.fighters.some(f=>f.handle===handle)) s.value=handle;
+  });
   const venue = document.querySelector("#venue");
   for (const item of [...inventory.venues].sort((a,b) => a.name.localeCompare(b.name))) {
     const option = new Option(item.name, item.file);
@@ -264,9 +269,9 @@ async function display() {
         if (selected[i]?.handle === select.value) { next.push(selected[i]); continue; }
         const fighter = inventory.fighters.find(f => f.handle === select.value);
         const data = await loadFighter(fighter.model, controller.signal);
-        const draw = {handle: fighter.handle, model: fighter.model, body: uploadScene(gl, program, data)};
+        const draw = {record:fighter, handle: fighter.handle, model: fighter.model, body: uploadScene(gl, program, data)};
         next.push(draw);
-        draw.bank = await loadPoseBank(fighter.model,controller.signal);
+        if(!battle) draw.bank = await loadPoseBank(fighter.model,controller.signal);
       }
       selected.filter(s=>!next.includes(s)).forEach(s => s.body.dispose());
       selected = next;
@@ -278,7 +283,12 @@ async function display() {
       if (!controller.signal.aborted) status.textContent = error.message;
     }
   }
-  selectors.forEach(s => s.addEventListener("change", chooseFighters));
+  selectors.forEach((s,i)=>s.addEventListener("change",()=>{
+    if(!battle) return chooseFighters();
+    const destination=new URL(location.href);
+    destination.searchParams.set("p"+(i+1),s.value);
+    location.assign(destination);
+  }));
   venue.addEventListener("change", () => {
     if (!battle) return select();
     const destination=new URL(location.href);
@@ -298,10 +308,10 @@ async function display() {
     hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio);
     fight = await loadFoundationFight(selected,arena);
-    status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
+    status.textContent = "WASD and arrows to move · Controls below";
     document.getElementById("restart").onclick = () => {
       controls.release(); fight.restart(); camera.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=0; draw();
-      status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
+      status.textContent = "WASD and arrows to move · Controls below";
     };
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
       ...fight.diagnostics(), renderedFrames, paused, network:controls.connection() }) });

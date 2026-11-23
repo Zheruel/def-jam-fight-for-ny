@@ -1,23 +1,38 @@
 const keys = new Set();
-const controlled = new Set(["KeyD","KeyJ","ArrowLeft","KeyK"]);
-
+const keyPads = [
+  {axes:[["KeyA","KeyD"],["KeyW","KeyS"]], buttons:{KeyJ:0x1000,KeyU:0x8000,KeyI:0x4000,KeyO:0x2000,
+    KeyQ:0x0400,KeyE:0x0800,KeyR:0x0100,KeyF:0x0200}},
+  {axes:[["ArrowLeft","ArrowRight"],["ArrowUp","ArrowDown"]], buttons:{KeyL:0x1000,KeyK:0x8000,
+    BracketLeft:0x4000,BracketRight:0x2000,Comma:0x0400,Period:0x0800,Slash:0x0100,Semicolon:0x0200}},
+];
+const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p.buttons)]));
+// Standard Gamepad order to PS2 pad bits, as read by the retail Battle update.
+const gamepadBits=[0x4000,0x2000,0x8000,0x1000,0x0400,0x0800,0x0100,0x0200,1,8,2,4,0x10,0x40,0x80,0x20];
 export function battleControls(redraw,audio) {
-  let remote, room, guest = false;
+  let remote, room, guest = false, poll=0, lastPacket="";
   const pads = [null,null];
   let state = "local";
   const button = id => document.getElementById(id);
   function input(slot) {
     if (pads[slot]) return pads[slot];
     if (slot === 1 && remote) return remote;
-    const move = keys.has(slot === 0 ? "KeyD" : "ArrowLeft");
-    const strike = keys.has(slot === 0 ? "KeyJ" : "KeyK");
-    return { buttons:(move ? 0x2000 : 0) | (strike ? (slot===0 ? 0x1000 : 0x8000) : 0),
-      x: move ? (slot===0 ? 1 : -1) : 0, z:0 };
+    const config=keyPads[slot];
+    const controller=Array.from(navigator.getGamepads?.()??[]).filter(p=>p?.connected)[guest ? 0 : slot];
+    let buttons=0;
+    Object.entries(config.buttons).forEach(([key,mask])=>{if(keys.has(key)) buttons|=mask;});
+    controller?.buttons.forEach((b,i)=>{if(b.pressed) buttons|=gamepadBits[i]??0;});
+    const [x,z]=config.axes.map(([negative,positive],i)=>{
+      const axis=controller?.axes[i]??0;
+      return Number(keys.has(positive))-Number(keys.has(negative)) || (Math.abs(axis)>0.15 ? axis : 0);
+    });
+    return {buttons,x,z};
   }
   function send() {
     if (!guest || !room) return;
     const p = input(1);
-    room.setInput({buttons:p.buttons,axes:[p.x,p.z,0,0]});
+    const packet=[p.buttons,p.x,p.z].join(",");
+    if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes:[p.x,p.z,0,0]});
+    lastPacket=packet;
   }
   function press(event) {
     if (!controlled.has(event.code) || event.target.tagName === "INPUT") return;
@@ -42,6 +57,9 @@ export function battleControls(redraw,audio) {
     if (join) {
       room = await transport.joinMatch({...options,code:button("code").value,video:button("remote"),
         onState,onPlaybackBlocked:()=>button("remote").controls = true});
+      lastPacket="";
+      const scan=()=>{if(guest){send();poll=requestAnimationFrame(scan);}};
+      poll=requestAnimationFrame(scan);
       button("remote").hidden = false;
       if (audio) { button("sound").hidden=true; button("remote").controls=true; }
       document.querySelector("canvas").hidden = true;
@@ -69,7 +87,7 @@ export function battleControls(redraw,audio) {
     };
   }
   button("leave").onclick = () => {
-    room?.close(); guest=false; remote=undefined; room=undefined; state="local";
+    cancelAnimationFrame(poll); room?.close(); guest=false; remote=undefined; room=undefined; state="local";
     button("host").disabled=button("join").disabled=false;
     button("leave").hidden=true; button("remote").hidden=true; document.querySelector("canvas").hidden=false;
     button("network").textContent=""; button("code").value=""; button("invite").hidden=true;

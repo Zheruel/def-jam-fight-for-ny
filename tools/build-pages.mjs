@@ -8,7 +8,8 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const output = join(root, "build/pages");
 
 const files = new Map([
-  ["index.html", "web/index.html"],
+  ["index.html", "web/launch.html"],
+  ["reference.html", "web/index.html"],
   ["coi-serviceworker.js", "web/coi-serviceworker.js"],
   ...[
     ...portFiles,

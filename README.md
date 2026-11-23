@@ -2,9 +2,7 @@
 
 **[Play on GitHub Pages](https://zheruel.github.io/def-jam-fight-for-ny/)**
 
-Open the page in desktop Chrome or Edge. The US PlayStation 2 game starts automatically and streams its assets as needed. Press **Enter** or controller **Start** at the title for Battle mode. Each player presses Start on the participant screen before choosing a fighter.
-
-For two-player versus, select **Host a match**, then **Copy invite**. The guest opens that link and controls the second DualShock 2. Both players see the host's match and hear its audio over WebRTC. An invite opens directly in guest mode.
+Choose two fighters and a venue to start a native match in desktop Chrome or Edge. WASD moves player one and the arrows move player two. Open Controls for attacks, shoulder buttons and gamepad mappings. To play online, choose Host match and share the room invite. The guest controls player two and receives the host’s video and audio.
 
 ## Local development
 
@@ -21,11 +19,11 @@ Open [the local player](http://127.0.0.1:8174). A fresh checkout fetches game co
 
 ## Native port
 
-The native build runs Blaze versus Doc using the original Battle routines translated to WebAssembly. Its venue selector loads each of the 24 stage meshes, collision planes and starting positions. It supports a limited set of moves and two-player rooms. In a 460-tick comparison, both fighters matched every retail action and state. The first headless Chrome combat benchmark averaged 60.0 rendered FPS at 960 × 491. The complete roster and venues are viewable, and the main player provides the wider retail Battle mode. [Play the native match](https://zheruel.github.io/def-jam-fight-for-ny/port/battle/index.html) · [Browse fighters and venues](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html) · [Native verification and limitations](port/README.md)
+All 75 fighter records and 24 venues can be selected in a native one-on-one match. The browser runs statically translated Battle and skeletal animation routines. It loads the motion resources for the selected fighters on demand. A local Chrome test measured 60.0 rendered frames per second at 979 × 734 during a two-hit exchange. The test replayed that exchange for every fighter in both slots. Match endings, special moves, venue interactions, audio and visual parity are still in development. [Native port and verification](port/README.md)
 
 ## Playable reference
 
-The host browser runs the original game code in a patched Play! WebAssembly runtime. The launcher redirects the retail front end to Battle mode and applies the unlock patch in memory. The asset manifest maps reads to individually verified, compressed blocks. GitHub Pages serves the player, runtime and manifest. A dedicated branch holds the game data. [Runtime and rebuild instructions](runtime/play-build/README.md) · [Content packaging](tools/game-assets.md)
+The [PS2 reference player](https://zheruel.github.io/def-jam-fight-for-ny/reference.html) runs the original game code in a patched Play! WebAssembly runtime. The launcher redirects the retail front end to Battle mode and applies the unlock patch in memory. The asset manifest maps reads to individually verified, compressed blocks. GitHub Pages serves the player, runtime and manifest. A dedicated branch holds the game data. [Runtime and rebuild instructions](runtime/play-build/README.md) · [Content packaging](tools/game-assets.md)
 
 The unlocked retail Battle lists contain **69 distinct fighter names across 74 entries**, including character variants, and **24 venues**. The underlying profile contains 75 fighter records, including the story protagonist. Full-speed combat and scene-by-scene visual parity are still being tested. [Retail inventory](ps2/content/inventory.json)
 

@@ -238,6 +238,7 @@ async function main() {
     assert.ok(['http:', 'https:'].includes(publicEntry.protocol), 'The player URL must use HTTP or HTTPS');
     assert.ok(!values['retail-menus'], 'Use --retail-menus with the local player so its overlays can be intercepted');
     if (!publicEntry.pathname.endsWith('/') && !publicEntry.pathname.endsWith('.html')) publicEntry.pathname += '/';
+    if (publicEntry.pathname.endsWith('/')) publicEntry.pathname += 'reference.html';
     publicEntry.searchParams.delete('join');
     publicEntry.hash = '';
   }
@@ -260,7 +261,7 @@ async function main() {
     await once(server, 'listening');
   }
   let browser;
-  const entry = publicEntry ?? new URL(`http://127.0.0.1:${server.address().port}/`);
+  const entry = publicEntry ?? new URL(`http://127.0.0.1:${server.address().port}/reference.html`);
   const guestEntry = new URL(entry);
   guestEntry.searchParams.set('join', '1');
   const manifestUrl = new URL(assetManifestPath, entry);

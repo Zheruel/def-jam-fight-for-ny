@@ -11,17 +11,18 @@
     h1,p { margin:0 } h1 {font-size:1.05rem} output,p {color:#c9c9c3; font-size:.88rem}
     main { min-height:0; position:relative; container-type:size; display:grid;place-items:center;background:#090a09 } canvas,video { display:block; width:min(100cqw,133.333cqh);height:min(100cqh,75cqw);object-fit:contain }
     [hidden] {display:none!important} button,input {font:inherit}
+    details { position:relative } details[open] {position:absolute;bottom:2.5rem;z-index:2;background:#222;padding:1rem;max-width:30rem} summary{cursor:pointer}
     label {font-size:.85rem} meter {width:5rem} input {width:8ch;text-transform:uppercase}
   </style>
 </head>
 <body data-battle>
-<header><h1>Blaze vs. Doc</h1><select id="venue" aria-label="Match venue"></select>
+<header><h1>Def Jam: Fight for NY</h1><select id="player1" aria-label="Player one fighter"></select><span>vs.</span><select id="player2" aria-label="Player two fighter"></select><select id="venue" aria-label="Match venue"></select>
 
   <button id="restart">Restart</button><button id="sound">Mute</button><p id="status" role="status">Loading native Battle…</p>
 </header>
 <main><canvas tabindex="0" aria-label="Native Battle"></canvas><video id="remote" muted autoplay playsinline hidden></video></main>
-<footer><button id="host">Host match</button><input id="code" aria-label="Room code" placeholder="Room code" maxlength="8">
-  <button id="join">Join</button><a id="invite" hidden>Room invite</a><button id="leave" hidden>Leave</button><output id="network"></output></footer>
-<div hidden><select id="player1"></select><select id="player2"></select><input id="cutaway" type="checkbox" checked></div>
+<footer><details><summary>Controls</summary><p>Player 1 moves with WASD. J / U / I / O press Triangle / Square / Cross / Circle. Q / E and R / F control the shoulder buttons.</p><p>Player 2 moves with the arrows. L / K / [ / ] press Triangle / Square / Cross / Circle. Comma / period and slash / semicolon control the shoulder buttons. Standard gamepads are supported.</p></details><button id="host">Host match</button><input id="code" aria-label="Room code" placeholder="Room code" maxlength="8">
+  <button id="join">Join</button><a id="invite" hidden>Room invite</a><button id="leave" hidden>Leave</button><output id="network"></output><a href="../../reference.html">PS2 reference</a></footer>
+<div hidden><input id="cutaway" type="checkbox" checked></div>
 <script type="module" src="./entry.mjs"></script>
 </body></html>
