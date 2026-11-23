@@ -84,9 +84,10 @@ export function createSubwayTrain(subway, { cues = 5 } = {}) {
 // Plays the train's sound and the scream of whoever it hit through a venueAudio() instance (audio.cue(bank, subsong, {gain})).
 // The "train" bank (SFX0, ambient2 of the venue) has five 5 second subsongs; which one retail's Amb_train picks is code in
 // the bank, so the cycle number picks. The hit plays Train_Kill_Female for the fighters whose retail grunt set is a Girl
-// set and Train_Kill_Male for the rest. Retail's volume ramp (under 2 dB) is not applied: cue() has no live gain.
+// set and Train_Kill_Male for the rest. The train bank is prepared on the first audio gesture so its volume can follow the phase immediately.
 export function createTrainAudio(audio, { fighters = [], combat = null, load = () => fetch(new URL("../audio/combat.json", import.meta.url)).then(r => r.json()) } = {}) {
-  let voice = 0, node = null, manifest = combat;
+  audio.prepareCueBank?.("train");
+  let voice = 0, node = null, manifest = combat, gain = 1;
   const play = (bank, subsong, gain = 1) => audio.cue(bank, subsong, { gain });
   const female = slot => /girl/i.test(manifest?.fighters?.[fighters[slot]?.coreID]?.grunts ?? "");
   return {
@@ -96,13 +97,17 @@ export function createTrainAudio(audio, { fighters = [], combat = null, load = (
         if (effect.kind !== "train") continue;
         if (effect.action === "audio" && effect.on) {
           const mine = ++voice;
+          gain = effect.gain;
           const started = await play(effect.bank, effect.subsong, effect.gain).catch(() => null);
-          if (mine === voice) node = started ?? null;
+          if (mine === voice) { node = started ?? null; if (node) audio.setCueGain?.(node, gain); }
           else try { started?.stop(); } catch { /* ended */ }
         } else if (effect.action === "audio") {
           voice++;
           try { node?.stop(); } catch { /* already ended */ }
           node = null;
+        } else if (effect.action === "volume") {
+          gain = effect.gain;
+          if (node) audio.setCueGain?.(node, gain);
         } else if (effect.action === "hit") {
           manifest ??= await load().catch(() => null);
           await play(female(effect.slot) ? "Train_Kill_Female" : "Train_Kill_Male", 1).catch(() => null);

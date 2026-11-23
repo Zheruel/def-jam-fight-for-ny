@@ -30,7 +30,7 @@ async function chooseType(page,type) {
 try {
   server.listen(0,"127.0.0.1");
   await once(server,"listening");
-  const origin="http://127.0.0.1:"+server.address().port+"/";
+  const origin = process.env.BATTLE_URL ?? `http://127.0.0.1:${server.address().port}/`;
   browser=await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});
   const errors=[];
   async function open(url) {

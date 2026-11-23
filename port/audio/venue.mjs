@@ -42,6 +42,7 @@ export function venueAudio(file, {
   const categories = {};
   const volumes = {music: 1, effects: 1, announcer: 1};
   const banks = new Map(), playing = new Set(), tracks = new Set();
+  const upcomingBanks = new Set(), cueVolumes = new WeakMap();
   let generation = 0;
   const voiceBuffers=new Map();
 
@@ -118,6 +119,8 @@ export function venueAudio(file, {
     graph();
     if (!requested) {
       requested = true;
+      for (const name of upcomingBanks) bank(name).catch(() => {});
+      upcomingBanks.clear();
       onStart?.();
     }
     play();
@@ -164,6 +167,14 @@ export function venueAudio(file, {
 
   return {
     stream: start,
+    prepareCueBank(name) {
+      if (requested) bank(name).catch(() => {});
+      else upcomingBanks.add(name);
+    },
+    setCueGain(node, gain) {
+      const param = cueVolumes.get(node);
+      if (param) param.value = gain;
+    },
     setActive(value) { active = value; synchronize(); },
     restart() {
       generation++;
@@ -195,6 +206,7 @@ export function venueAudio(file, {
       if (version !== generation || !active || hidden()) return;
       const node = context.createBufferSource(), volume = context.createGain();
       playing.add(node);
+      cueVolumes.set(node, volume.gain);
       node.onended = () => { playing.delete(node); node.disconnect(); volume.disconnect(); };
       node.buffer = buffer;
       node.playbackRate.value = rate;
