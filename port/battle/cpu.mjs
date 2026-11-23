@@ -19,7 +19,7 @@ export const PAD_BASE = 0x4bbfb0;
 export const PAD_COPY = 0x2f1338;
 export const AI_BASE = 0x4c3ae0, AI_STRIDE = 0xb8, AI_READY = 0x4c4cd0;
 export const CPU_FLAG = 0x937;
-export const AI_TABLE = 0x4c4ce0, AI_DATA = 0x15760c0;
+export const AI_TABLE = 0x4c4ce0;
 const ACTOR_BASE = 0x4bc170, ACTOR_BYTES = 0x12f8;
 
 // Seat numbers are 0-based. A CPU seat is never the first (the host's) and the seats are the last ones, which is also
@@ -32,10 +32,8 @@ export function cpuSeats(seats, count) {
 // Seat type words for the match start, and the actor flag they mirror (what the actor creation at 0x2eda64 does: bit 0
 // of +0x937 follows the type). `fighters[i].cpu` marks seat i.
 export function writeSeatTypes(memory, fighters) {
-  // The AI decision tables ("AI  " file, 0x15558 bytes) are loaded to the heap at match setup and 0x4c4ce0 points at
-  // them. The person-only starts never touched them; kernel/cpu-pages.gz carries the copy the retail Free For All
-  // loaded at AI_DATA, and a start whose own pointer names another load address (the one-on-one start) is pointed at it.
-  if (fighters.some(fighter => fighter.cpu)) memory.setUint32(AI_TABLE, AI_DATA, true);
+  // The AI decision file ("AI  ", 0x15558 bytes) is loaded to the heap at match setup and 0x4c4ce0 points at it. Every
+  // start keeps its capture's own pointer; kernel/cpu-<start>.gz carries the pages of the file at that address.
   fighters.forEach((fighter, slot) => {
     const flag = ACTOR_BASE + slot * ACTOR_BYTES + CPU_FLAG;
     memory.setUint32(TYPE_BASE + 4 * slot, fighter.cpu ? 1 : 0, true);
@@ -52,11 +50,11 @@ export function neutralPad(memory, address) {
   for (let offset = 0; offset < 24; offset += 4) memory.setUint32(address + offset, 0, true);
 }
 
-// A seed is {page, 4096 bytes} records. The CPU data pages the person-only seeds never touched (kernel/cpu-pages.gz) are
+// A seed is {page, 4096 bytes} records. The CPU data pages the person-only seeds never touched (kernel/cpu-<start file>, one per formation start: the formations' heaps differ) are
 // appended to a seed that has CPU seats, without replacing any page it already holds.
-export async function withCpuPages(seed, fighters) {
+export async function withCpuPages(seed, fighters, start) {
   if (!fighters.some(fighter => fighter.cpu)) return seed;
-  return mergeCpuPages(seed, await fetchPacked(new URL("../kernel/cpu-pages.gz", import.meta.url)));
+  return mergeCpuPages(seed, await fetchPacked(new URL("../kernel/cpu-" + start, import.meta.url)));
 }
 
 export function mergeCpuPages(seed, extra) {

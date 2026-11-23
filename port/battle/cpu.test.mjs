@@ -7,7 +7,7 @@ import { gunzipSync } from "node:zlib";
 import test from "node:test";
 import { createFoundationFight, signatureClipIds } from "./fight.mjs";
 import { createMatchAnimation } from "../animation/match.mjs";
-import { AI_DATA, AI_READY, CPU_FLAG, PAD_BASE, TYPE_BASE, cpuSeats, mergeCpuPages } from "./cpu.mjs";
+import { AI_TABLE, CPU_FLAG, PAD_BASE, TYPE_BASE, cpuSeats, mergeCpuPages } from "./cpu.mjs";
 import inventory from "../../ps2/content/inventory.json" with { type: "json" };
 
 const unpack = name => Uint8Array.from(gunzipSync(readFileSync(new URL("../" + name, import.meta.url)))).buffer;
@@ -15,24 +15,27 @@ const actor = slot => 0x4bc170 + slot * 0x12f8;
 const wasm = await WebAssembly.compile(unpack("kernel/battle.wasm.gz"));
 const sampler = await WebAssembly.compile(unpack("animation/sampler.wasm.gz"));
 const rules = unpack("kernel/match-rules.gz");
-const cpuPages = unpack("kernel/cpu-pages.gz");
+const AI_SHA256 = "a380101778acbd8cb896a905366abd3d28ecbab6508c99ac578481ac758b3520";
+const starts = { duel: "foundation-start.gz", three: "three-start.gz", four: "four-start.gz", team: "team-start.gz" };
 const record = id => inventory.fighters.find(f => f.fighterXml.coreID === id);
 const rig = model => {
   const binary = unpack("render/fighters/" + model + ".skin.gz");
   return JSON.parse(new TextDecoder().decode(new Uint8Array(binary, 8, new DataView(binary).getUint32(4, true))));
 };
 
-// ids: coreIDs of the fighters, seat 0 first; cpu: how many of the last seats the CPU plays.
-async function match(ids, cpu, { merge = true } = {}) {
+// ids: coreIDs of the fighters, seat 0 first; cpu: how many of the last seats the CPU plays; formation: the start used
+// (by default the one-on-one, three-fighter or four-fighter Free For All start by the number of fighters).
+async function match(ids, cpu, { merge = true, formation = ids.length === 2 ? "duel" : ids.length === 3 ? "three" : "four" } = {}) {
   const fighters = ids.map((id, slot) => ({ record: record(id), body: rig(record(id).model), model: record(id).model, cpu: slot >= ids.length - cpu }));
-  const four = ids.length === 4;
-  const start = unpack(four ? "kernel/four-start.gz" : "kernel/foundation-start.gz");
-  const animation = await createMatchAnimation(sampler, unpack(four ? "animation/four-shared.gz" : "animation/shared.gz"),
+  const start = unpack("kernel/" + starts[formation]);
+  const animation = await createMatchAnimation(sampler, unpack(ids.length > 2 ? "animation/four-shared.gz" : "animation/shared.gz"),
     ids.map(id => unpack("animation/banks/wres" + String(id).padStart(3, "0") + ".gz")));
-  const fight = await createFoundationFight(fighters, wasm, cpu && merge ? mergeCpuPages(start, cpuPages) : start, null, rules, animation);
+  const seed = cpu && merge ? mergeCpuPages(start, unpack("kernel/cpu-" + starts[formation])) : start;
+  const fight = await createFoundationFight(fighters, wasm, seed, null, rules, animation);
   animation.setSignatures(new Map(signatureClipIds(fight.memory, ids.length).map(id => [id, unpack("animation/banks/special" + id + ".gz")])));
   return { fight, fighters, memory: fight.memory };
 }
+const aiFile = memory => { const at = memory.getUint32(AI_TABLE, true); return { at, bytes: new Uint8Array(memory.buffer, memory.byteOffset + at, 0x15558) }; };
 const digest = (hash, fight) => { for (const a of fight.diagnostics().actors) hash.update(JSON.stringify([a.position, a.health, a.score, a.action, a.state])); };
 const read = memory => pad => [0, 1, 2, 3, 4, 5].map(k => k < 2 ? memory.getUint32(pad + 4 * k, true) : memory.getFloat32(pad + 4 * k, true));
 // The seat-0 person's script: walks in circles and throws a punch now and then.
@@ -58,19 +61,20 @@ test("the CPU seats are the last seats, one seat always stays a person", () => {
   assert.throws(() => cpuSeats(2, 2), RangeError);
 });
 
-test("the AI decision tables are the retail capture's own file", () => {
-  const pages = new Uint8Array(0x2000000), view = new DataView(cpuPages);
-  for (let at = 0; at < cpuPages.byteLength; at += 4100) pages.set(new Uint8Array(cpuPages, at + 4, 4096), view.getUint32(at, true) * 4096);
-  const table = pages.subarray(AI_DATA, AI_DATA + 0x15558);
-  assert.equal(new DataView(table.buffer, table.byteOffset).getUint32(0, true), 0x20204941, "AI file magic");
-  assert.equal(createHash("sha256").update(table).digest("hex"), "a380101778acbd8cb896a905366abd3d28ecbab6508c99ac578481ac758b3520");
-});
+for (const [formation, ids, at] of [["duel", [5, 10], 0x1496b00], ["three", [5, 10, 11], 0x14e73c0], ["four", [5, 10, 11, 16], 0x15760c0], ["team", [5, 10, 11, 16], 0x15a3440]]) {
+  test(`${formation}: the AI decision tables are the capture's own file at the capture's own pointer`, async () => {
+    const { memory } = await match(ids, ids.length - 1, { formation });
+    const file = aiFile(memory);
+    assert.equal(file.at, at);
+    assert.equal(new DataView(file.bytes.buffer, file.bytes.byteOffset).getUint32(0, true), 0x20204941, "AI file magic");
+    assert.equal(createHash("sha256").update(file.bytes).digest("hex"), AI_SHA256);
+  });
+}
 
 test("seat types follow the match setup and the actor flag mirrors them", async () => {
   const four = await match([5, 10, 11, 16], 3);
   assert.deepEqual([0, 1, 2, 3].map(i => four.memory.getUint32(TYPE_BASE + 4 * i, true)), [0, 1, 1, 1]);
   assert.deepEqual([0, 1, 2, 3].map(i => four.memory.getUint8(actor(i) + CPU_FLAG) & 1), [0, 1, 1, 1]);
-  assert.equal(four.memory.getUint32(0x4c4ce0, true), AI_DATA);
   const duel = await match([5, 10], 1);
   assert.deepEqual([0, 1].map(i => duel.memory.getUint8(actor(i) + CPU_FLAG) & 1), [0, 1]);
   // No CPU is ever added on its own: person-only matches keep type 0 everywhere and never run the AI bridge.
@@ -83,12 +87,14 @@ test("seat types follow the match setup and the actor flag mirrors them", async 
   assert.ok(!calls.includes(0x2f1338), "a person-only match never asks the CPU for decisions");
 });
 
-for (const [name, ids, cpu] of [["four-way", [5, 10, 11, 16], 3], ["one-on-one", [5, 10], 1], ["Free For All with a person pair", [5, 10, 11, 16], 2]]) {
+for (const [name, ids, cpu, formation] of [["four-way", [5, 10, 11, 16], 3], ["one-on-one", [5, 10], 1], ["Free For All with a person pair", [5, 10, 11, 16], 2],
+  ["three fighters", [6, 7, 8], 2], ["three fighters with one CPU", [6, 7, 8], 1], ["Team match", [5, 10, 11, 16], 3, "team"], ["Team match with a person pair", [5, 10, 11, 16], 2, "team"]]) {
   test(`${name}: the CPU moves, fights and scores on its own, deterministically`, async () => {
-    const a = await match(ids, cpu), b = await match(ids, cpu);
+    const a = await match(ids, cpu, { formation }), b = await match(ids, cpu, { formation });
     const start = a.fight.diagnostics().actors.map(x => x.position);
     const first = run(a, 1200), second = run(b, 1200);
     assert.equal(first, second, "two runs of the same match are identical");
+    assert.equal(createHash("sha256").update(aiFile(a.memory).bytes).digest("hex"), AI_SHA256, "nothing overwrites the AI file");
     const after = a.fight.diagnostics().actors;
     const cpuSlots = ids.map((_, i) => i).filter(i => i >= ids.length - cpu);
     for (const slot of cpuSlots) {

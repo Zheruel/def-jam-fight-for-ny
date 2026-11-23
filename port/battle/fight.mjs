@@ -22,7 +22,7 @@ export async function loadFoundationFight(fighters,venue,formation) {
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
     loadMatchAnimation(fighters),
   ]);
-  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters),arena,rules,animation);
+  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters,mode.start),arena,rules,animation);
   const clips=signatureClipIds(fight.memory,fighters.length);
   animation.setSignatures(new Map(await Promise.all(clips.map(async clip=>[
     clip,await fetchPacked(new URL(`../animation/banks/special${clip}.gz`,import.meta.url))

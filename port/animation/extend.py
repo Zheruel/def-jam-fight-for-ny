@@ -18,6 +18,13 @@ def extend(out, elf):
     # Every vtable of the retail channel readers between the first BASE00 reader and type 25.
     candidates = set(struct.unpack_from('<'+'I'*((0x3a9460-0x3a8300)//4),elf,0x3a8300-0xff000))
     todo = [a for a in candidates if a in files and (0x1f6000<=a<=0x20a900 or 0x367000<=a<=0x369000)]
+    # The recompiler dispatches calls it could not bind directly (0x2042a8 from the channel readers) through
+    # dispatchGuestBranch with a constant target: follow those from the shipped table too.
+    def branch_targets(text):
+        return {int(n,16) for n in re.findall(r'dispatchGuestBranch\(rdram, ctx, 0x([0-9A-Fa-f]+)u',text)}
+    for a in old | set(todo):
+        if a in files:
+            todo += [t for t in branch_targets(files[a].read_text()) if t not in old]
     bodies = {}
     while todo:
         a = todo.pop()
@@ -29,6 +36,7 @@ def extend(out, elf):
         calls = set(re.findall(r'\b(sub_[0-9A-F]{8}_0x[0-9a-f]+)\(rdram',body))
         for name in calls:
             todo.append(int(name.split('_0x')[-1],16))
+        todo += branch_targets(body)
         decl = ''.join(f'void {name}(uint8_t*,R5900Context*,PS2Runtime*);\n' for name in sorted(calls))
         bodies[a] = decl + body
     ordered = sorted(bodies)
