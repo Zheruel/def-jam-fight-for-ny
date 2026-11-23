@@ -430,12 +430,22 @@ async function main() {
       throw new Error(`Timed out waiting for ${name}. Last screen text: ${image.text}`);
     }
 
-    await playBattle({ beginTrace: values.trace ? () => host.evaluate(startRetailTrace) : null, measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
+    await playBattle({ beginTrace: values.trace ? () => host.evaluate(startRetailTrace, Boolean(process.env.DEFJAM_REFERENCE_SNAPSHOT)) : null, measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
       rtc: () => rtcStats(guest), report });
     if (values.trace) {
-      const samples = await host.evaluate(() => window.finishRetailTrace());
+      if (process.env.DEFJAM_REFERENCE_SNAPSHOT) {
+        for (let i = 0; i < 2; i++) {
+          const chunks = [];
+          for (let off = 0; off < 0x2000000; off += 1048576) {
+            const text = await host.evaluate(([i,off]) => window.readRetailSnapshot(i,off),[i,off]);
+            chunks.push(Buffer.from(text,"base64"));
+          }
+          await writeFile(join(out,`fighter-ram-${i}.bin`),Buffer.concat(chunks));
+        }
+      }
+      const { samples, motionData } = await host.evaluate(() => window.finishRetailTrace());
       assert.ok(samples.length > 30, "Too few reference samples");
-      await writeFile(join(out, "combat-trace.json"), JSON.stringify({ match: report.match, samples }));
+      await writeFile(join(out, "combat-trace.json"), JSON.stringify({ match: report.match, samples, motionData }));
     }
     assert.equal(boot.guest.packageRequests, 0, 'The guest must receive the stream without fetching game data');
     assert.deepEqual(boot.isoRequests, [], 'Neither player may request an ISO');

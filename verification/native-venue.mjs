@@ -67,11 +67,26 @@ try {
     const sample = await page.evaluate(() => drawSample);
     assert.ok(sample.visible > 0 && sample.colors > 1 && !sample.error, `Failed to draw ${model}`);
   }
+  const selector = page.locator("#player1");
+  const fighters = await selector.locator("option").evaluateAll(os => os.map(o => o.value));
+  assert.equal(fighters.length,75);
+  await page.locator("#venue").selectOption("V2BG_02A");
+  await page.waitForFunction(() => document.querySelector("canvas").dataset.venue === "V2BG_02A");
+  const guest = await page.locator("#player2").inputValue();
+  const checksums = new Set();
+  for (const fighter of fighters) {
+    await selector.selectOption(fighter);
+    await page.waitForFunction(ids => document.querySelector("canvas").dataset.fighters === ids, fighter+","+guest);
+    const sample = await page.evaluate(() => drawSample);
+    assert.equal(sample.error,0);
+    checksums.add(sample.checksum);
+  }
+  assert.ok(checksums.size > 60, "Selecting fighters should change their appearance");
   assert.deepEqual(errors, []);
   assert.ok(requests.some(url => url.endsWith("/geometry/venues/V2BG_02A.scene.gz")));
   assert.ok(requests.every(url => !/\.wasm$|\/runtime\/|\/game-assets\/|\.iso$/.test(url)),
     "Native rendering must run independently of the PS2 player");
-  console.log(`Verified all 24 native venues. Foundation rendered with ${initial.colors} sampled colors; camera rotation changed pixels.`);
+  console.log(`Verified all 24 native venues and 75 fighter models. Foundation rendered with ${initial.colors} sampled colors; camera rotation changed pixels.`);
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

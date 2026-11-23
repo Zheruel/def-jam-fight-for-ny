@@ -49,6 +49,7 @@ def build(disc):
     if hashlib.sha256(elf).hexdigest() != ELF_HASH:
         raise ValueError("Unexpected PS2 executable")
     data = full("/MOTION/MAIN_ALL.DAT")
+    settings = []
     slots = []
     names = []
     pos = 0
@@ -61,6 +62,11 @@ def build(disc):
             if size != 130 * 6:
                 raise ValueError("Unexpected fighter move slots")
             slots.append(list(struct.iter_unpack("<3H",body)))
+        elif tag == b"FZUI":
+            stride, count = struct.unpack_from("<II", body)
+            if stride != 39 or not 0 <= len(body) - 8 - stride * count < 16:
+                raise ValueError("Invalid motion settings table")
+            settings.append(body[8:8+stride*count])
         elif tag == b"NAME":
             count = struct.unpack_from("<I",body)[0]
             starts = struct.unpack_from(f"<{count}H",body,4)
@@ -77,9 +83,11 @@ def build(disc):
         loaded = bank(disc, "/MOTION/WRES_ALL.VIV", f"wres{i+1:03}.mnl")
         # Compact references to names, preserving alternate labels used only in a bank.
         banks.append([index.get(clip, clip) for clip in loaded])
+    if [len(bank) for bank in settings] != [2088*39,873*39]:
+        raise ValueError("Unexpected FZUI bank sizes")
     return {"sourceSha256":hashlib.sha256(data).hexdigest(),"common":common,
             "global":ids,"baseBank":bank(disc,"/MOTION/BASE00.VIV","base00.mnl"),
-            "fighterBanks":banks,"moveNames":names,"slots":slots}
+            "fighterBanks":banks,"moveNames":names,"slots":slots}, b"".join(settings)
 
 
 def main():
@@ -89,14 +97,16 @@ def main():
     args = parser.parse_args()
     disc = Disc(args.iso)
     try:
-        encoded = json.dumps(build(disc),separators=(",",":"))+"\n"
+        library, settings = build(disc)
+        encoded = json.dumps(library,separators=(",",":"))+"\n"
     finally:
         disc.close()
     if args.check:
-        if OUTPUT.read_text() != encoded:
+        if OUTPUT.read_text() != encoded or (HERE / "motion-settings.bin").read_bytes() != settings:
             raise SystemExit("Motion library differs from retail")
     else:
         OUTPUT.write_text(encoded)
+        (HERE / "motion-settings.bin").write_bytes(settings)
 
 
 if __name__ == "__main__":

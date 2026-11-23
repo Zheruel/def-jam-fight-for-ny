@@ -1,4 +1,5 @@
-import { loadScene, uploadScene } from "./scene.mjs";
+import { createBattleLineup } from "../battle/setup.mjs";
+import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
 import inventory from "../../ps2/content/inventory.json" with { type: "json" };
 
 const canvas = document.querySelector("canvas");
@@ -7,6 +8,13 @@ const status = document.querySelector("#status");
 const vertex = `#version 300 es
 in vec3 position;
 in vec4 rgba;
+in vec3 normal;
+in vec4 joints;
+in vec4 weights;
+layout(std140) uniform Skeleton { mat4 jointMatrix[128]; };
+uniform bool skinned;
+uniform vec3 origin;
+uniform float heading;
 in vec2 uv;
 out vec2 texcoord;
 uniform vec3 center;
@@ -19,10 +27,22 @@ out vec3 world;
 out vec3 vertexColor;
 void main() {
   texcoord = uv;
-  height = position.y;
-  world = position - center;
-  // The retail GS uses 128 for a full modulation factor.
-  vertexColor = rgba.rgb * (255.0 / 128.0);
+  vec3 p = position;
+  if (skinned) {
+    mat4 pose = jointMatrix[int(joints.x)] * weights.x + jointMatrix[int(joints.y)] * weights.y
+              + jointMatrix[int(joints.z)] * weights.z + jointMatrix[int(joints.w)] * weights.w;
+    p = (pose * vec4(p, 1.0)).xyz;
+    mat2 turn = mat2(cos(heading), -sin(heading), sin(heading), cos(heading));
+    p.xz = turn * p.xz;
+    p += origin;
+    vec3 n = mat3(pose) * normal;
+    n.xz = turn * n.xz;
+    vertexColor = vec3(0.80 + 0.20 * dot(normalize(n), normalize(vec3(0.3,1.0,0.7))));
+  } else {
+    vertexColor = rgba.rgb * (255.0 / 128.0);
+  }
+  height = p.y;
+  world = p - center;
   gl_Position = vec4(vec3(dot(world,right), dot(world,up), dot(world,forward)) * scale, 1.0);
 }`;
 const fragment = `#version 300 es
@@ -64,17 +84,37 @@ async function display() {
   gl.enable(gl.DEPTH_TEST);
   gl.clearColor(0.10, 0.115, 0.12, 1);
 
-  let scene, request;
+  let scene, request, skinRequest, selected = [];
+  const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
+  const pose = gl.createBuffer();
+  const bind = new Float32Array(128 * 16);
+  for (let i = 0; i < bind.length; i += 16) bind[i] = bind[i+5] = bind[i+10] = bind[i+15] = 1;
+  gl.bindBuffer(gl.UNIFORM_BUFFER, pose);
+  gl.bufferData(gl.UNIFORM_BUFFER, bind, gl.DYNAMIC_DRAW);
+  gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, pose);
+  gl.uniformBlockBinding(program, gl.getUniformBlockIndex(program,"Skeleton"), 0);
+  for (const select of selectors) {
+    for (const f of [...inventory.fighters].sort((a,b) => a.name.localeCompare(b.name))) {
+      const variants = inventory.fighters.filter(other => other.name === f.name);
+      const label = variants.length > 1 ? f.name + " (" + (variants.indexOf(f)+1) + ")" : f.name;
+      select.add(new Option(label, f.handle));
+    }
+  }
+  selectors[0].value = "0x07000030";
+  selectors[1].value = "0x07000025";
   const venue = document.querySelector("#venue");
   for (const item of [...inventory.venues].sort((a,b) => a.name.localeCompare(b.name))) {
-    venue.add(new Option(item.name, item.file));
+    const option = new Option(item.name, item.file);
+    option.dataset.handle = item.handle;
+    venue.add(option);
   }
   venue.value = "V2BG_02A";
   const uniform = key => gl.getUniformLocation(program, key);
   const right = uniform("right"), up = uniform("up"), forward = uniform("forward"), scale = uniform("scale");
+  const skinned = uniform("skinned"), origin = uniform("origin"), heading = uniform("heading");
   const focus = uniform("center"), ceiling = uniform("ceiling");
   const cutaway = document.querySelector("#cutaway");
-  let yaw = 0.65, pitch = 0.70, zoom = 1;
+  let yaw = 0.28, pitch = 0.32, zoom = 1;
 
   function draw() {
     if (!scene) return;
@@ -97,12 +137,25 @@ async function display() {
     gl.uniform3f(forward, -sy * cp, -sp, -cy * cp);
     // The two Foundation single-match slots straddle the origin. Center the
     // inspection camera on the fight floor when the upper room is clipped.
-    const span = cutaway.checked ? 100 : radius;
+    const span = cutaway.checked ? 39 : radius;
     gl.uniform3fv(focus, cutaway.checked ? [0, 11, 0] : center);
     gl.uniform1f(ceiling, cutaway.checked ? 23 : max[1] + 1);
     const size = zoom * 0.98 / span;
     gl.uniform3f(scale, size * Math.min(1, height / width), size * Math.min(1, width / height), 0.98 / (radius * 2));
+    gl.uniform1i(skinned, 0);
     scene.draw();
+    if (selected.length) {
+      const lineup = createBattleLineup(venue.selectedOptions[0].dataset.handle, "SINGLE", selected.map(s => s.handle));
+      gl.uniform1i(skinned, 1);
+      gl.uniform1f(ceiling, 1e8);
+      selected.forEach(({body}, i) => {
+        const [x,z] = lineup.participants[i].position;
+        const target = lineup.participants[1-i].position;
+        gl.uniform3f(origin, x, 0, z);
+        gl.uniform1f(heading, Math.atan2(target[0]-x, target[1]-z));
+        body.draw();
+      });
+    }
   }
   function move(dx, dy, magnification = 1) {
     yaw += dx;
@@ -145,7 +198,27 @@ async function display() {
       if (!controller.signal.aborted) status.textContent = error.message;
     }
   }
+  async function chooseFighters() {
+    skinRequest?.abort();
+    const controller = skinRequest = new AbortController();
+    const next = [];
+    try {
+      for (const select of selectors) {
+        const fighter = inventory.fighters.find(f => f.handle === select.value);
+        const data = await loadFighter(fighter.model, controller.signal);
+        next.push({handle: fighter.handle, body: uploadScene(gl, program, data)});
+      }
+      selected.forEach(s => s.body.dispose());
+      selected = next;
+      draw();
+      canvas.dataset.fighters = selected.map(s => s.handle).join(",");
+    } catch (error) {
+      next.forEach(s => s.body.dispose());
+      if (!controller.signal.aborted) status.textContent = error.message;
+    }
+  }
+  selectors.forEach(s => s.addEventListener("change", chooseFighters));
   venue.addEventListener("change", select);
-  await select();
+  await Promise.all([select(), chooseFighters()]);
 }
 display().catch(error => { status.textContent = error.message; });

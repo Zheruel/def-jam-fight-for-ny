@@ -32,3 +32,15 @@ test("actor special state keeps the correct two- or three-frame offset", () => {
   assert.equal(resolveMotion(48, [{...special, flags: 0}]).motion, 700);
   assert.equal(resolveMotion(48, [{...special, flags: 4}]).motion, 699);
 });
+
+import { readFileSync } from "node:fs";
+import settings from "./reference-settings.json" with { type: "json" };
+import { motionSettings } from "./settings.mjs";
+
+test("expanded motion settings match all 34 live actor words for each observed clip", () => {
+  const bytes = readFileSync(new URL("./motion-settings.bin", import.meta.url));
+  for (const [key, {end,tick,words}] of Object.entries(settings.observed)) {
+    const [bank,motion] = key.split("/").map(Number);
+    assert.deepEqual([...motionSettings(bytes,bank,motion,end,tick)],words,key);
+  }
+});
