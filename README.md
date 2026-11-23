@@ -23,7 +23,7 @@ Open [the local player](http://127.0.0.1:8174). A fresh checkout fetches game co
 
 The host browser runs the original game code in a patched Play! WebAssembly runtime. The launcher redirects the retail front end to Battle mode and applies the unlock patch in memory. The asset manifest maps reads to individually verified, compressed blocks. GitHub Pages serves the player, runtime and manifest. A dedicated branch holds the game data. [Runtime and rebuild instructions](runtime/play-build/README.md) · [Content packaging](tools/game-assets.md)
 
-The unlocked retail Battle lists contain **74 fighter entries** (including variants) and **24 venues**. The underlying profile contains 75 fighter records, including the story protagonist. Full-speed combat and scene-by-scene visual parity are still being tested. [Retail inventory](ps2/content/inventory.json)
+The unlocked retail Battle lists contain **69 distinct fighter names across 74 entries**, including character variants, and **24 venues**. The underlying profile contains 75 fighter records, including the story protagonist. Full-speed combat and scene-by-scene visual parity are still being tested. [Retail inventory](ps2/content/inventory.json)
 
 ## Verification
 
@@ -34,6 +34,6 @@ npm run test:netplay
 npm run test:match
 ```
 
-The match test uses two headless browsers on macOS with Chrome and the Xcode command-line tools. It records inputs, screenshots, emulated VBlanks and decoded guest frames under `private/verification/ps2-match/`. In a packaged-game run, Blaze and Doc each scored 250 points at Foundation. That test measured 22.3 emulated VBlanks and 23.1 guest video frames per second during combat. The guest fetched zero game blocks. A separate loading benchmark reduced the wait for Foundation's first 3D frame from 79.5 seconds to 25.6–32.8 seconds. [Match verification](verification/README.md) · [Loading benchmark](ps2/diagnostics/README.md)
+The match test uses two headless browsers on macOS with Chrome and the Xcode command-line tools. It records inputs, screenshots, emulated VBlanks and decoded guest frames under `private/verification/ps2-match/`. In a packaged-game run, Blaze and Doc each scored 250 points at Foundation. That test measured 22.3 emulated VBlanks and 23.1 guest video frames per second during combat. A separate test on the live GitHub Pages URL also scored hits for both players. The public run measured 16.1 decoded guest frames per second over 20.2 seconds. In both runs the guest fetched zero game blocks. A separate loading benchmark reduced the wait for Foundation's first 3D frame from 79.5 seconds to 25.6–32.8 seconds. [Match verification](verification/README.md) · [Loading benchmark](ps2/diagnostics/README.md)
 
 To reproduce the content package or rederive the patches from a source copy, the reference disc is the US PS2 release `SLUS-21004`, SHA-1 `5eda39dfd703804c8734b91bd23039f642317837`. The web player does not require a disc image at build, launch or play time. [Battle patch](ps2/battle/README.md)

@@ -85,5 +85,30 @@
       "26-guest-kick-host.png": "c9ea453a14f5333774976ff8019534d91e504ab53ea0329a0d849880439bb9ed",
       "27-after-actions-guest.png": "123f474b09d64de39149e09a5672090fa7aecda826eb44e18e6874088ec87e28"
     }
+  },
+  "publicHarness": {
+    "directory": "private/verification/ps2-match/run-VjATgg",
+    "target": "https://zheruel.github.io/def-jam-fight-for-ny/",
+    "titleDestination": "battle",
+    "assetsManifestSha256": "acd37123ff61a3f23b05132cba7fe4805d1a73a66aae4800f07be708cd72c111",
+    "wasmSha256": "5bf3feca75a1fc1573a44dfbde3a3063d2db6cca4ac0a359ab15e4e7818973c6",
+    "battleManifestSha256": "02b65f236168595c2e0e3b66cfe8d67ec67cceb5675d8e46229188492cfbc492",
+    "unlockManifestSha256": "f9767159c2b56d25bad4d23925ef70bb38797f6be00e7321f5f0344acfa67d54",
+    "reportSha256": "5eea3691b009953cfc88084275bd00f6cd57ab90578f5d8f1e627dc9afcf6930",
+    "captures": {
+      "04-post-title-menu-host.png": "109db488db4c35f7ba04c286340cddc3a1f09046ba186b4d3e9fd9024c7e9dc2",
+      "12-two-human-controllers-host.png": "c7c07353d00c0ae430c3d2a9b3823176ebfc46dcbad5a45796adbb638ffc6d0b",
+      "17-two-fighters-ready-host.png": "1774e65f2e9f28d4da0357ecb40fd024edd38e39eb06c8541a25afc30c8ba5a4",
+      "18-venue-foundation-host.png": "715e60f70f570196e59dab6aca10aa21b5761d559a80d3435a18810f03e43499",
+      "19-match-card-host.png": "390d8c26e86c2d5ed2857d51d90b7b24c00ee931a0e970b88202a3d3199e94f1",
+      "20-guest-match-card-guest.png": "4894026e54c72b0ef9ef73064bdaa241fb3e9f32a5edc60ee84d970c8421dd76",
+      "21-fight-ready-host.png": "c57cbe96b52ad33543b556a3247894671d7adb3a03e9c5ecdc67e2a3efcebdd7",
+      "22-guest-fight-ready-guest.png": "ad609063cb112130c6df81e6aab1fbaa8044a06fa89ded2a0074388998851d4e",
+      "23-host-movement-host.png": "73651b683ee9ae1687f302e4b0116711b25f8d87d810d4daf65e2fe32f5902e0",
+      "24-guest-movement-host.png": "ca4200be185c24b2dd83578333309f98d3e3f722cddafd9c71b56877a06580f9",
+      "25-host-punch-host.png": "65f11978ab1e5a023d2a6da2d074ef5131282c6e55b3786478699a2772fe5dde",
+      "26-guest-kick-host.png": "afad85f7dfd7d65197eb3773a3d1af6709738ba4c4a4b55775667adde38d6963",
+      "27-after-actions-guest.png": "0328392e088d57c992777451b71a6f6fdbec4d7d5ecbb73f7bcb91e6925fd38f"
+    }
   }
 }

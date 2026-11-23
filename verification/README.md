@@ -2,6 +2,8 @@
 
 Run `npm run setup` and `node verification/ps2-match.mjs` on a Mac with Chrome, Xcode command-line tools, and the packaged `game-assets/` directory. The harness starts its own loopback server and two headless Chrome contexts. The host opens the game automatically, and the guest opens the room form at `/?join=1`. The harness checks the package manifest hash and rejects ISO requests, file pickers, and browser dialogs.
 
+Run `node verification/ps2-match.mjs --url https://zheruel.github.io/def-jam-fight-for-ny/` to use the published game and signaling service. This mode reads the deployed assets and waits for the browser setup to finish on both Pages tabs.
+
 The default run requires the title to open Battle directly. Use `--retail-menus` to follow the original menu flow with the runtime overlays disabled. The harness assigns both humans, reads the fighter cards to select Blaze and Doc, and verifies Foundation before starting a standard One on One match. It waits for both player names and the live clock before sending movement and attacks.
 
 Screen captures and the JSON report are stored under `private/verification/ps2-match/`. The report gives separate counts for emulated VBlanks, sampled GS frames, and frames decoded by the WebRTC guest. Input readback times include the harness polling delay.

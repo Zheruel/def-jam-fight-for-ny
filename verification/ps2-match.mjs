@@ -15,7 +15,10 @@ import { gameServer } from '../tools/serve.mjs';
 const run = promisify(execFile);
 const root = fileURLToPath(new URL('../', import.meta.url));
 const artifactRoot = join(root, 'private/verification/ps2-match');
-const assetManifestPath = '/game-assets/manifest.json';
+const assetManifestPath = 'game-assets/manifest.json';
+const battleManifestPath = 'ps2/battle/battle-patch.json';
+const unlockManifestPath = 'ps2/content/unlock-disc-patch.json';
+const wasmPath = 'runtime/play-build/Play.wasm';
 const buttons = { cross: 1, circle: 2, square: 4, triangle: 8, start: 512, down: 8192, left: 16384, right: 32768 };
 const neutralAxes = [0, 0, 0, 0];
 const fighterNameRegions = [[0.17, 0.67, 0.32, 0.15], [0.55, 0.68, 0.38, 0.14]];
@@ -30,13 +33,24 @@ async function hash(file) {
   return digest.digest('hex');
 }
 
+const hashBytes = bytes => createHash('sha256').update(bytes).digest('hex');
+
+async function publicAsset(entry, path) {
+  const url = new URL(path, entry);
+  const response = await fetch(url, { signal: AbortSignal.timeout(30_000) });
+  assert.ok(response.ok, `HTTP ${response.status} for ${url.href}`);
+  return Buffer.from(await response.arrayBuffer());
+}
+
 async function rtcStats(page) {
   return page.evaluate(async () => {
-    const peer = window.matchVerificationPeers.at(-1);
-    const reports = Array.from((await peer.getStats()).values());
+    const sessions = await Promise.all(window.matchVerificationPeers.map(async peer =>
+      Array.from((await peer.getStats()).values())));
+    // PeerJS has another connection for signaling. Only the match carries inbound video.
+    const reports = sessions.find(session => session.some(row => row.type === 'inbound-rtp' && row.kind === 'video')) ?? [];
     const video = reports.find(row => row.type === 'inbound-rtp' && row.kind === 'video');
     const audio = reports.find(row => row.type === 'inbound-rtp' && row.kind === 'audio');
-    const input = reports.find(row => row.type === 'data-channel' && row.state === 'open');
+    const input = reports.find(row => row.type === 'data-channel' && row.label === 'controller-v1' && row.state === 'open');
     return {
       timeMs: performance.now(),
       decodedVideoFrames: video?.framesDecoded ?? 0,
@@ -195,12 +209,20 @@ async function playBattle(controls) {
 }
 
 async function main() {
-  const { values } = parseArgs({ options: { 'retail-menus': { type: 'boolean', default: false } } });
-  const manifest = await readFile(join(root, assetManifestPath));
-  const assetsManifestSha256 = createHash('sha256').update(manifest).digest('hex');
+  const { values } = parseArgs({ options: { url: { type: 'string' }, 'retail-menus': { type: 'boolean', default: false } } });
+  const publicEntry = values.url && new URL(values.url);
+  if (publicEntry) {
+    assert.ok(['http:', 'https:'].includes(publicEntry.protocol), 'The player URL must use HTTP or HTTPS');
+    assert.ok(!values['retail-menus'], 'Use --retail-menus with the local player so its overlays can be intercepted');
+    if (!publicEntry.pathname.endsWith('/') && !publicEntry.pathname.endsWith('.html')) publicEntry.pathname += '/';
+    publicEntry.searchParams.delete('join');
+    publicEntry.hash = '';
+  }
+  const loadAsset = path => publicEntry ? publicAsset(publicEntry, path) : readFile(join(root, path));
+  const [manifest, wasm] = await Promise.all([loadAsset(assetManifestPath), loadAsset(wasmPath)]);
+  const assetsManifestSha256 = hashBytes(manifest);
   assert.equal(JSON.parse(manifest).serial, 'SLUS-21004', 'The package must be the USA PS2 game');
-  const wasm = join(root, 'runtime/play-build/Play.wasm');
-  const wasmSha256 = await hash(wasm);
+  const wasmSha256 = hashBytes(wasm);
   await mkdir(artifactRoot, { recursive: true, mode: 0o700 });
   const out = await mkdtemp(join(artifactRoot, 'run-'));
   const recognizeText = join(out, 'recognize-text');
@@ -208,12 +230,21 @@ async function main() {
   await run('swiftc', ['-O', fileURLToPath(new URL('recognize-text.swift', import.meta.url)), '-o', recognizeText]);
   console.log('Captures in', out);
 
-  const server = gameServer(root, { reference: false });
-  attachNetplay(server);
-  server.listen(0, '127.0.0.1');
-  await once(server, 'listening');
+  const server = publicEntry ? null : gameServer(root, { reference: false });
+  if (server) {
+    attachNetplay(server);
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+  }
   let browser;
-  const report = { gameId: 'SLUS-21004', assetsManifestSha256, wasmSha256,
+  const entry = publicEntry ?? new URL(`http://127.0.0.1:${server.address().port}/`);
+  const guestEntry = new URL(entry);
+  guestEntry.searchParams.set('join', '1');
+  const manifestUrl = new URL(assetManifestPath, entry);
+  const assetRoot = new URL('./', manifestUrl);
+  const discRoot = new URL('disc/', entry);
+  const isIsoRequest = url => url.href.startsWith(discRoot.href) || /\.iso(?:$|\/)/iu.test(url.pathname);
+  const report = { gameId: 'SLUS-21004', target: publicEntry ? entry.href : 'loopback', assetsManifestSha256, wasmSha256,
     menuMode: values['retail-menus'] ? 'retail' : 'launcher', captures: [], inputs: [] };
   const browserMessages = [];
   try {
@@ -226,7 +257,6 @@ async function main() {
     const context = { viewport: { width: 1280, height: 960 } };
     const host = await browser.newPage(context);
     const guest = await browser.newPage(context);
-    const origin = `http://127.0.0.1:${server.address().port}`;
     const errors = [];
     const boot = report.boot = {
       host: { automatic: true, packageRequests: 0 },
@@ -236,7 +266,11 @@ async function main() {
     for (const [name, page] of [['host', host], ['guest', guest]]) {
       page.on('pageerror', error => errors.push(`${name}: ${error.message}`));
       page.on('request', request => {
-        if (new URL(request.url()).pathname.startsWith('/game-assets/')) boot[name].packageRequests++;
+        const url = new URL(request.url());
+        if (url.href.startsWith(assetRoot.href) || /\/blocks\/[a-f0-9]{64}\.gz$/u.test(url.pathname)) {
+          boot[name].packageRequests++;
+        }
+        if (isIsoRequest(url)) boot.isoRequests.push({ page: name, url: url.href });
       });
       page.on('filechooser', () => boot.fileChoosers.push(name));
       page.on('dialog', async dialog => {
@@ -248,40 +282,42 @@ async function main() {
         browserMessages.push({ page: name, type: message.type(), text: message.text() });
         if (browserMessages.length > 120) browserMessages.shift();
       });
-      await page.addInitScript(() => {
+      await page.addInitScript(local => {
         const Peer = RTCPeerConnection;
         window.matchVerificationPeers = [];
         // Loopback host candidates suffice for these two local browser contexts.
         window.RTCPeerConnection = class extends Peer {
           constructor(options) {
-            super({ ...options, iceServers: [] });
+            super(local ? { ...options, iceServers: [] } : options);
             window.matchVerificationPeers.push(this);
           }
         };
-      });
-      await page.route(url => /(?:^\/disc(?:\/|$)|\.iso(?:$|\/))/iu.test(decodeURIComponent(url.pathname)), route => {
-        boot.isoRequests.push({ page: name, url: route.request().url() });
-        return route.abort();
-      });
+      }, !publicEntry);
+      await page.route(isIsoRequest, route => route.abort());
     }
 
     if (values['retail-menus']) {
-      for (const manifest of ['ps2/battle/battle-patch.json', 'ps2/content/unlock-disc-patch.json']) {
+      for (const manifest of [battleManifestPath, unlockManifestPath]) {
         const original = JSON.parse(await readFile(join(root, manifest), 'utf8'));
         await host.route(`**/${manifest}`, route => route.fulfill({ json: { ...original, patches: [] } }));
       }
     } else {
-      report.battleManifestSha256 = await hash(join(root, 'ps2/battle/battle-patch.json'));
-      report.unlockManifestSha256 = await hash(join(root, 'ps2/content/unlock-disc-patch.json'));
+      const [battle, unlocks] = await Promise.all([loadAsset(battleManifestPath), loadAsset(unlockManifestPath)]);
+      report.battleManifestSha256 = hashBytes(battle);
+      report.unlockManifestSha256 = hashBytes(unlocks);
     }
 
-    const assetResponse = host.waitForResponse(response => new URL(response.url()).pathname === assetManifestPath);
-    await Promise.all([host.goto(`${origin}/`), guest.goto(`${origin}/?join=1`)]);
-    const servedManifest = await assetResponse;
+    const [servedManifest, hostPage, guestPage] = await Promise.all([
+      host.waitForResponse(response => response.url() === manifestUrl.href, { timeout: 90_000 }),
+      host.goto(entry.href, { waitUntil: 'commit' }),
+      guest.goto(guestEntry.href, { waitUntil: 'commit' }),
+    ]);
+    assert.ok(hostPage?.ok() && guestPage?.ok(), 'The player and room pages must serve successfully');
     assert.ok(servedManifest.ok(), 'The host must load the package manifest automatically');
-    assert.equal(createHash('sha256').update(await servedManifest.body()).digest('hex'), assetsManifestSha256);
-    await host.waitForFunction(() => window.defJam?.diagnostics().discId === 'SLUS-21004' &&
+    assert.equal(hashBytes(await servedManifest.body()), assetsManifestSha256);
+    await host.waitForFunction(() => crossOriginIsolated && window.defJam?.diagnostics().discId === 'SLUS-21004' &&
       window.defJam.diagnostics().vblanks > 0, null, { timeout: 90_000 });
+    await guest.waitForFunction(() => crossOriginIsolated && Boolean(window.defJam), null, { timeout: 45_000 });
     assert.ok(boot.host.packageRequests > 1, 'The host must load game blocks from the package');
     assert.equal(await host.locator('input[type="file"]').count(), 0, 'The host must have no file picker');
     assert.equal(await guest.locator('input[type="file"]').count(), 0, 'The guest must have no file picker');
@@ -386,7 +422,7 @@ async function main() {
     try {
       await browser?.close();
     } finally {
-      await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+      if (server) await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
       if (browserMessages.length) report.browserMessages = browserMessages;
       await writeFile(join(out, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     }
