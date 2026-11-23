@@ -1,7 +1,8 @@
-// Synchronous sampling of the keyframe motion banks written by sampler/bank.py (`def-jam-fny-motion-bank/2`).
+// Synchronous sampling of the keyframe motion banks written by sampler/bank.py (`def-jam-fny-motion-bank/3`).
 // Poses come out in the engine entry layout (94 x 12 floats: scale xyz1, quaternion xyzw, translation xyz1) so they feed
 // composePose()/skinPositions() in pose.mjs directly. The banks reproduce the recompiled retail sampler (0x132b48) at any
-// time, including its half-frame breaks, to about 1e-3.
+// time, including its half-frame breaks, to about 1e-3. Quaternions are the engine's raw (non-unit) lerp results: retail
+// builds bone matrices from them as they are, so keep them unnormalised (pose.mjs composePose already does).
 //
 //   const rig = JSON.parse(rigText);                                   // rig-blaze.json / rig-doc.json
 //   const bank = new MotionBank(JSON.parse(indexText), bytes, rig);     // bytes: ArrayBuffer of <bank>.bin
@@ -12,17 +13,8 @@
 // Q101 = 328, Q107 = 334); fighter banks = index into the WRES bank (+1000 for slot 1, e.g. Doc's N01C7AA kick = 1069).
 // `root` is the engine's absolute offset from the motion start (y = hip height) and the root yaw in degrees.
 
-export const FORMAT = "def-jam-fny-motion-bank/2";
+export const FORMAT = "def-jam-fny-motion-bank/3";
 const BONES = 94;
-
-/** xyzw from the stored smallest three (the dropped component is the largest and positive). */
-function unpack(index, a, b, c, out, at) {
-  const largest = Math.sqrt(Math.max(0, 1 - a * a - b * b - c * c));
-  if (index === 0) { out[at] = largest; out[at + 1] = a; out[at + 2] = b; out[at + 3] = c; }
-  else if (index === 1) { out[at] = a; out[at + 1] = largest; out[at + 2] = b; out[at + 3] = c; }
-  else if (index === 2) { out[at] = a; out[at + 1] = b; out[at + 2] = largest; out[at + 3] = c; }
-  else { out[at] = a; out[at + 1] = b; out[at + 2] = c; out[at + 3] = largest; }
-}
 
 /** Index i such that times[i] <= t < times[i + 1] (clamped to the track). */
 function segment(times, t) {
@@ -65,13 +57,9 @@ export class MotionBank {
     for (let k = 0; k < BONES; k++) {
       if (this.held.has(k)) continue;
       const n = view.getUint16(at, true); at += 2;
-      const t = times(n), index = at; at += n;
-      const planes = [at, at + 2 * n, at + 4 * n]; at += 6 * n;
+      const t = times(n);
       const q = new Float32Array(n * 4);
-      for (let i = 0; i < n; i++) {
-        unpack(view.getUint8(index + i), view.getInt16(planes[0] + 2 * i, true) / this.quant,
-          view.getInt16(planes[1] + 2 * i, true) / this.quant, view.getInt16(planes[2] + 2 * i, true) / this.quant, q, i * 4);
-      }
+      for (let c = 0; c < 4; c++) for (let i = 0; i < n; i++, at += 2) q[i * 4 + c] = view.getInt16(at, true) / this.quant;
       quats[k] = { times: t, values: q };
       if (tclass[k] === 1) { for (let a = 0; a < 3; a++, at += 4) constTrans[k * 3 + a] = view.getFloat32(at, true); }
       else if (tclass[k] === 2) {
@@ -117,8 +105,7 @@ export class MotionBank {
         const sign = values[a] * values[b] + values[a + 1] * values[b + 1] + values[a + 2] * values[b + 2] + values[a + 3] * values[b + 3] < 0 ? -1 : 1;
         const x = values[a] * (1 - w) + sign * values[b] * w, y = values[a + 1] * (1 - w) + sign * values[b + 1] * w;
         const z = values[a + 2] * (1 - w) + sign * values[b + 2] * w, s = values[a + 3] * (1 - w) + sign * values[b + 3] * w;
-        const length = Math.hypot(x, y, z, s) || 1;
-        out[o + 4] = x / length; out[o + 5] = y / length; out[o + 6] = z / length; out[o + 7] = s / length;
+        out[o + 4] = x; out[o + 5] = y; out[o + 6] = z; out[o + 7] = s;   // not renormalised: retail composes the raw lerp
       }
       const track = motion.trans[k];
       if (track) interpolate(track, t, 3, out, o + 8);

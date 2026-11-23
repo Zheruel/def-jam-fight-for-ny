@@ -139,3 +139,43 @@ export function bounds(positions) {
   }
   return { min, max };
 }
+
+/**
+ * Retail bone ids (what 0x132a28 / 0x132ab8 take; id 1 = root) -> bone index. Read from the table at 0x3CCDB8; ids 1..40 are valid
+ * (a 41st entry names bone 94, which the 94-bone fighter skeletons do not have).
+ */
+export const NAMED_BONES = Object.freeze([0, 1, 12, 13, 14, 57, 58, 81, 15, 16, 17, 18, 19, 20, 36, 37, 38, 39, 40, 41,
+  2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93]);
+export const WAIST_ID = 4;   // bone 13 "waist"
+export const HEAD_ID = 7;    // bone 58 "head"
+
+function quatMul(a, b) {
+  return [a[3] * b[0] + a[0] * b[3] + a[1] * b[2] - a[2] * b[1], a[3] * b[1] - a[0] * b[2] + a[1] * b[3] + a[2] * b[0],
+    a[3] * b[2] + a[0] * b[1] - a[1] * b[0] + a[2] * b[3], a[3] * b[3] - a[0] * b[0] - a[1] * b[1] - a[2] * b[2]];
+}
+
+/**
+ * Retail 0x132ab8(slot, boneId, euler): the procedural bone rotation the actor update (0x308a30) layers on the sampled pose.
+ * `euler` is degrees (x, y, z); x turns about the quaternion's Y axis, y about X, z about Z, y first, and the result multiplies the
+ * entry's quaternion from the left: q' = Rz(z) * RY(x) * RX(y) * q (verified exact against the recompiled retail call). It edits
+ * `entries` in place and never renormalises.
+ */
+export function applyBoneEuler(entries, boneId, euler) {
+  const bone = NAMED_BONES[boneId - 1];
+  if (bone === undefined) throw new RangeError(`bone id ${boneId} is not a retail bone id`);
+  const axis = (a, degrees) => { const h = degrees * Math.PI / 360, q = [0, 0, 0, Math.cos(h)]; q[a] = Math.sin(h); return q; };
+  const delta = quatMul(axis(2, euler[2]), quatMul(axis(1, euler[0]), axis(0, euler[1])));
+  const e = bone * 12;
+  const q = quatMul(delta, [entries[e + 4], entries[e + 5], entries[e + 6], entries[e + 7]]);
+  entries[e + 4] = q[0]; entries[e + 5] = q[1]; entries[e + 6] = q[2]; entries[e + 7] = q[3];
+  return entries;
+}
+
+/** Retail 0x132a28(out, slot, boneId): the bone's row-major world matrix (translation in row 3) = bone-to-model world * actor matrix. */
+export function boneWorldMatrix(model, entries, actor, boneId, composed = composePose(model, entries).world) {
+  const bone = NAMED_BONES[boneId - 1];
+  if (bone === undefined) throw new RangeError(`bone id ${boneId} is not a retail bone id`);
+  const out = new Float64Array(16);
+  multiply(composed, bone * 16, actor, 0, out, 0);
+  return out;
+}

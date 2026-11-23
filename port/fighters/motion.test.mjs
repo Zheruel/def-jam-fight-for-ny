@@ -59,13 +59,23 @@ test("idle clips match the recorded retail poses", { skip: !existsSync(join(runs
     let err = 0;
     for (let k = 0; k < 94; k++) {
       if ((a.slot ? base.doc : base.blaze).held.has(k) || k === 13 || k === 58) continue;
-      const n = Math.hypot(ref[k * 12 + 4], ref[k * 12 + 5], ref[k * 12 + 6], ref[k * 12 + 7]) || 1;
       const sg = Math.sign(out[k * 12 + 4] * ref[k * 12 + 4] + out[k * 12 + 5] * ref[k * 12 + 5] + out[k * 12 + 6] * ref[k * 12 + 6] + out[k * 12 + 7] * ref[k * 12 + 7]) || 1;
-      for (let j = 4; j < 11; j++) err = Math.max(err, Math.abs(out[k * 12 + j] - (j < 8 ? sg / n : 1) * ref[k * 12 + j]));
+      for (let j = 4; j < 11; j++) err = Math.max(err, Math.abs(out[k * 12 + j] - (j < 8 ? sg : 1) * ref[k * 12 + j]));
     }
     const key = `${a.slot}/${a.frame}`;
     best.set(key, Math.min(best.get(key) ?? 9, err));
   }
   assert.ok(best.size > 100);
   for (const [key, err] of best) assert.ok(err < 0.01, `${key} ${err}`);
+});
+
+test("strike quaternions keep the engine's raw (non-unit) lerp", { skip: !existsSync(join(runs, "run-xo8asY/combat-trace.json")) }, () => {
+  // Retail composes bone matrices from the unnormalised quaternions (0x132a28 world matrices); clip 67 bone 18 dips to |q| ~ 0.89.
+  const out = new Float32Array(94 * 12);
+  let lowest = 9;
+  for (let t = 0; t <= 39; t += 0.5) {
+    wres.blaze.sample(67, t, out);
+    lowest = Math.min(lowest, Math.hypot(out[18 * 12 + 4], out[18 * 12 + 5], out[18 * 12 + 6], out[18 * 12 + 7]));
+  }
+  assert.ok(lowest < 0.95 && lowest > 0.8, `lowest |q| ${lowest}`);
 });

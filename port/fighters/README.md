@@ -54,8 +54,9 @@ const { skin, world, entries } = readPose(new DataView(eeRam), model, slot);   /
 
 `sampler/` runs the recompiled retail `0x132b48(slot, bank, clip, out, -1, time)` natively on a RAM snapshot (`build.py` builds
 `private/fighter-sampler/sampler`; `harness.cpp` also exposes root offset, root yaw `0x132c38` and the duration service `0x132c60`).
-`sampler/bank.py` samples every clip on an adaptive grid and bakes `def-jam-fny-motion-bank/2` (quantized quaternion keyframes in 1/64-frame
-time, constant/keyed translations, root x/y/z/yaw track; format in its docstring). Clip `end` is always the retail `0x132c60` result,
+`sampler/bank.py` samples every clip on an adaptive grid and bakes `def-jam-fny-motion-bank/3` (raw quaternion keyframes as 4 x int16 in 1/64-frame
+time, constant/keyed translations, root x/y/z/yaw track; format in its docstring). Engine quaternions are NOT unit length (|q| down to ~0.85 in strikes):
+retail builds bone matrices from the raw lerp, so neither the bank nor `composePose` may normalise (normalising moved hand positions by up to 1.6 units). Clip `end` is always the retail `0x132c60` result,
 never detected from the pose.
 
 ```sh
@@ -68,10 +69,21 @@ Shared BASE00 clips take the sampling fighter's own rest translations from its r
 
 Validation: bank vs native sampler at 120 random times per clip: max 0.0003-0.002 (one half-frame root step 0.04); idle clips match the recorded
 retail poses on all settled frames; strikes/hits match outside blend windows. Not reproduced: the 12-frame blend, HELD bones (fingers/lips/brows),
-head/bone 13 look-at residual (procedural rig, see below), non-unit engine quaternions are normalized.
+the procedural waist/head aim (below).
 
 ## Not recovered
 
 * **Animations.** `animbank.py` resolves the bank structure: `BASE00.VIV` and each `WRES_ALL.VIV` member are an ELF split into `.ord` + `.orl`, with five objects (`_d/_f/_h/_s/_t`) per clip and the list of channels (skeleton indices) it drives. Idle clips A112 (Blaze) and A117 (Doc) drive 50 and 58 of 67 and 65 skeleton channels; other clips use shorter prefixes (29–49 channels), so they run on a smaller skeleton whose bone mapping onto the 94-bone rig is not stored in the bank. The key streams are compressed (16-bit values centered on 0x8000, float tables, byte indices, a clip length such as `8.5` as a float) and the sampling rules were not recovered, so no clip is exported; arbitrary-frame sampling needs the sampler (EE 0x1a2f38/0x1a2fe8, scratchpad animation buffer). Strike poses need live captures mid-attack.
 * **Textures.** Parts are not yet matched to the `.ssh` textures.
 * **Eyes and effects.** Sprite packets (eyes, sparkle) are skipped; `skippedPackets` is not exported.
+
+## Bone world matrices and procedural aim
+
+- Retail bone ids (`NAMED_BONES`, table at 0x3CCDB8; id 1 = root, ids 1..40) are what `0x132a28(out, slot, id)` (bone world matrix, translation in row 3)
+  and `0x132ab8(slot, id, euler)` take. `boneWorldMatrix(model, entries, actorMatrix(position, facingDeg), id)` equals the retail call to 4e-5 (Blaze)
+  / 1e-3 (Doc) on all 40 bones (`sampler <ram> b`, tested in `pose.test.mjs`). The actor matrix is a yaw about +Y (row 0 = (cos, 0, -sin)).
+- `0x132ab8` is the only procedural pose edit on top of the sampled clip: `applyBoneEuler(entries, id, euler)` (exact vs retail, `sampler <ram> e`).
+  Its only caller is `0x308a30` (actor look-at), which turns the waist (id 4, bone 13) by (0, 0.4 v, 0) and the head (id 7, bone 58) by (p, 0.6 v, 0),
+  v = yaw state at actor+0x78 (|v| <= 45), p = pitch state at actor+0x68 (|p| <= 20); the live residual over the clip is exactly these two rotations
+  (|d| = 1, no z), ~0.1 deg at distance 50 and 5-8 deg at distance 8. It moves hands by up to 0.5 units. `0x132b00(slot, eulerVec, posVec)` hands the actor's
+  world rotation/position (actor+0xC4 / +0x50) to the skeleton.

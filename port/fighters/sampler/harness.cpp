@@ -154,6 +154,20 @@ static void duration(uint32_t slot, int bank, int clip, int32_t* whole, float* f
     *fraction = registers.f[0];
 }
 
+// Retail 0x132a28(out, slot, bone): the bone's 4x4 world matrix as the game's own hit/attach code reads it (translation in row 3).
+static void boneMatrix(uint32_t slot, uint32_t bone, float* out, bool keep = false) {
+    if (!keep) { memcpy(data, pristine, PS2_RAM_SIZE); memset(scratchpad, 0, sizeof(scratchpad)); }
+    registers = R5900Context();
+    registers.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+    setreg(28, strtoul(getenv("SAMPLER_GP") ? getenv("SAMPLER_GP") : "0", nullptr, 0));
+    setreg(29, 0x1ff0000);
+    setreg(4, 0x1e20000);
+    setreg(5, slot);
+    setreg(6, bone);
+    call(0x132a28);
+    memcpy(out, data + 0x1e20000, 64);
+}
+
 int main(int argc, char** argv) {
     if (argc < 3) { fprintf(stderr, "usage: sampler ram.bin slot|- time bank clip   (or '-' to read 'slot time bank clip' lines)\n"); return 2; }
     FILE* f = fopen(argv[1], "rb");
@@ -170,7 +184,52 @@ int main(int argc, char** argv) {
         }
         return 0;
     }
+    if (argv[2][0] == 'b') {   // sampler ram.bin bone  < "slot bone" lines -> 16 floats per line
+        unsigned slot, bone;
+        while (scanf("%u %u", &slot, &bone) == 2) {
+            float m[16];
+            boneMatrix(slot, bone, m);
+            fwrite(m, 4, 16, stdout);
+        }
+        return 0;
+    }
     uint8_t out[94 * 48 + 16];
+    if (argv[2][0] == 'w') {   // sampler ram.bin w  < "slot time bank clip" lines -> pose block, then the 40 named bone world matrices (0x132a28) of that pose
+        unsigned slot; float time; int bank, clip;
+        setenv("SAMPLER_KEEP", "1", 1);
+        while (scanf("%u %f %d %d", &slot, &time, &bank, &clip) == 4) {
+            memcpy(data, pristine, PS2_RAM_SIZE);
+            memset(scratchpad, 0, sizeof(scratchpad));
+            sample(slot, time, bank, clip, out);
+            fwrite(out, 1, sizeof(out), stdout);
+            for (unsigned id = 1; id <= 40; id++) { float m[16]; boneMatrix(slot, id, m, true); fwrite(m, 4, 16, stdout); }
+        }
+        return 0;
+    }
+    if (argv[2][0] == 'e') {   // sampler ram.bin e < "slot time bank clip id ex ey ez": sample, then retail 0x132ab8(slot, id, euler degrees); pose block + 40 world matrices
+        unsigned slot; float time; int bank, clip, id; float euler[4];
+        setenv("SAMPLER_KEEP", "1", 1);
+        while (scanf("%u %f %d %d %d %f %f %f", &slot, &time, &bank, &clip, &id, &euler[0], &euler[1], &euler[2]) == 8) {
+            memcpy(data, pristine, PS2_RAM_SIZE);
+            memset(scratchpad, 0, sizeof(scratchpad));
+            sample(slot, time, bank, clip, out);
+            if (id > 0) {
+                memcpy(data + 0x1e30000, euler, 12);
+                registers = R5900Context();
+                registers.vu0_vf[0] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
+                setreg(28, strtoul(getenv("SAMPLER_GP") ? getenv("SAMPLER_GP") : "0", nullptr, 0));
+                setreg(29, 0x1ff0000);
+                setreg(4, slot); setreg(5, id); setreg(6, 0x1e30000);
+                call(0x132ab8);
+            }
+            uint32_t character = *(uint32_t*)(data + 0x471230 + slot * 4);
+            uint32_t destination = *(uint32_t*)(data + character + 0x17c);
+            memcpy(out, data + destination, 94 * 48);
+            fwrite(out, 1, sizeof(out), stdout);
+            for (unsigned b = 1; b <= 40; b++) { float m[16]; boneMatrix(slot, b, m, true); fwrite(m, 4, 16, stdout); }
+        }
+        return 0;
+    }
     if (argv[2][0] == '-') {
         unsigned slot; float time; int bank, clip;
         while (scanf("%u %f %d %d", &slot, &time, &bank, &clip) == 4) {

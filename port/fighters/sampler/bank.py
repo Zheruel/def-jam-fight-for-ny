@@ -14,12 +14,12 @@ tolerances below (`TOL_*`). Root translation/yaw (the engine's 0x132b48 `out` an
 Output per bank: `<bank>.json` (index) and `<bank>.bin` (little-endian blob). Per clip, in the blob:
     translation class   94 bytes   0 = rig default, 1 = constant (3 x f32), 2 = keyed (u16 n, n x u16 times, n x 3 x f32)
     for each bone not in HELD, in order:
-        quaternion track  u16 n; n x u16 times (1/64 frame); n x u8 index of the dropped largest component;
-                          then three planes of n x int16 = round(v * quant) (the other three components, xyzw order, the
-                          dropped one made positive). The dropped component is sqrt(1 - sum of squares).
+        quaternion track  u16 n; n x u16 times (1/64 frame); then four planes (x, y, z, w) of n x int16 = round(v * quant).
+                          The keys are the engine's raw quaternions, NOT unit length (clip data and blends leave |q| down to ~0.85);
+                          retail composes bones from them as they are, so a consumer must not normalise.
         translation       none (class 0) / 3 x f32 (class 1) / keyed as above (class 2)
     root track          u16 n; n x u16 times; n x (x, y, z, yaw degrees) f32   (x, y, z: absolute offset from the motion start)
-A track with n = 1 is constant; between keys quaternions are nlerp'd (shortest arc) and everything else lerp'd; before the first and
+A track with n = 1 is constant; between keys everything is lerp'd (quaternions along the shortest arc, never renormalised, as the engine does); before the first and
 after the last key the value is held. HELD bones (fingers, lips/brows) are not stored: see rig files.
 """
 from __future__ import annotations
@@ -36,13 +36,13 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent))
 import bake  # noqa: E402
 
-FORMAT = "def-jam-fny-motion-bank/2"
+FORMAT = "def-jam-fny-motion-bank/3"
 BONES = 94
 ENTRY = 12
 HELD = set(bake.HELD)
 QUANT = 4095.0
 UNIT = 64                       # time units per frame
-TOL_QUAT = 3e-4                 # per component of the normalized quaternion
+TOL_QUAT = 3e-4                 # per component of the raw quaternion
 TOL_TRANS = 5e-4
 TOL_ROOT = 1e-3
 SAMPLER = bake.SAMPLER
@@ -65,18 +65,13 @@ def durations(ram: Path, queries):
     return [float(line.split()[1]) for line in done.stdout.decode().splitlines()]
 
 
-def normalize(q):
-    length = math.sqrt(sum(v * v for v in q)) or 1.0
-    return [v / length for v in q]
-
-
 def align(q, ref):
     return [-v for v in q] if sum(a * b for a, b in zip(q, ref)) < 0 else q
 
 
-def nlerp(a, b, w):
+def lerp_q(a, b, w):
     b = align(b, a)
-    return normalize([x * (1 - w) + y * w for x, y in zip(a, b)])
+    return [x * (1 - w) + y * w for x, y in zip(a, b)]
 
 
 def reduce_track(times, values, tolerance, quaternion):
@@ -90,7 +85,7 @@ def reduce_track(times, values, tolerance, quaternion):
         for i in range(lo + 1, hi):
             w = (times[i] - times[lo]) / span
             if quaternion:
-                p = nlerp(values[lo], values[hi], w)
+                p = lerp_q(values[lo], values[hi], w)
                 e = max(abs(x - y) for x, y in zip(p, align(values[i], p)))
             else:
                 e = max(abs(x * (1 - w) + y * w - z) for x, y, z in zip(values[lo], values[hi], values[i]))
@@ -100,12 +95,6 @@ def reduce_track(times, values, tolerance, quaternion):
             keep.add(at)
             stack += [(lo, at), (at, hi)]
     return sorted(keep)
-
-
-def smallest_three(q):
-    index = max(range(4), key=lambda i: abs(q[i]))
-    sign = -1.0 if q[index] < 0 else 1.0
-    return index, [sign * q[i] for i in range(4) if i != index]
 
 
 def pack_times(times, keys):
@@ -128,7 +117,7 @@ def encode_clip(grid, poses, defaults):
     for k in range(BONES):
         if k in HELD:
             continue
-        quats = [normalize(pose[k * ENTRY + 4:k * ENTRY + 8]) for pose, _ in poses]
+        quats = [list(pose[k * ENTRY + 4:k * ENTRY + 8]) for pose, _ in poses]
         kept = reduce_track(grid, quats, TOL_QUAT, True)
         trans = [tuple(pose[k * ENTRY + 8:k * ENTRY + 11]) for pose, _ in poses]
         tkeys = reduce_track(grid, trans, TOL_TRANS, False)
@@ -141,11 +130,9 @@ def encode_clip(grid, poses, defaults):
         keys += len(kept) + (len(tkeys) if tclass[k] == 2 else 0)
     blob = bytearray(bytes(tclass))
     for k, kept, quats, tkeys, trans in tracks:
-        packed = [smallest_three(quats[i]) for i in kept]
         blob += struct.pack("<H", len(kept)) + pack_times(grid, kept)
-        blob += bytes(index for index, _ in packed)
-        for c in range(3):
-            blob += struct.pack(f"<{len(kept)}h", *[round(rest[c] * QUANT) for _, rest in packed])
+        for c in range(4):
+            blob += struct.pack(f"<{len(kept)}h", *[round(quats[i][c] * QUANT) for i in kept])
         if tclass[k] == 1:
             blob += struct.pack("<3f", *trans[0])
         elif tclass[k] == 2:
