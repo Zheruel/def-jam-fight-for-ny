@@ -8,7 +8,7 @@ const parse = (query, ffa = true) => parseBattleQuery(new URLSearchParams(query)
 const byHandle = handle => inventory.fighters.find(f => f.handle === handle);
 
 test("one-on-one keeps its defaults, mirror matches and venue", () => {
-  assert.deepEqual(parse(""), { mode: "1v1", handles: ["0x07000030", "0x07000025"], venue: "V2BG_02A", room: null, seat: null });
+  assert.deepEqual(parse(""), { mode: "1v1", handles: ["0x07000030", "0x07000025"], venue: "V2BG_02A", room: null, cpu: 0, seat: null });
   assert.deepEqual(parse("p1=0x07000025&p2=0x07000025&venue=V2BG_09A&room=ABCD2345").handles, ["0x07000025", "0x07000025"]);
   assert.equal(parse("venue=V2BG_07A").venue, "V2BG_07A");
 });
@@ -50,4 +50,28 @@ test("the parsed Free For All draft builds the retail four-fighter lineup", () =
   const lineup = createBattleLineup(handle, "FREE FOR ALL 4", handles);
   assert.equal(lineup.participants.length, 4);
   assert.deepEqual(lineup.participants.map(p => p.slot), [1, 2, 3, 4]);
+});
+
+test("three-player Free For All uses three seats and its original venue formation", () => {
+  const { mode, handles, venue, seat } = parse("mode=ffa3&venue=V2BG_15A&seat=4");
+  assert.equal(mode, "ffa3");
+  assert.equal(handles.length, 3);
+  assert.equal(new Set(handles).size,3);
+  assert.equal(venue,"V2BG_02A");
+  assert.equal(seat,null);
+  assert.equal(parse("mode=ffa3&seat=3").seat,3);
+  assert.equal(inventory.venues.filter(v=>venueSupports(v.file,mode)).length,21);
+});
+
+test("CPU seats are explicit, never more than all but one seat, and leave guests the person seats", () => {
+  assert.equal(parse("").cpu, 0, "an empty seat is never filled with a CPU on its own");
+  assert.equal(parse("cpu=1").cpu, 1);
+  assert.equal(parse("cpu=2").cpu, 0, "one-on-one keeps its person");
+  assert.equal(parse("mode=ffa&cpu=3").cpu, 3);
+  assert.equal(parse("mode=ffa&cpu=4").cpu, 0);
+  assert.equal(parse("mode=ffa&cpu=-1").cpu, 0);
+  assert.equal(parse("mode=ffa&cpu=x").cpu, 0);
+  assert.equal(parse("mode=ffa&cpu=2&seat=2").seat, 2);
+  assert.equal(parse("mode=ffa&cpu=2&seat=3").seat, null, "a guest cannot ask for a CPU seat");
+  assert.equal(parse("mode=ffa&seat=4").seat, 4);
 });

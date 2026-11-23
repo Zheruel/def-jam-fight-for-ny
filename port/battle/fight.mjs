@@ -1,3 +1,4 @@
+import { MODES } from "./modes.mjs";
 import { loadMatchAnimation } from "../animation/match.mjs";
 import { loadMatchRules, initializeFighterProfile } from "./roster.mjs";
 import { installArena,loadArena } from "./arena.mjs";
@@ -6,19 +7,22 @@ import { instantiateBattle } from "../kernel/runtime.mjs";
 import { poseIndex } from "../motion/pose-bank.mjs";
 import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
+import { copyDecisions, neutralPad, withCpuPages, writeSeatTypes } from "./cpu.mjs";
 
 const actorAddress = slot => 0x4bc170 + slot * 0x12f8;
 const rad = Math.PI / 180;
 
-export async function loadFoundationFight(fighters,venue) {
+export async function loadFoundationFight(fighters,venue,formation) {
+  const mode=Object.values(MODES).find(m=>m.fighters===fighters.length && (!formation || m.formation===formation));
+  if(!mode) throw RangeError("No Battle start for "+fighters.length+" fighters in "+formation);
   const [source,seed,arena,rules,animation]=await Promise.all([
     fetchPacked(new URL("../kernel/battle.wasm.gz",import.meta.url)),
-    fetchPacked(new URL(fighters.length===4 ? "../kernel/four-start.gz" : "../kernel/foundation-start.gz",import.meta.url)),
+    fetchPacked(new URL("../kernel/"+mode.start,import.meta.url)),
     venue.file==="V2BG_02A" ? null : loadArena(venue),
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
     loadMatchAnimation(fighters),
   ]);
-  const fight=await createFoundationFight(fighters,source,seed,arena,rules,animation);
+  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters),arena,rules,animation);
   const clips=signatureClipIds(fight.memory,fighters.length);
   animation.setSignatures(new Map(await Promise.all(clips.map(async clip=>[
     clip,await fetchPacked(new URL(`../animation/banks/special${clip}.gz`,import.meta.url))
@@ -117,6 +121,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   const file = new DataView(seed);
   if (!file.byteLength || file.byteLength % 4100) throw new Error("Invalid Foundation start data");
   const pads = [];
+  const hasCpu = fighters.some(f=>f.cpu);
   let ticks;
   function restart() {
     bytes.fill(0);
@@ -125,6 +130,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       bytes.set(new Uint8Array(seed,at+4,4096),page*4096);
     }
     if(rules) loadMatchRules(kernel,rules);
+    writeSeatTypes(memory,fighters);
     animation?.reset();
     if(animation) fighters.forEach((f,slot)=>{
       initializeFighterProfile(kernel,slot,f.record);
@@ -152,6 +158,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     // Retail runs the match referee (0x2dbbd8, delta 1.0) before the actor update; once it calls the finish the pads go dead.
     const finished = outcome.advance().over;
     pads.forEach((p,i) => {
+      if(fighters[i].cpu) return;
       const {buttons,x,z,rx=0,rz=0} = finished ? {buttons:0,x:0,z:0} : inputs[i];
       const previous = word(p);
       memory.setUint32(p,buttons,true);
@@ -161,6 +168,10 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       memory.setFloat32(p+16,rx,true);
       memory.setFloat32(p+20,rz,true);
     });
+    if(hasCpu) {
+      copyDecisions(kernel);
+      if(finished) pads.forEach((p,i) => fighters[i].cpu && neutralPad(memory,p));
+    }
     kernel.tick();
     states.forEach((state,slot) => {
       state.actorPosition = readVector(actors[slot]+0x44);

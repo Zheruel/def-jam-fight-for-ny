@@ -90,7 +90,7 @@ try {
   // Multi-fighter modes the page advertises (Free For All with three or four fighters): the same menu with three or four cards; Enter locks in
   // each seat in turn, and only venues with that mode's formation are offered. A mode the page does not advertise is not offered.
   const multi = {};
-  for (const mode of ["ffa3", "ffa"].filter(m => types.includes(m))) {
+  for (const mode of ["team", "ffa3", "ffa"].filter(m => types.includes(m))) {
     const tab = await browser.newPage({ viewport: { width: 1024, height: 824 } });
     tab.on("pageerror", e => errors.push(mode + ": " + e.message));
     await tab.goto(base);

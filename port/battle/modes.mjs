@@ -1,10 +1,13 @@
 // Battle page modes and their query schema (shared by the viewer, the controls and tests).
 //
-//   ?mode=1v1|ffa     one-on-one (default) or four-fighter Free For All
+//   ?mode=1v1|ffa3|ffa|team  one-on-one (default), Free For All or two versus two
 //   ?p1=&p2=&p3=&p4=  fighter handles from ps2/content/inventory.json; p3/p4 only in ffa
 //   ?venue=V2BG_xx    venue file; ffa needs a venue with a "FREE FOR ALL 4" formation
 //   ?room=CODE        join a hosted match as a guest (the host's shared match view)
 //   ?seat=2..4        optional guest seat to take (1-based player number; default: the next open one)
+//   ?cpu=N            the last N seats are retail CPU opponents (default 0: a seat nobody holds is never filled in on
+//                     its own). N is 0..fighters-1, so one seat always belongs to a person; the people sit in seats
+//                     1..fighters-N, which is also the range guests join (a CPU seat is never offered to a guest).
 //
 // In ffa every fighter is distinct by FIGHTER.XML coreID (the kernel profiles a fighter by it) and by name (so
 // the HUD labels differ); any pN that is missing, unknown or repeats an earlier fighter is replaced by the
@@ -13,8 +16,10 @@
 import lineups from "./lineups.json" with { type: "json" };
 
 export const MODES = Object.freeze({
-  "1v1": Object.freeze({ formation: "SINGLE", fighters: 2 }),
-  ffa: Object.freeze({ formation: "FREE FOR ALL 4", fighters: 4 }),
+  "1v1": Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "One on one" }),
+  ffa3: Object.freeze({ formation: "FREE FOR ALL 3", fighters: 3, start: "three-start.gz", label: "Free For All · 3 fighters" }),
+  ffa: Object.freeze({ formation: "FREE FOR ALL 4", fighters: 4, start: "four-start.gz", label: "Free For All · 4 fighters" }),
+  team: Object.freeze({ formation: "2 vs 2 TAG", fighters: 4, start: "team-start.gz", label: "Team Match" }),
 });
 export const DEFAULT_FIGHTERS = ["0x07000030", "0x07000025", "0x0700000A", "0x07000011"];
 export const DEFAULT_VENUE = "V2BG_02A";
@@ -30,7 +35,8 @@ export const venueSupports = (file, mode) => Object.hasOwn(lineups[file] ?? {}, 
 
 export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
   const byHandle = new Map(fighters.map(f => [f.handle, f]));
-  const mode = ffa && params.get("mode") === "ffa" ? "ffa" : "1v1";
+  const requested=params.get("mode");
+  const mode = ffa && Object.hasOwn(MODES, requested) ? requested : "1v1";
   const count = MODES[mode].fighters;
   const sorted = [...fighters].sort((a, b) => a.name.localeCompare(b.name) || a.handle.localeCompare(b.handle));
   const used = new Set();
@@ -39,7 +45,7 @@ export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
   for (let i = 0; i < count; i++) {
     let pick = byHandle.get(params.get("p" + (i + 1)));
     if (mode === "1v1") pick ??= byHandle.get(DEFAULT_FIGHTERS[i]);
-    if (mode === "ffa") {
+    if (count > 2) {
       if (!pick || taken(pick)) pick = [...DEFAULT_FIGHTERS.map(h => byHandle.get(h)), ...sorted].find(f => f && !taken(f));
       used.add(pick.fighterXml.coreID).add(pick.name);
     }
@@ -47,9 +53,11 @@ export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
   }
   let venue = venues.find(v => v.file === params.get("venue"));
   if (!venue || !venueSupports(venue.file, mode)) venue = venues.find(v => v.file === DEFAULT_VENUE);
+  const cpu = Number(params.get("cpu") ?? 0);
+  const cpuCount = Number.isInteger(cpu) && cpu >= 0 && cpu < count ? cpu : 0;
   const seat = Number(params.get("seat"));
   return {
-    mode, handles, venue: venue.file, room: params.get("room") || null,
-    seat: Number.isInteger(seat) && seat >= 2 && seat <= count ? seat : null,
+    mode, handles, venue: venue.file, room: params.get("room") || null, cpu: cpuCount,
+    seat: Number.isInteger(seat) && seat >= 2 && seat <= count - cpuCount ? seat : null,
   };
 }

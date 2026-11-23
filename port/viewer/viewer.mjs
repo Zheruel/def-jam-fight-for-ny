@@ -120,13 +120,13 @@ async function display() {
   const query = battle ? parseBattleQuery(params,{fighters:inventory.fighters,venues:inventory.venues,ffa:ffaAllowed}) : null;
   const mode = query?.mode ?? "1v1", count = MODES[mode].fighters;
   const selectors = [1,2,3,4].slice(0,count).map(n=>document.querySelector("#player"+n));
-  // Free For All is a local preview until the four-body match is verified; published pages keep one-on-one only.
   const modeSelect = document.querySelector("#mode");
   if(modeSelect) {
+    modeSelect.replaceChildren(...Object.entries(MODES).map(([key,value])=>new Option(value.label,key)));
     modeSelect.hidden = !ffaAllowed;
     modeSelect.value = mode;
   }
-  document.querySelectorAll("#player3,#player4").forEach(select=>select.hidden = mode !== "ffa");
+  document.querySelectorAll("#player3,#player4").forEach((select,i)=>select.hidden = i+2 >= count);
   document.body.dataset.mode = mode;
   const pose = gl.createBuffer();
   const bind = new Float32Array(128 * 16);
@@ -147,7 +147,7 @@ async function display() {
   if(battle) selectors.forEach((s,i)=>{ s.value=query.handles[i]; });
   // One fighter per seat in Free For All: a fighter another seat holds (or a namesake) cannot be picked again.
   function distinctFighters() {
-    if(mode !== "ffa") return;
+    if(count <= 2) return;
     const held = selectors.map(s=>inventory.fighters.find(f=>f.handle===s.value));
     selectors.forEach((select,i)=>{
       for(const option of select.options) {
@@ -423,11 +423,14 @@ async function display() {
     environment = createEnvironment(stage.manifest,events.names,{weaponModels:events.weaponModels});
     if(stage.manifest.subway) { const {createTrainAudio}=await import("../scenery/train.mjs"); trainAudio=createTrainAudio(audio,{fighters:selected.map(f=>f.record.fighterXml)}); }
     hud=await createHud(gl);
-    controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count});
-    fight = await loadFoundationFight(selected,arena);
+    // Explicit CPU seats only (?cpu=N, the last N seats): the retail AI plays them and no controller or guest can.
+    selected.forEach((f,i)=>{ f.cpu = i >= count - query.cpu; });
+    controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count,cpu:query.cpu});
+    fight = await loadFoundationFight(selected,arena,MODES[mode].formation);
     if(voicePlayer)fight.setVoicePlayer(voicePlayer);
     camera = battleCamera(fight.kernel, arena.file);
-    const hint = mode === "ffa" ? "Free For All · WASD, arrows, gamepads 3–4 and guests · Controls below" : "WASD and arrows to move · Controls below";
+    const cpuNote = query.cpu ? " · "+query.cpu+(query.cpu>1?" CPU opponents":" CPU opponent") : "";
+    const hint = (count>2 ? MODES[mode].label+" · WASD, arrows, gamepads and guests · Controls below" : "WASD and arrows to move · Controls below")+cpuNote;
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
       rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();

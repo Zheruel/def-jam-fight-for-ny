@@ -1,6 +1,6 @@
 # Native Battle port
 
-The production URL opens the native one-on-one match. This directory contains the browser implementation recovered from the US PS2 release, SLUS-21004.
+The production URL opens the PS2 Battle selector. Players can start a native One on One, three- or four-fighter Free For All, or two-on-two Team Match. This directory contains the browser implementation recovered from the US PS2 release, SLUS-21004.
 
 The first match used for comparison is Blaze versus Doc at The Foundation. The reference harness selects both fighters, loads the venue, sends inputs from two players and captures the resulting fight. [Reference match harness](../verification/README.md)
 

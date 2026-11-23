@@ -10,12 +10,17 @@ const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p
 const gamepadBits=[0x4000,0x2000,0x8000,0x1000,0x0400,0x0800,0x0100,0x0200,1,8,2,4,0x10,0x40,0x80,0x20];
 // seats: 2 for one-on-one, 4 for Free For All. Seat 0 is the host's; seats 1..seats-1 go to guests, to a local
 // gamepad of the same number, or (seats 0 and 1) to the keyboard. A seat with none of those holds still.
-export function battleControls(redraw,audio,{seats=2}={}) {
+// cpu: how many of the last seats the retail CPU plays (port/battle/cpu.mjs). Those seats read no keyboard, gamepad or
+// guest, so a controller that is plugged in is never taken over, and only the person seats are offered to guests.
+export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
+  const people=seats-cpu;
   let remote = {}, room, guest = false, poll=0, lastPacket="";
   const pads = Array(seats).fill(null);
   let state = "local";
   const button = id => document.getElementById(id);
+  const IDLE={buttons:0,x:0,z:0};
   function input(slot) {
+    if (slot>=people) return IDLE;
     if (pads[slot]) return pads[slot];
     if (slot >= 1 && remote[slot]) return remote[slot];
     return read(keyPads[slot], slot);
@@ -73,12 +78,13 @@ export function battleControls(redraw,audio,{seats=2}={}) {
       if (audio) { button("sound").hidden=true; button("remote").controls=true; }
       document.querySelector("canvas").hidden = true;
     } else {
+      if (people < 2) throw new Error("Every other seat is a CPU opponent, so there is no seat for a guest.");
       room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),audioStream:audio?.stream(),onState,
-        players:seats,
+        players:people,
         onInput(p,slot){remote[slot]={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};},
         // A seat whose guest left goes back to the local controls instead of holding the last remote state.
         onPeer({slot,state}){ if(state==="open") delete remote[slot]; },
-        onSlots(list){ const out=button("seats"); if(out) out.textContent=list.map(s=>"P"+(s.slot+1)+" "+s.state).join(" · "); }});
+        onSlots(list){ const out=button("seats"); if(out) out.textContent=[...list.map(s=>"P"+(s.slot+1)+" "+s.state),...Array.from({length:cpu},(_,i)=>"P"+(people+i+1)+" CPU")].join(" · "); }});
       button("code").value = room.code;
       const invite=new URL(location.href);
       invite.searchParams.set("room",room.code);
