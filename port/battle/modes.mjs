@@ -20,6 +20,7 @@ export const MODES = Object.freeze({
   "1v1": Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "One on one" }),
   ffa3: Object.freeze({ formation: "FREE FOR ALL 3", fighters: 3, start: "three-start.gz", label: "Free For All · 3 fighters" }),
   ffa: Object.freeze({ formation: "FREE FOR ALL 4", fighters: 4, start: "four-start.gz", label: "Free For All · 4 fighters" }),
+  subway: Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "Subway Match", venues: ["V2BG_04A"] }),
   team: Object.freeze({ formation: "2 vs 2 TAG", fighters: 4, start: "team-start.gz", label: "Team Match" }),
 });
 export const DEFAULT_FIGHTERS = ["0x07000030", "0x07000025", "0x0700000A", "0x07000011"];
@@ -32,7 +33,10 @@ export function freeForAllAvailable(location = globalThis.location) {
   return ["localhost", "127.0.0.1", "[::1]"].includes(location?.hostname);
 }
 
-export const venueSupports = (file, mode) => Object.hasOwn(lineups[file] ?? {}, MODES[mode].formation);
+export function venueSupports(file, mode) {
+  const { formation, venues } = MODES[mode];
+  return (!venues || venues.includes(file)) && Object.hasOwn(lineups[file] ?? {}, formation);
+}
 
 export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
   const byHandle = new Map(fighters.map(f => [f.handle, f]));
@@ -45,7 +49,7 @@ export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
   const handles = [];
   for (let i = 0; i < count; i++) {
     let pick = byHandle.get(params.get("p" + (i + 1)));
-    if (mode === "1v1") pick ??= byHandle.get(DEFAULT_FIGHTERS[i]);
+    if (count === 2) pick ??= byHandle.get(DEFAULT_FIGHTERS[i]);
     if (count > 2) {
       if (!pick || taken(pick)) pick = [...DEFAULT_FIGHTERS.map(h => byHandle.get(h)), ...sorted].find(f => f && !taken(f));
       used.add(pick.fighterXml.coreID).add(pick.name);
@@ -53,7 +57,7 @@ export function parseBattleQuery(params, { fighters, venues, ffa = false }) {
     handles.push(pick.handle);
   }
   let venue = venues.find(v => v.file === params.get("venue"));
-  if (!venue || !venueSupports(venue.file, mode)) venue = venues.find(v => v.file === DEFAULT_VENUE);
+  if (!venue || !venueSupports(venue.file, mode)) venue = venues.find(v => v.file === (MODES[mode].venues?.[0] ?? DEFAULT_VENUE));
   const cpu = Number(params.get("cpu") ?? 0);
   const cpuCount = Number.isInteger(cpu) && cpu >= 0 && cpu < count ? cpu : 0;
   const seat = Number(params.get("seat"));

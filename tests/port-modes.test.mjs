@@ -75,3 +75,12 @@ test("CPU seats are explicit, never more than all but one seat, and leave guests
   assert.equal(parse("mode=ffa&cpu=2&seat=3").seat, null, "a guest cannot ask for a CPU seat");
   assert.equal(parse("mode=ffa&seat=4").seat, 4);
 });
+
+test("Subway Match restricts any lineup to 125th Street Station", () => {
+  const {mode, handles, venue, cpu} = parse("mode=subway&venue=V2BG_02A&cpu=1");
+  assert.equal(mode, "subway");
+  assert.equal(cpu, 1);
+  assert.deepEqual(handles, parse("").handles);
+  assert.equal(venue, "V2BG_04A");
+  assert.deepEqual(inventory.venues.filter(v=>venueSupports(v.file,mode)).map(v=>v.file), [venue]);
+});

@@ -12,9 +12,9 @@ import { copyDecisions, neutralPad, withCpuPages, writeSeatTypes } from "./cpu.m
 const actorAddress = slot => 0x4bc170 + slot * 0x12f8;
 const rad = Math.PI / 180;
 
-export async function loadFoundationFight(fighters,venue,formation) {
-  const mode=Object.values(MODES).find(m=>m.fighters===fighters.length && (!formation || m.formation===formation));
-  if(!mode) throw RangeError("No Battle start for "+fighters.length+" fighters in "+formation);
+export async function loadFoundationFight(fighters,venue,format) {
+  const mode=MODES[format] ?? Object.values(MODES).find(m=>m.fighters===fighters.length && (!format || m.formation===format));
+  if(mode?.fighters!==fighters.length) throw RangeError("No Battle start for "+fighters.length+" fighters in "+format);
   const [source,seed,arena,rules,animation]=await Promise.all([
     fetchPacked(new URL("../kernel/battle.wasm.gz",import.meta.url)),
     fetchPacked(new URL("../kernel/"+mode.start,import.meta.url)),

@@ -73,7 +73,7 @@ test("a venue's remix shares its pin and cycles with next/previous", () => {
 });
 
 test("match types follow what MODES advertises, in retail order", () => {
-  assert.deepEqual(matchTypes(MODES, true), ["1v1", "team", "ffa3", "ffa"].filter(mode => Object.hasOwn(MODES, mode)), "exactly the advertised modes");
+  assert.deepEqual(matchTypes(MODES, true), ["1v1", "team", "ffa3", "ffa", "window", "subway", "demolition", "inferno", "cage", "ringout"].filter(mode => Object.hasOwn(MODES, mode)), "exactly the advertised modes");
   assert.ok(matchTypes(MODES, true).includes("1v1"));
   const all = { "1v1": {}, ffa: {}, team: {}, ffa3: {} };
   assert.deepEqual(matchTypes(all, true), ["1v1", "team", "ffa3", "ffa"]);

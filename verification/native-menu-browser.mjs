@@ -22,7 +22,11 @@ const types = matchTypes(MODES, true);
 // Navigates the match type step by the intended type, not by a hard-coded number of key presses.
 const chooseType = async (page, type) => {
   assert.ok(types.includes(type), `${type} is advertised`);
-  for (let i = 0; i < ["1v1", "team", "ffa"].indexOf(type === "ffa3" ? "ffa" : type); i++) await page.keyboard.press("ArrowRight");
+  const rows = [["1v1", "team", "ffa"], ["window", "subway", "demolition", "inferno"], ["cage", "ringout"]];
+  const card = type === "ffa3" ? "ffa" : type;
+  const row = rows.findIndex(cards => cards.includes(card));
+  for (let i = 0; i < row; i++) await page.keyboard.press("ArrowDown");
+  for (let i = 0; i < rows[row].indexOf(card); i++) await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
   if (type.startsWith("ffa")) {
     if (type === "ffa3") await page.keyboard.press("ArrowLeft");
@@ -94,7 +98,7 @@ try {
   // Multi-fighter modes the page advertises (Free For All with three or four fighters): the same menu with three or four cards; Enter locks in
   // each seat in turn, and only venues with that mode's formation are offered. A mode the page does not advertise is not offered.
   const multi = {};
-  for (const mode of ["team", "ffa3", "ffa"].filter(m => types.includes(m))) {
+  for (const mode of types.filter(m => m !== "1v1")) {
     const tab = await browser.newPage({ viewport: { width: 1024, height: 824 } });
     tab.on("pageerror", e => errors.push(mode + ": " + e.message));
     await tab.goto(base);
@@ -125,13 +129,14 @@ try {
     if (mode === "team") assert.equal(params.get("teams"), "1324");
     assert.deepEqual(order.map(seat => inventory.fighters.find(f => f.handle === params.get("p" + seat)).name), names);
     assert.ok(Object.hasOwn(lineups[params.get("venue")], MODES[mode].formation), "the venue has the mode's formation");
+    if (MODES[mode].venues) assert.ok(MODES[mode].venues.includes(params.get("venue")));
     multi[mode] = { fighters: names, venue: params.get("venue") };
     await tab.close();
   }
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ fighters: names, venue: venue.name, file: venue.file, portraitsFetchedBeforeMatch: portraits().size }));
   console.log(JSON.stringify(multi));
-  console.log("The retail selector chose fighters and a venue, one-on-one and every advertised Free For All size, and started the native match.");
+  console.log("All advertised match types reached a native fight through the retail selector.");
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));

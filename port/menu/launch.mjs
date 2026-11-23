@@ -8,7 +8,7 @@ import { roomSession } from "../battle/controls.mjs";
 
 // The match types to offer: whatever MODES advertises, in the retail order. Free For All stays behind its availability switch.
 export function matchTypes(modes = MODES, ffa = freeForAllAvailable()) {
-  return ["1v1", "team", "ffa3", "ffa"].filter(mode => Object.hasOwn(modes, mode) && (ffa || !mode.startsWith("ffa")));
+  return ["1v1", "team", "ffa3", "ffa", "window", "subway", "demolition", "inferno", "cage", "ringout"].filter(mode => Object.hasOwn(modes, mode) && (ffa || !mode.startsWith("ffa")));
 }
 
 export async function chooseMatch(params) {

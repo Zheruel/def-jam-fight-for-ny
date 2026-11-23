@@ -28,7 +28,9 @@ try {
       return start.apply(this, arguments);
     };
   });
-  await page.goto(`http://127.0.0.1:${server.address().port}/port/battle/index.html?venue=V2BG_04A`);
+  const url = new URL(process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`);
+  url.searchParams.set("mode", "subway");
+  await page.goto(url.href);
   await page.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 5, null, { timeout: 60000 });
   await page.mouse.click(500, 300);   // the first gesture starts audio
   const seen = {};
