@@ -136,7 +136,9 @@ try {
     });
     const params = new URL(tab.url()).searchParams;
     assert.equal(params.get("mode"), mode);
-    const names = await tab.evaluate(() => nativeBattle.diagnostics().actors.map(a => a.name));
+    const match = await tab.evaluate(() => nativeBattle.diagnostics());
+    assert.equal(match.matchType, MODES[mode].id, mode + " uses its retail backend match type");
+    const names = match.actors.map(a => a.name);
     assert.equal(names.length, seats);
     assert.equal(new Set(names).size, seats, "distinct fighters");
     const order = mode === "team" ? [1, 3, 2, 4] : Array.from({length:seats}, (_, i) => i + 1);

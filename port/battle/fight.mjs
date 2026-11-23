@@ -22,7 +22,7 @@ export async function loadFoundationFight(fighters,venue,format,rule) {
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
     loadMatchAnimation(fighters),
   ]);
-  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters,mode.start),arena,rules,animation,rule);
+  const fight=await createFoundationFight(fighters,source,await withCpuPages(seed,fighters,mode.start),arena,rules,animation,rule,mode.id);
   const clips=signatureClipIds(fight.memory,fighters.length);
   animation.setSignatures(new Map(await Promise.all(clips.map(async clip=>[
     clip,await fetchPacked(new URL(`../animation/banks/special${clip}.gz`,import.meta.url))
@@ -44,7 +44,7 @@ export function signatureClipIds(memory,count=2) {
   return [...ids];
 }
 
-export async function createFoundationFight(fighters,source,seed,arena,rules,animation,rule = "standard") {
+export async function createFoundationFight(fighters,source,seed,arena,rules,animation,rule = "standard", matchType) {
   if(fighters.length<2 || fighters.length>4) throw RangeError("Battle requires two to four fighters");
   const actors=fighters.map((_,slot)=>actorAddress(slot));
   let memory, outcome, voice;
@@ -129,6 +129,9 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       const page = file.getUint32(at,true);
       bytes.set(new Uint8Array(seed,at+4,4096),page*4096);
     }
+    // SetMatchType (0x135ef0) writes the card id to the backend setup from registry slot 0x18.
+    // The actor count and formation already come from the matching start capture.
+    if (matchType !== undefined) memory.setUint32(word(0x3fdaa0 + 0x18 * 4) + 0xb8, matchType, true);
     // Observed after choosing each rule in the PS2 front end: Crowd Votes selects the
     // five-minute timer. No Submissions clears bit 1 while keeping the formation.
     if (rule === "votes") memory.setUint32(0x4bbd30, 1, true);
@@ -193,7 +196,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     return {limb, escape: scalar(record + 0x30), health: scalar(record + 0x1c + 4*limb)};
   }
   function diagnostics() {
-    return {ticks,rule,ruleFlags:word(0x4bbd2c),timerSetting:word(0x4bbd30),voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
+    return {ticks,rule,matchType:word(word(0x3fdaa0 + 0x18 * 4) + 0xb8),ruleFlags:word(0x4bbd2c),timerSetting:word(0x4bbd30),voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),recoverableHealth:scalar(a+0x358),
       hold:submissionMeter(i),eliminated:Boolean(memory.getUint16(a+0x932,true)&0x200),score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
   }

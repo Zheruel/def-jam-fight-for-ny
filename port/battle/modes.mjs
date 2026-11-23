@@ -19,14 +19,14 @@ import { SPECIAL } from "./special.mjs";
 import lineups from "./lineups.json" with { type: "json" };
 
 export const MODES = Object.freeze({
-  "1v1": Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "One on one" }),
-  ffa3: Object.freeze({ formation: "FREE FOR ALL 3", fighters: 3, start: "three-start.gz", label: "Free For All · 3 fighters" }),
-  ffa: Object.freeze({ formation: "FREE FOR ALL 4", fighters: 4, start: "four-start.gz", label: "Free For All · 4 fighters" }),
+  "1v1": Object.freeze({ id: 0, formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "One on one" }),
+  ffa3: Object.freeze({ id: 2, formation: "FREE FOR ALL 3", fighters: 3, start: "three-start.gz", label: "Free For All · 3 fighters" }),
+  ffa: Object.freeze({ id: 3, formation: "FREE FOR ALL 4", fighters: 4, start: "four-start.gz", label: "Free For All · 4 fighters" }),
   ...Object.fromEntries(["subway", "cage", "inferno", "window", "demolition"].map(mode => [mode, Object.freeze({
-    formation: "SINGLE", fighters: 2, start: "foundation-start.gz",
+    id: SPECIAL[mode].id, formation: "SINGLE", fighters: 2, start: "foundation-start.gz",
     label: SPECIAL[mode].name + " Match", venues: [SPECIAL[mode].file],
   })])),
-  team: Object.freeze({ formation: "2 vs 2 TAG", fighters: 4, start: "team-start.gz", label: "Team Match" }),
+  team: Object.freeze({ id: 1, formation: "2 vs 2 TAG", fighters: 4, start: "team-start.gz", label: "Team Match" }),
 });
 export const DEFAULT_FIGHTERS = ["0x07000030", "0x07000025", "0x0700000A", "0x07000011"];
 export const DEFAULT_VENUE = "V2BG_02A";
