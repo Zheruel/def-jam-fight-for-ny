@@ -1,6 +1,6 @@
 import {drawPause} from "./pause.mjs";
 import layout from "./layout.json" with {type:"json"};
-import { BANNER, resultLines } from "./result.mjs";
+import { BANNER, drawResultTitle, resultLines } from "./result.mjs";
 import { CARD, drawRematch } from "./rematch.mjs";
 import { loadScreen } from "./screen.mjs";
 
@@ -11,7 +11,7 @@ export async function createHud(gl) {
     if (!response.ok) throw Error("Unable to load HUD "+name);
     return response;
   };
-  const [border,health,momentum,blazin] = await Promise.all(["mainBarContainer_1","healthBar","momentumBar","blazin"].map(async name=>
+  const [border,health,momentum,blazin,overlays,danger,tapBorder,tapMeter,limbMeter] = await Promise.all(["mainBarContainer_1","healthBar","momentumBar","blazin","Overlays","danger","tapBarContainer_1","tapBarMeter","tapHealthMeter"].map(async name=>
     createImageBitmap(await (await load(name+".png")).blob())));
   await Promise.all(["names","numbers"].map(async family=>{
     const face=new FontFace("Battle"+family,await (await load(family+".ttf")).arrayBuffer());
@@ -84,12 +84,17 @@ export async function createHud(gl) {
     if(hp>0)context.drawImage(green,0,0,hp,8,...anchors.pos_p1_healthBar,hp,8);
     if(mp>0)context.drawImage(gold,0,0,mp,8,...anchors.pos_p1_momentumBar,mp,8);
     context.restore();
+    if (!out) {
+      const [dx,dy]=anchors["pos_"+id+"_danger"], [bx,by]=anchors["pos_"+id+"_blazin"];
+      if (actor.health < actor.maxHealth * 0.1)
+        context.drawImage(danger,dx,lowerSeat ? LOWER.axis-dy-21-LOWER.top : dy);
+      if (actor.blazin) context.drawImage(blazin,bx,lowerSeat ? LOWER.axis-by-20-LOWER.top : by);
+    }
     const [nx,ny]=anchors["text_"+id+"_name"],[sx,sy]=anchors["text_"+id+"_totalscore"];
     // The retail referee marks eliminated fighters independently of the health bar.
     context.globalAlpha=out?0.45:1;
     const align=right?"right":"left";
     const row=(y,height)=>lowerSeat?LOWER.axis-LOWER.top-y-height:y;
-    if(actor.blazin)context.drawImage(blazin,...(lowerSeat?[anchors["pos_"+id+"_blazin"][0],row(anchors["pos_"+id+"_blazin"][1],blazin.height)]:anchors["pos_"+id+"_blazin"]));
     label(actor.name.toUpperCase(),nx,row(ny,LOWER.nameHeight),14,"names",align,context);
     label(String(score),sx,row(sy,LOWER.scoreHeight),18,"numbers",align,context);
     context.globalAlpha=1;
@@ -106,10 +111,57 @@ export async function createHud(gl) {
       context.globalAlpha=1;
     }
   }
+  // 0x2dd1d8 publishes these seat records for both the camera and the HUD. The original
+  // tap widget (0x1b5c50) reads its visibility, limb index and both meter fills here.
+  const tapSheets = [];
+  const limbNames = ["HEAD HEALTH", "Back Health", "ARM HEALTH", "LEG HEALTH", "Tope Health"];
+  function drawHolds(actors) {
+    const count = actors.length;
+    for (let first = 0; first < count; first += 2) {
+      const holds = [];
+      for (let slot = first; slot < Math.min(first+2,count); slot++) {
+        const hold = actors[slot].hold;
+        if (!hold) continue;
+        const pixels = (ratio,width) => Math.round(Math.max(0, Math.min(1,ratio)) * width);
+        holds.push([slot,hold.limb,pixels(hold.escape,125),pixels(hold.health,129)]);
+      }
+      if (!holds.length) continue;
+      const lowerSeat = first > 0;
+      const top = lowerSeat ? 296 : 80, height = 72;
+      if (!tapSheets[first]) {
+        const canvas = new OffscreenCanvas(640,height);
+        tapSheets[first] = {canvas, ctx:canvas.getContext("2d"), texture:makeTexture(640,height)};
+      }
+      const sheet = tapSheets[first], ink = sheet.ctx, key = JSON.stringify(holds);
+      gl.bindTexture(gl.TEXTURE_2D,sheet.texture);
+      if (sheet.key !== key) {
+        sheet.key = key;
+        ink.clearRect(0,0,640,height);
+        for (const [slot,limb,escape,limbHealth] of holds) {
+          const right = slot%2 === 1, id = right ? "p2" : "p1";
+          ink.save();
+          ink.setTransform(right ? -1 : 1,0,0,lowerSeat ? -1 : 1,right ? 640 : 0,lowerSeat ? LOWER.axis-top : -top);
+          ink.drawImage(tapBorder,...anchors.pos_p1_tapBarContainer);
+          if (escape) ink.drawImage(tapMeter,0,0,escape,4,...anchors.pos_p1_tapBarMeter,escape,4);
+          if (limbHealth) ink.drawImage(limbMeter,0,0,limbHealth,4,...anchors.pos_p1_tapHealthMeter,limbHealth,4);
+          ink.restore();
+          const drawText = (text,anchor) => {
+            const [x,y] = anchors["text_"+id+"_"+anchor];
+            label(text,x,lowerSeat ? LOWER.axis-y-13-top : y-top,13,"names",right?"right":"left",ink);
+          };
+          drawText(limbNames[limb],"taphealth");
+          drawText("TAP ANY BUTTON","tapname");
+        }
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,sheet.canvas);
+      }
+      gl.uniform2f(band,1-2*top/448,2*height/448);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    }
+  }
   // `rematch` (port/hud/rematch.mjs) is the YES/NO choice; its card replaces the banner's plain rematch line.
   return function draw({actors,ticks,outcome,rematch,pause}) {
-    const {minutes,seconds}=outcome.clock;
-    const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin,a.eliminated]);
+    const {minutes,seconds}=outcome.displayClock;
+    const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin,a.eliminated,a.health < a.maxHealth * 0.1]);
     const four=actors.length>2;
     if(four) {
       actors.forEach((a,i)=>{
@@ -124,6 +176,7 @@ export async function createHud(gl) {
     const seatKey=(bar,i)=>four ? bar.join(",")+"/"+fade(i) : bar.join(",");
     const topKey=minutes+":"+seconds+"/"+seatKey(bars[0],0)+"/"+seatKey(bars[1],1);
     const lowerKey=four ? seatKey(bars[2],2)+(bars[3] ? "/"+seatKey(bars[3],3) : "") : "";
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D,texture);
     if(four && lowerKey!==lastLower) {
       lastLower=lowerKey;
@@ -145,6 +198,7 @@ export async function createHud(gl) {
         if(hp>0)ctx.drawImage(green,0,0,hp,8,...anchors.pos_p1_healthBar,hp,8);
         if(mp>0)ctx.drawImage(gold,0,0,mp,8,...anchors.pos_p1_momentumBar,mp,8);
         ctx.restore();
+        if(!actors[i].eliminated && bars[i][5]) ctx.drawImage(danger,...anchors["pos_"+id+"_danger"]);
         if(actors[i].blazin)ctx.drawImage(blazin,...anchors["pos_"+id+"_blazin"]);
         label(actors[i].name.toUpperCase(),...anchors["text_"+id+"_name"],14,"names",i?"right":"left");
         label(String(score),...anchors["text_"+id+"_totalscore"],18,"numbers",i?"right":"left");
@@ -155,13 +209,16 @@ export async function createHud(gl) {
     }
     gl.useProgram(program);gl.bindVertexArray(null);
     gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
-    gl.uniform2f(band,1,192/448);
-    gl.drawArrays(gl.TRIANGLES,0,3);
-    if(four) {
+    if (!outcome.over) {
+      gl.uniform2f(band,1,192/448);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    }
+    if(four && !outcome.over) {
       gl.bindTexture(gl.TEXTURE_2D,lowerTexture);
       gl.uniform2f(band,1-2*LOWER.top/448,192/448);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
+    if (!outcome.over && actors.some(actor=>actor.hold)) drawHolds(actors);
     const cardShown=Boolean(rematch?.shown);
     const lines=resultLines(outcome,actors.map(a=>a.name))?.filter(l=>!cardShown||l.text!=="ENTER  REMATCH");
     if(lines) {
@@ -170,7 +227,8 @@ export async function createHud(gl) {
       if(bannerKey!==lastBanner) {
         lastBanner=bannerKey;
         bannerCtx.clearRect(0,0,BANNER.width,BANNER.height);
-        lines.forEach(l=>label(l.text,l.x,l.y,l.size,l.family,l.align,bannerCtx));
+        drawResultTitle(bannerCtx,overlays,layout.overlays,lines[0].text);
+        lines.slice(1).forEach(l=>label(l.text,l.x,l.y,l.size,l.family,l.align,bannerCtx));
         gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,banner);
       }
       gl.uniform2f(band,1-2*BANNER.top/448,BANNER.height/224);

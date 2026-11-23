@@ -13,7 +13,7 @@ from battle_patch import Disc
 from refpack import decompress
 from ssh import textures
 
-SPRITES = ("healthBar","momentumBar","mainBarContainer_1","blazin")
+SPRITES = ("healthBar","momentumBar","mainBarContainer_1","blazin","danger","tapBarContainer_1","tapBarMeter","tapHealthMeter")
 
 def extract(iso, output):
     disc = Disc(iso)
@@ -30,7 +30,7 @@ def extract(iso, output):
     source = decompress(blob)
     count = struct.unpack_from("<I",source,8)[0]
     directory = bytearray(source)
-    names, anchors = {}, {}
+    names, anchors, overlays = {}, {}, {}
     for i in range(count):
         _, start = struct.unpack_from("<4sI",source,16+i*8)
         end = struct.unpack_from("<I",source,28+i*8)[0] if i+1<count else len(source)
@@ -40,6 +40,10 @@ def extract(iso, output):
         name = matches[-1].decode()
         if name.startswith(("pos_p1_","pos_p2_","text_p1_","text_p2_")) or name=="text_time":
             anchors[name] = struct.unpack_from("<hh",source,start+12)
+        if name.startswith(("uv_over_", "pos_over_")):
+            overlays[name] = struct.unpack_from("<hh",source,start+12)
+        if name == "Overlays":
+            names[name] = f"{i:04x}"
         if name.startswith("tex_"):
             names[name[4:]] = f"{i:04x}"
     # SHPS allows duplicate four-byte codes. Decode by ordinal, retain full names.
@@ -47,10 +51,10 @@ def extract(iso, output):
         directory[16+i*8:20+i*8] = f"{i:04x}".encode()
     art = textures(directory)
     output.mkdir(parents=True,exist_ok=True)
-    for name in SPRITES:
+    for name in (*SPRITES, "Overlays"):
         (output / (name+".png")).write_bytes(art[names[name]])
     (output / "layout.json").write_text(json.dumps({"sourceSha256":hashlib.sha256(source).hexdigest(),
-        "size":[640,448],"anchors":anchors},indent=2)+"\n")
+        "size":[640,448],"anchors":anchors,"overlays":overlays},indent=2)+"\n")
 
 if __name__ == "__main__":
     parser=argparse.ArgumentParser(description=__doc__)

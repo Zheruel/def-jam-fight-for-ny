@@ -14,7 +14,7 @@ function memory({ allies, flags, phase = 3 }) {
     view.setUint16(a + 0x932, flags[slot], true);
     view.setFloat32(a + 0x350, flags[slot] & 0x200 ? 0 : 100, true);
   });
-  return createOutcome({ memory: view }, ACTORS).read();
+  return { ...createOutcome({ memory: view }, ACTORS).read(), ticksSinceOver: 130 };
 }
 
 test("a Team result groups the allies and names the winning team", () => {

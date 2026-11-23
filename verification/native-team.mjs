@@ -122,8 +122,14 @@ function play(seed, weak = []) {
   for (const s of weak) { const max = real(actor(s) + 0x354); setReal(actor(s) + 0x350, 8); setReal(actor(s) + 0x35c, 8 / max); }
   let random = seed, held = [0, 0, 0, 0], retargeted = false;
   const knocked = new Set();
+  let submissionMeterSeen = false;
   for (let tick = 0; tick < 40000 && !fight.outcome().over; tick++) {
     const { actors } = fight.diagnostics();
+    if (!submissionMeterSeen && actors.some(a => a.state === 66)) {
+      fight.kernel.call(0x2dd1d8, 0x43d6a8);
+      const hold = fight.diagnostics().actors.find(a => a.state === 66)?.hold;
+      if (hold && hold.health > 0 && hold.escape >= 0 && hold.escape <= 1) submissionMeterSeen = true;
+    }
     if (tick % 18 === 0) held = held.map(() => strikes[(random = (Math.imul(random, 1664525) + 1013904223) >>> 0) % strikes.length]);
     // Once an opponent is out, every survivor on the other team is retargeted onto the remaining foe, never an ally.
     for (let s = 0; s < 4; s++) if (half(actor(s) + 0x932) & 0x200) knocked.add(s);
@@ -146,7 +152,7 @@ function play(seed, weak = []) {
       return { buttons: d > 10 ? 0x2000 : tick % 18 < 4 ? held[i] : 0, x: d > 7 ? dx / d : 0, z: d > 7 ? -dz / d : 0 };
     }));
   }
-  return { result: fight.outcome(), retargeted };
+  return { result: fight.outcome(), retargeted, submissionMeterSeen };
 }
 const full = play(17);
 assert.equal(full.result.method, "ko", "Full-health Team match reaches a knockout");
@@ -160,7 +166,8 @@ console.log("Full-health Team match: winning team", full.result.winners, "losers
 // Weakened teams make a quick match from each side; the survivors retarget the remaining opponent.
 // Seed 3 first knocks Doc out, then Magic finishes Blaze in a submission hold (states 65/66).
 for (const [seed, weak, method] of [[17, [2, 3], "ko"], [3, [0, 1], "submission"], [5, [2, 3], "ko"]]) {
-  const { result, retargeted } = play(seed, weak);
+  const { result, retargeted, submissionMeterSeen } = play(seed, weak);
+  if (method === "submission") assert.ok(submissionMeterSeen, "the retail hold shows the victim’s limb and escape gauges");
   assert.equal(result.method, method);
   assert.ok(retargeted, `seed ${seed}: survivors retarget after a knockout`);
   assert.deepEqual(result.winners, weak[0] === 2 ? [0, 1] : [2, 3], `seed ${seed}: the stronger team wins`);

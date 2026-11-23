@@ -14,7 +14,6 @@ server.listen(0,"127.0.0.1");
 await once(server,"listening");
 const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/?p1=0x07000030&p2=0x07000025&venue=V2BG_02A`;   // a direct link skips the menu
 let browser;
-// Pixels of the banner's cream lettering inside the band it is drawn in (screen rows 160..288 of 448).
 // Pixels of the REMATCH? card's cream paper (screen rows 284..444, the middle of the screen).
 const paperCount = `async (source) => {
   const w = 640, h = 448, surface = new OffscreenCanvas(w,h), ctx = surface.getContext("2d");
@@ -25,13 +24,17 @@ const paperCount = `async (source) => {
   for (let i=0;i<data.length;i+=4) if (data[i]>225 && data[i+1]>205 && data[i+2]>160 && data[i+2]<225) paper++;
   return paper;
 }`;
+// Bright strokes in the original KO sprite, including the 16-line NTSC top border.
 const inkCount = `async (source) => {
-  const w = 640, h = 448, surface = new OffscreenCanvas(w,h), ctx = surface.getContext("2d");
+  const w = 640, h = 480, surface = new OffscreenCanvas(w,h), ctx = surface.getContext("2d");
   if (source instanceof Blob) ctx.drawImage(await createImageBitmap(source),0,0,w,h);
   else ctx.drawImage(source,0,0,w,h);
-  const {data} = ctx.getImageData(0,160,w,128);
+  const {data} = ctx.getImageData(276,174,88,89);
   let ink = 0;
-  for (let i=0;i<data.length;i+=4) if (data[i]>222 && data[i]<240 && data[i+1]>215 && data[i+1]<232 && data[i+2]>196 && data[i+2]<220) ink++;
+  for (let i=0;i<data.length;i+=4) {
+    const low=Math.min(data[i],data[i+1],data[i+2]), high=Math.max(data[i],data[i+1],data[i+2]);
+    if (low>205 && high-low<18) ink++;
+  }
   return ink;
 }`;
 try {
@@ -94,8 +97,7 @@ try {
   }
   await playToResult();
   const outcome = await host.evaluate(()=>nativeBattle.diagnostics().outcome);
-  // The page's 30 second limit can call the match before Blaze lands the knockdown; both are retail finishes with a banner.
-  assert.ok(["ko","time"].includes(outcome.method),JSON.stringify(outcome));
+  assert.equal(outcome.method,"ko",JSON.stringify(outcome));
   assert.equal(outcome.winner,0);
   await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.ticksSinceOver>=130);
   const after = await view("2-result");

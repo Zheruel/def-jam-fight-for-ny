@@ -39,11 +39,13 @@ for (const [rule, flags, timer] of [["votes",0x10007,1],["no-submissions",0x1000
     assert.ok(result.result);
     assert.equal(result.method, "time");
     assert.deepEqual(result.clock, {minutes:5, seconds:0});
+    assert.deepEqual(result.displayClock, {minutes:0, seconds:0});
   }
   variant.rematch();
   assert.equal(variant.diagnostics().ruleFlags, flags);
   assert.equal(variant.diagnostics().timerSetting, timer);
   assert.equal(variant.outcome().phase, 1);
+  if (timer) assert.equal(variant.outcome().displayClock.minutes, 4);
 }
 match.rematch();
 
@@ -73,7 +75,7 @@ for (const rule of ["standard", "no-submissions"]) {
   if (rule === "standard") {
     assert.ok(outcome.result);
     assert.deepEqual([outcome.winner, outcome.loser, outcome.method], [0, 1, "submission"]);
-    assert.equal(resultLines(outcome, ["Blaze", "Doc"])[0].text, "SUBMISSION");
+    assert.equal(resultLines(outcome, ["Blaze", "Doc"])[0].text, "SUBMIT");
   } else {
     assert.equal(outcome.over, false);
     const limit = Math.fround(m.getFloat32(victim + 0x354, true) * 0.1);
@@ -150,7 +152,7 @@ for(const [victim,seed,options] of [[1,17],[0,17],[1,9],[1,17,{spent:false,limit
   assert.ok(outcome.clock.minutes*60+outcome.clock.seconds>0,"retail clock ran");
   assert.deepEqual(r.frozen[1],[0,0],"pads were released after the finish");
   const lines=resultLines(outcome,r.actors.map(a=>a.name));
-  assert.equal(lines[0].text,"K.O.");
+  assert.equal(lines[0].text,"KO");
   assert.ok(lines.some(l=>l.text===`${r.actors[winner].name.toUpperCase()} WINS`));
   assert.ok(lines.some(l=>l.text==="ENTER  REMATCH"),"rematch offered after the hold");
   lines.forEach(l=>assert.ok(l.y>=0&&l.y+l.size<=BANNER.height&&l.x>=0&&l.x<=BANNER.width,`banner line ${l.text} inside the ${BANNER.width}x${BANNER.height} surface`));
@@ -193,7 +195,7 @@ match=foundation;
 
 // A hazard finish (subway train) is a knockout on the banner, not a time-up.
 const hazard=resultLines({...timed[0].outcome,method:"hazard"},timed[0].names);
-assert.equal(hazard[0].text,"K.O.");
+assert.equal(hazard[0].text,"KO");
 assert.ok(hazard.some(l=>l.text===`${timed[0].names[0].toUpperCase()} WINS`));
 
 // Rematch restores a clean match.

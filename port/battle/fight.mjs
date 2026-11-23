@@ -160,7 +160,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   restart();
   function tick(inputs) {
     // Retail runs the match referee (0x2dbbd8, delta 1.0) before the actor update; once it calls the finish the pads go dead.
-    const finished = outcome.advance().over;
+    const finished = outcome.advance();
     pads.forEach((p,i) => {
       if(fighters[i].cpu) return;
       const {buttons,x,z,rx=0,rz=0} = finished ? {buttons:0,x:0,z:0} : inputs[i];
@@ -183,10 +183,19 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     });
     ticks++;
   }
+  // 0x2dd1d8 publishes the HUD records before each camera update. The retail submission
+  // widget at 0x1b5c50 uses these fields for the victim's limb and escape gauges.
+  function submissionMeter(slot) {
+    const record = 0x43d6a8 + 0x18 + slot * 0xc8;
+    if (!(memory.getUint16(record + 0xc4, true) & 2)) return null;
+    const limb = memory.getInt32(record + 0x78, true);
+    if (limb < 0 || limb > 4) return null;
+    return {limb, escape: scalar(record + 0x30), health: scalar(record + 0x1c + 4*limb)};
+  }
   function diagnostics() {
     return {ticks,rule,ruleFlags:word(0x4bbd2c),timerSetting:word(0x4bbd30),voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
-      eliminated:Boolean(memory.getUint16(a+0x932,true)&0x200),score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
+      hold:submissionMeter(i),eliminated:Boolean(memory.getUint16(a+0x932,true)&0x200),score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
   }
   return { states, tick, restart, setVoicePlayer(player) {voice=player;}, rematch: restart, outcome: () => outcome.read(), diagnostics, observedPages:kernel.observedPages, memory, kernel };
 }

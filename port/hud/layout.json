@@ -169,5 +169,127 @@
       446,
       44
     ]
+  },
+  "overlays": {
+    "uv_over_double1": [
+      2,
+      0
+    ],
+    "uv_over_double2": [
+      202,
+      82
+    ],
+    "uv_over_time1": [
+      343,
+      0
+    ],
+    "uv_over_time2": [
+      495,
+      88
+    ],
+    "uv_over_over1": [
+      203,
+      0
+    ],
+    "uv_over_over2": [
+      343,
+      83
+    ],
+    "uv_over_submit1": [
+      0,
+      84
+    ],
+    "uv_over_submit2": [
+      213,
+      167
+    ],
+    "uv_over_totalled1": [
+      213,
+      88
+    ],
+    "uv_over_totalled2": [
+      477,
+      177
+    ],
+    "uv_over_fight1": [
+      333,
+      176
+    ],
+    "uv_over_fight2": [
+      499,
+      254
+    ],
+    "uv_over_ring1": [
+      202,
+      177
+    ],
+    "uv_over_ring2": [
+      332,
+      255
+    ],
+    "uv_over_out1": [
+      89,
+      172
+    ],
+    "uv_over_out2": [
+      199,
+      255
+    ],
+    "uv_over_ko1": [
+      0,
+      166
+    ],
+    "uv_over_ko2": [
+      88,
+      255
+    ],
+    "uv_over_dko1": [
+      0,
+      166
+    ],
+    "uv_over_dko2": [
+      88,
+      255
+    ],
+    "pos_over_dko": [
+      378,
+      163
+    ],
+    "pos_over_double": [
+      173,
+      167
+    ],
+    "pos_over_fight": [
+      237,
+      169
+    ],
+    "pos_over_ko": [
+      276,
+      158
+    ],
+    "pos_over_out": [
+      332,
+      166
+    ],
+    "pos_over_over": [
+      328,
+      166
+    ],
+    "pos_over_ring": [
+      197,
+      169
+    ],
+    "pos_over_submit": [
+      213,
+      166
+    ],
+    "pos_over_time": [
+      171,
+      164
+    ],
+    "pos_over_totalled": [
+      188,
+      163
+    ]
   }
 }

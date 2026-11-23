@@ -44,7 +44,7 @@ export const portFiles = [
   "port/animation/match.mjs","port/animation/runtime.mjs","port/animation/banks.mjs",
   "port/animation/shared.gz","port/animation/four-shared.gz","port/animation/sampler.wasm.gz","port/fighters/pose.mjs",
   "port/battle/roster.mjs", "port/kernel/match-rules.gz",
-  "port/battle/arena.mjs", "port/battle/camera.mjs", "port/battle/cameras.json", "port/hud/hud.mjs", "port/hud/result.mjs", "port/hud/rematch.mjs", "port/hud/screen.mjs", "port/hud/screens/rematch.json", ...rematchScreen.pictures.map(picture=>"port/hud/screens/"+picture.file), "port/hud/layout.json", "port/hud/healthBar.png",
+  "port/battle/arena.mjs", "port/battle/camera.mjs", "port/battle/cameras.json", "port/hud/hud.mjs", "port/hud/result.mjs", "port/hud/rematch.mjs", "port/hud/screen.mjs", "port/hud/screens/rematch.json", ...rematchScreen.pictures.map(picture=>"port/hud/screens/"+picture.file), "port/hud/layout.json", "port/hud/Overlays.png", "port/hud/danger.png", "port/hud/tapBarContainer_1.png", "port/hud/tapBarMeter.png", "port/hud/tapHealthMeter.png", "port/hud/healthBar.png",
   "port/hud/pause.mjs", "port/hud/pause.json", "port/hud/pause.png", "port/hud/blazin.png","port/hud/mainBarContainer_1.png", "port/hud/momentumBar.png", "port/hud/names.ttf", "port/hud/numbers.ttf",
   "port/battle/index.html", "port/battle/controls.mjs", "port/battle/outcome.mjs", "port/battle/fight.mjs",
   "port/kernel/runtime.mjs", "port/kernel/battle.wasm.gz", "port/kernel/foundation-start.gz", "port/kernel/four-start.gz", "port/kernel/three-start.gz", "port/kernel/team-start.gz",

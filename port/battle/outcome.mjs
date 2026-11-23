@@ -18,12 +18,12 @@ export function createOutcome(kernel, actors) {
   const half = address => memory.getUint16(address, true);
   let overFor = 0, effects = [], speed = 1;
 
-  // One retail frame of the referee. Returns the state after it ran.
+  // The input loop only needs to know whether the referee stopped the fight.
   function advance() {
     kernel.callWithDelta(0x2dbbd8, 0, 1);
     const phase = word(G + 8);
     overFor = phase >= PHASE.ending ? overFor + 1 : 0;
-    return read();
+    return phase >= PHASE.ending;
   }
 
   // Teams from the retail ally pointer (actor +4), kept only when the two point at each other: [[0,1],[2,3]] in a Team match,
@@ -60,13 +60,22 @@ export function createOutcome(kernel, actors) {
       if (loser < 0) loser = null;
     }
     const groups = teams(), teamOf = slot => slot === null ? [] : groups.find(g => g.includes(slot));
+    const clock = { minutes: word(G + 0x1a8), seconds: word(G + 0x1ac) };
+    let displayClock = clock;
+    const timer = word(0x4bbd30);
+    if (timer) {
+      const limit = 0x392db8 + 2 * timer;
+      const left = Math.max(0, memory.getUint8(limit) * 60 + memory.getUint8(limit+1)
+        - word(G + 0x198) * 60 - word(G + 0x19c));
+      displayClock = {minutes: Math.floor(left/60), seconds: left%60};
+    }
     return {
       phase, over, result: phase >= PHASE.result, winner, loser, draw: over && winner === null,
       // The teams, and the slots of the winning and losing team (empty for a draw): [2, 3] wins when slot 3 is flagged.
       teams: groups, winners: teamOf(winner), losers: teamOf(loser),
       method: over ? finishMethod() : null,
       // Retail match clock (G+0x1a8 minutes, G+0x1ac seconds); it advances while the referee runs.
-      clock: { minutes: word(G + 0x1a8), seconds: word(G + 0x1ac) },
+      clock, displayClock,
       ticksSinceOver: overFor,
       speed, effects,
     };
