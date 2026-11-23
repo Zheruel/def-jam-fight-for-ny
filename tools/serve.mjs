@@ -3,9 +3,11 @@ import { open, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { portFiles } from './port-files.mjs';
 import { peerConfiguration } from './ice.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const nativeRoutes = new Set(portFiles.map(file => '/' + file));
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
 function byteRange(header, size) {
@@ -36,7 +38,7 @@ export function gameServer(directory = root, { reference = false } = {}) {
     }
     if (name === '/') name = '/web/index.html';
     if (reference && name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
-    else if (!/^\/(game-assets\/(manifest\.json|blocks\/[0-9a-f]{64}\.gz)$|web\/|runtime\/play-build\/|netplay\/(client\.mjs|peerjs\.mjs|vendor\/[a-zA-Z0-9._-]+)$|ps2\/battle\/(overlay\.mjs|battle-patch\.json)$|ps2\/content\/unlock-disc-patch\.json$)/.test(name)) return fail(404);
+    else if (!nativeRoutes.has(name) && !/^\/(game-assets\/(manifest\.json|blocks\/[0-9a-f]{64}\.gz)$|web\/|runtime\/play-build\/|netplay\/(client\.mjs|peerjs\.mjs|vendor\/[a-zA-Z0-9._-]+)$|ps2\/battle\/(overlay\.mjs|battle-patch\.json)$|ps2\/content\/unlock-disc-patch\.json$)/.test(name)) return fail(404);
     if (name.split('/').some(part => part.startsWith('.')) || /[\\\0]/.test(name)) return fail(404);
     let file;
     try {

@@ -2,6 +2,8 @@ import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { portFiles } from "./port-files.mjs";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const output = join(root, "build/pages");
 
@@ -9,6 +11,7 @@ const files = new Map([
   ["index.html", "web/index.html"],
   ["coi-serviceworker.js", "web/coi-serviceworker.js"],
   ...[
+    ...portFiles,
     "web/app.mjs",
     "web/controls.mjs",
     "web/game-assets.mjs",
