@@ -27,6 +27,15 @@ export function createOutcome(kernel, actors) {
     return read();
   }
 
+  // Teams from the retail ally pointer (actor +4), kept only when the two point at each other: [[0,1],[2,3]] in a Team match,
+  // one fighter each in a one-on-one or Free For All. The referee flags a single winner, so a team wins through its member.
+  const slotOf = new Map(actors.map((a, i) => [a, i]));
+  function teams() {
+    const ally = actors.map(a => slotOf.get(word(a + 4)) ?? null);
+    const mates = slot => ally[slot] !== null && ally[slot] !== slot && ally[ally[slot]] === slot ? [slot, ally[slot]].sort() : [slot];
+    return actors.map((_, slot) => mates(slot)).filter((group, i, all) => all.findIndex(g => g[0] === group[0]) === i);
+  }
+
   function read() {
     const phase = word(G + 8), over = phase >= PHASE.ending;
     const marks = actors.map(a => half(a + 0x932));
@@ -39,8 +48,11 @@ export function createOutcome(kernel, actors) {
       if (winner < 0) winner = null;
       if (loser < 0) loser = null;
     }
+    const groups = teams(), teamOf = slot => slot === null ? [] : groups.find(g => g.includes(slot));
     return {
       phase, over, result: phase >= PHASE.result, winner, loser, draw: over && winner === null,
+      // The teams, and the slots of the winning and losing team (empty for a draw): [2, 3] wins when slot 3 is flagged.
+      teams: groups, winners: teamOf(winner), losers: teamOf(loser),
       // "hazard": the round ended with the loser's health left and the subway train bit (0x20) set in the match flags G+448.
       method: !over ? null : loser !== null && scalar(actors[loser] + 0x350) <= 0 ? "ko"
         : loser !== null && word(G + 448) & TRAIN ? "hazard" : "time",
