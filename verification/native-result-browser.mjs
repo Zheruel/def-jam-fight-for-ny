@@ -15,6 +15,16 @@ await once(server,"listening");
 const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`;
 let browser;
 // Pixels of the banner's cream lettering inside the band it is drawn in (screen rows 160..288 of 448).
+// Pixels of the REMATCH? card's cream paper (screen rows 284..444, the middle of the screen).
+const paperCount = `async (source) => {
+  const w = 640, h = 448, surface = new OffscreenCanvas(w,h), ctx = surface.getContext("2d");
+  if (source instanceof Blob) ctx.drawImage(await createImageBitmap(source),0,0,w,h);
+  else ctx.drawImage(source,0,0,w,h);
+  const {data} = ctx.getImageData(200,284,240,160);
+  let paper = 0;
+  for (let i=0;i<data.length;i+=4) if (data[i]>225 && data[i+1]>205 && data[i+2]>160 && data[i+2]<225) paper++;
+  return paper;
+}`;
 const inkCount = `async (source) => {
   const w = 640, h = 448, surface = new OffscreenCanvas(w,h), ctx = surface.getContext("2d");
   if (source instanceof Blob) ctx.drawImage(await createImageBitmap(source),0,0,w,h);
@@ -46,13 +56,17 @@ try {
   await guest.waitForFunction(()=>window.nativeBattle);
   await guest.waitForFunction(()=>document.querySelector("#remote").videoWidth>0 && nativeBattle.diagnostics().network==="connected");
 
+  const count = (counter,source) => `(${counter})(${source})`;
   const shot = async (stage) => {
     const png = await host.locator("canvas").screenshot();
     if (process.env.NATIVE_SCREENSHOT) writeFileSync(`${process.env.NATIVE_SCREENSHOT}/${stage}.png`,png);
-    return host.evaluate(`(${inkCount})(await (await fetch("data:image/png;base64,${png.toString("base64")}")).blob())`.replace(/^/,"(async()=>")+")()");
+    const blob = `await (await fetch("data:image/png;base64,${png.toString("base64")}")).blob()`;
+    return { host: await host.evaluate(`(async()=>${count(inkCount,blob)})()`), card: await host.evaluate(`(async()=>${count(paperCount,blob)})()`) };
   };
-  const guestInk = () => guest.evaluate(`(${inkCount})(document.querySelector("#remote"))`);
-  const before = { host: await shot("1-fight"), guest: await guestInk() };
+  const guestInk = () => guest.evaluate(count(inkCount,`document.querySelector("#remote")`));
+  const guestCard = () => guest.evaluate(count(paperCount,`document.querySelector("#remote")`));
+  const view = async stage => { const h = await shot(stage); return { host: h.host, card: h.card, guest: await guestInk(), guestCard: await guestCard() }; };
+  const before = await view("1-fight");
 
   // Blaze brawls until the retail referee calls the match.
   await host.evaluate(async () => {
@@ -81,23 +95,32 @@ try {
   assert.ok(["ko","time"].includes(outcome.method),JSON.stringify(outcome));
   assert.equal(outcome.winner,0);
   await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.ticksSinceOver>=130);
-  const after = { host: await shot("2-result"), guest: await guestInk() };
+  const after = await view("2-result");
   assert.ok(after.host>before.host+400,`result banner lettering on the host (${before.host} -> ${after.host})`);
   assert.ok(after.guest>before.guest+150,`result banner reaches the guest's video (${before.guest} -> ${after.guest})`);
+  assert.ok(after.card>before.card+3000,`retail REMATCH? card on the host (${before.card} -> ${after.card})`);
+  assert.ok(after.guestCard>before.guestCard+3000,`retail REMATCH? card on the guest (${before.guestCard} -> ${after.guestCard})`);
 
-  // Enter offers the rematch once the hold is over.
+  // NO closes the card (the match stays over); YES, the default choice, starts the rematch.
   await host.locator("canvas").click();
+  await host.keyboard.press("ArrowRight");
+  await host.keyboard.press("Enter");
+  await host.waitForTimeout(400);
+  const declined = await view("3-declined");
+  assert.ok(await host.evaluate(()=>nativeBattle.diagnostics().outcome.over),"NO keeps the result up");
+  assert.ok(declined.card<before.card+1500,`card closed after NO (${declined.card})`);
   await host.keyboard.press("Enter");
   await host.waitForFunction(()=>{const d=nativeBattle.diagnostics();return !d.outcome.over && d.ticks<60;});
   const reset = await host.evaluate(()=>nativeBattle.diagnostics());
   assert.equal(reset.outcome.phase,1);
   reset.actors.forEach(a=>assert.equal(a.health,a.maxHealth));
   await host.waitForTimeout(500);
-  const cleared = { host: await shot("3-rematch"), guest: await guestInk() };
+  const cleared = await view("4-rematch");
   assert.ok(cleared.host<before.host+150,`banner gone after the rematch on the host (${cleared.host})`);
   assert.ok(cleared.guest<before.guest+150,`banner gone after the rematch on the guest (${cleared.guest})`);
+  assert.ok(cleared.card<before.card+1500&&cleared.guestCard<before.guestCard+1500,"card gone after the rematch");
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({before,after,cleared,finishedAtTick:outcome.ticksSinceOver}));
+  console.log(JSON.stringify({before,after,declined,cleared,finishedAtTick:outcome.ticksSinceOver}));
   console.log("A hosted match ended in a KO, showed the result banner to host and guest, and a rematch cleared it.");
 } finally {
   await browser?.close();

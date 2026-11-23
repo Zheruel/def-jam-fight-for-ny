@@ -1,0 +1,200 @@
+{
+ "screen": "screens/battle/rematch.big",
+ "size": [
+  640,
+  480
+ ],
+ "pictures": [
+  {
+   "file": "rematch-0.png",
+   "size": [
+    288,
+    196
+   ]
+  },
+  {
+   "file": "rematch-1.png",
+   "size": [
+    16,
+    16
+   ]
+  },
+  {
+   "file": "rematch-2.png",
+   "size": [
+    24,
+    20
+   ]
+  },
+  {
+   "file": "rematch-3.png",
+   "size": [
+    24,
+    20
+   ]
+  },
+  {
+   "file": "rematch-4.png",
+   "size": [
+    120,
+    68
+   ]
+  },
+  {
+   "file": "rematch-5.png",
+   "size": [
+    240,
+    72
+   ]
+  }
+ ],
+ "elements": [
+  {
+   "kind": "image",
+   "path": "/2",
+   "rect": [
+    184.0,
+    233.0,
+    465.0,
+    426.0
+   ],
+   "picture": 0
+  },
+  {
+   "kind": "image",
+   "path": "/rematchHighlight/5/4",
+   "rect": [
+    326.0,
+    294.0,
+    443.0,
+    362.0
+   ],
+   "picture": 4
+  },
+  {
+   "kind": "image",
+   "path": "/rematchHighlight/5/4",
+   "rect": [
+    326.0,
+    294.0,
+    443.0,
+    362.0
+   ],
+   "picture": 4
+  },
+  {
+   "kind": "image",
+   "path": "/outlines/8",
+   "rect": [
+    205.0,
+    293.0,
+    444.0,
+    362.0
+   ],
+   "picture": 5
+  },
+  {
+   "kind": "text",
+   "path": "/11",
+   "rect": [
+    211.5,
+    244.25,
+    440.95,
+    321.35
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    227.4499969482422,
+    75.0999984741211
+   ],
+   "font": 10,
+   "align": 2,
+   "color": 4294766806,
+   "size": 33.0,
+   "multiline": true,
+   "text": "~MTCH_REMATCH",
+   "variable": "rematchTitle"
+  },
+  {
+   "kind": "text",
+   "path": "/rematchYes",
+   "rect": [
+    211.5,
+    296.65,
+    314.5,
+    464.9
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    101.0,
+    166.25
+   ],
+   "font": 10,
+   "align": 2,
+   "color": 4278190080,
+   "size": 49.0,
+   "multiline": true,
+   "text": "~CMN_YES",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/rematchNo",
+   "rect": [
+    333.5,
+    296.65,
+    433.95,
+    464.9
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    98.44999694824219,
+    166.25
+   ],
+   "font": 10,
+   "align": 2,
+   "color": 4294766806,
+   "size": 49.0,
+   "multiline": true,
+   "text": "~CMN_NO",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/infoSticker/infoStickerTextClip",
+   "rect": [
+    381.0,
+    370.05,
+    447.85,
+    414.45
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    64.8499984741211,
+    42.400001525878906
+   ],
+   "font": 10,
+   "align": 0,
+   "color": 4294967295,
+   "size": 16.0,
+   "multiline": true,
+   "text": "~CMN_SELECT",
+   "variable": "infoStickerText"
+  },
+  {
+   "kind": "image",
+   "path": "/infoSticker/infoStickerButton/16",
+   "rect": [
+    365.5,
+    374.5,
+    380.5,
+    389.5
+   ],
+   "picture": 1
+  }
+ ]
+}

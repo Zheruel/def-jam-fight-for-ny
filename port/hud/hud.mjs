@@ -1,5 +1,7 @@
 import layout from "./layout.json" with {type:"json"};
 import { BANNER, resultLines } from "./result.mjs";
+import { CARD, drawRematch } from "./rematch.mjs";
+import { loadScreen } from "./screen.mjs";
 
 // Keep the HUD in the host canvas so the WebRTC guest receives the same frame.
 export async function createHud(gl) {
@@ -14,6 +16,7 @@ export async function createHud(gl) {
     const face=new FontFace("Battle"+family,await (await load(family+".ttf")).arrayBuffer());
     document.fonts.add(await face.load());
   }));
+  const rematchScreen=await loadScreen("rematch",new URL("./screens/",import.meta.url));
   const surface=new OffscreenCanvas(640,96),ctx=surface.getContext("2d");
   const tint=(image,color)=>{
     const tile=new OffscreenCanvas(image.width,image.height),ink=tile.getContext("2d");
@@ -51,6 +54,8 @@ export async function createHud(gl) {
   };
   const texture=makeTexture(640,96), bannerTexture=makeTexture(BANNER.width,BANNER.height);
   const banner=new OffscreenCanvas(BANNER.width,BANNER.height), bannerCtx=banner.getContext("2d");
+  const cardTexture=makeTexture(CARD.width,CARD.height);
+  const card=new OffscreenCanvas(CARD.width,CARD.height), cardCtx=card.getContext("2d");
   const {anchors}=layout;
   function label(value,x,y,size,family,align,context=ctx) {
     context.font=size+"px Battle"+family;
@@ -58,8 +63,9 @@ export async function createHud(gl) {
     context.lineWidth=2.5;context.strokeStyle="#3d352b";context.strokeText(value,x,y);
     context.fillText(value,x,y);
   }
-  let last, lastBanner="";
-  return function draw({actors,ticks,outcome}) {
+  let last, lastBanner="", lastCard=-1;
+  // `rematch` (port/hud/rematch.mjs) is the YES/NO choice; its card replaces the banner's plain rematch line.
+  return function draw({actors,ticks,outcome,rematch}) {
     const second=Math.floor(ticks/60);
     const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin]);
     const key=[second,...bars.flat()].join(",");
@@ -87,7 +93,8 @@ export async function createHud(gl) {
     gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
     gl.uniform2f(band,1,192/448);
     gl.drawArrays(gl.TRIANGLES,0,3);
-    const lines=resultLines(outcome,actors.map(a=>a.name));
+    const cardShown=Boolean(rematch?.shown);
+    const lines=resultLines(outcome,actors.map(a=>a.name))?.filter(l=>!cardShown||l.text!=="ENTER  REMATCH");
     if(lines) {
       gl.bindTexture(gl.TEXTURE_2D,bannerTexture);
       const bannerKey=JSON.stringify(lines);
@@ -100,6 +107,16 @@ export async function createHud(gl) {
       gl.uniform2f(band,1-2*BANNER.top/448,BANNER.height/224);
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
+    if(cardShown) {
+      gl.bindTexture(gl.TEXTURE_2D,cardTexture);
+      if(lastCard!==rematch.selected) {
+        lastCard=rematch.selected;
+        drawRematch(cardCtx,rematchScreen,rematch.selected);
+        gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,card);
+      }
+      gl.uniform2f(band,1-2*CARD.top/448,CARD.height/224);
+      gl.drawArrays(gl.TRIANGLES,0,3);
+    } else lastCard=-1;
     gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);
   };
 }

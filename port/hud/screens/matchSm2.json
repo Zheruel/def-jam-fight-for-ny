@@ -1,0 +1,739 @@
+{
+ "screen": "screens/battle/matchSm2.big",
+ "size": [
+  640,
+  480
+ ],
+ "pictures": [
+  {
+   "file": "matchSm2-0.png",
+   "size": [
+    512,
+    120
+   ]
+  },
+  {
+   "file": "matchSm2-1.png",
+   "size": [
+    128,
+    256
+   ]
+  },
+  {
+   "file": "matchSm2-2.png",
+   "size": [
+    512,
+    256
+   ]
+  },
+  {
+   "file": "matchSm2-3.png",
+   "size": [
+    128,
+    128
+   ]
+  },
+  {
+   "file": "matchSm2-4.png",
+   "size": [
+    248,
+    52
+   ]
+  },
+  {
+   "file": "matchSm2-5.png",
+   "size": [
+    208,
+    104
+   ]
+  },
+  {
+   "file": "matchSm2-6.png",
+   "size": [
+    40,
+    32
+   ]
+  },
+  {
+   "file": "matchSm2-7.png",
+   "size": [
+    40,
+    32
+   ]
+  },
+  {
+   "file": "matchSm2-8.png",
+   "size": [
+    40,
+    32
+   ]
+  },
+  {
+   "file": "matchSm2-9.png",
+   "size": [
+    208,
+    104
+   ]
+  },
+  {
+   "file": "matchSm2-10.png",
+   "size": [
+    40,
+    32
+   ]
+  }
+ ],
+ "elements": [
+  {
+   "kind": "image",
+   "path": "/paper/20",
+   "rect": [
+    50.0,
+    60.0,
+    589.0,
+    434.0
+   ],
+   "picture": 2
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent1/panelColor/23",
+   "rect": [
+    65.02,
+    370.53,
+    304.98,
+    420.04
+   ],
+   "picture": 3
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent1/29",
+   "rect": [
+    65.0,
+    370.48,
+    304.95,
+    419.99
+   ],
+   "picture": 1
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/30",
+   "rect": [
+    70.0,
+    373.04,
+    169.93,
+    426.24
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    97.94999694824219,
+    51.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_TOTEARN",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/31",
+   "rect": [
+    66.4,
+    318.03,
+    200.27,
+    360.23
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    131.9499969482422,
+    40.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_TOTAL",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/32",
+   "rect": [
+    66.7,
+    344.03,
+    201.37,
+    386.24
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.64999389648438,
+    40.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_CASH",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/scoreText",
+   "rect": [
+    167.98,
+    126.0,
+    302.65,
+    151.6
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.6999969482422,
+    23.600000381469727
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4278190080,
+   "size": 18.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/34",
+   "rect": [
+    66.4,
+    125.5,
+    200.27,
+    154.0
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    131.9499969482422,
+    26.5
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_SCRE",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/points/textClip/textContent",
+   "rect": [
+    139.96,
+    316.02,
+    301.57,
+    346.74
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.6999969482422,
+    23.600000381469727
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4278190080,
+   "size": 18.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/cash/textClip/textContent",
+   "rect": [
+    139.96,
+    342.02,
+    301.57,
+    372.74
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.6999969482422,
+    23.600000381469727
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4278190080,
+   "size": 18.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/earnings/textClip/textContent",
+   "rect": [
+    121.26,
+    369.15,
+    310.58,
+    422.92
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    155.8000030517578,
+    42.79999923706055
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4294305222,
+   "size": 34.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent1/41",
+   "rect": [
+    66.0,
+    158.06,
+    310.95,
+    308.08
+   ],
+   "picture": 0
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent1/scroller/scrollBar/23",
+   "rect": [
+    293.55,
+    158.01,
+    299.55,
+    308.03
+   ],
+   "picture": 3
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/szFighterNameMov",
+   "rect": [
+    113.94,
+    83.99,
+    307.25,
+    119.22
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    191.3000030517578,
+    33.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4278190080,
+   "size": 26.0,
+   "multiline": true,
+   "text": " ",
+   "variable": "sName"
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/playerSticker/53",
+   "rect": [
+    105.4,
+    45.88,
+    149.02,
+    81.57
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    33.599998474121094,
+    27.100000381469727
+   ],
+   "font": 52,
+   "align": 0,
+   "color": 4294967295,
+   "size": 18.0,
+   "multiline": true,
+   "text": "P",
+   "variable": "playerText1"
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/playerSticker/54",
+   "rect": [
+    120.1,
+    45.88,
+    163.73,
+    81.57
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    33.599998474121094,
+    27.100000381469727
+   ],
+   "font": 52,
+   "align": 0,
+   "color": 4294967295,
+   "size": 18.0,
+   "multiline": true,
+   "text": "1",
+   "variable": "playerText2"
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent1/playerSticker/55",
+   "rect": [
+    136.03,
+    45.88,
+    179.66,
+    81.57
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    33.599998474121094,
+    27.100000381469727
+   ],
+   "font": 52,
+   "align": 0,
+   "color": 4294967295,
+   "size": 18.0,
+   "multiline": true,
+   "text": "1",
+   "variable": "playerText3"
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent2/panelColor/23",
+   "rect": [
+    333.02,
+    365.67,
+    572.98,
+    415.18
+   ],
+   "picture": 3
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent2/29",
+   "rect": [
+    333.0,
+    365.62,
+    572.95,
+    415.13
+   ],
+   "picture": 1
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/30",
+   "rect": [
+    338.0,
+    368.17,
+    437.93,
+    421.38
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    97.94999694824219,
+    51.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_TOTEARN",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/31",
+   "rect": [
+    334.4,
+    313.15,
+    468.27,
+    355.37
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    131.9499969482422,
+    40.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_TOTAL",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/32",
+   "rect": [
+    334.7,
+    339.16,
+    469.37,
+    381.37
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.64999389648438,
+    40.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_CASH",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/scoreText",
+   "rect": [
+    435.98,
+    121.1,
+    570.65,
+    146.71
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.6999969482422,
+    23.600000381469727
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4278190080,
+   "size": 18.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/34",
+   "rect": [
+    334.4,
+    120.6,
+    468.27,
+    149.11
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    131.9499969482422,
+    26.5
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4294305222,
+   "size": 18.0,
+   "multiline": true,
+   "text": "~MTCH_SCRE",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/points/textClip/textContent",
+   "rect": [
+    407.96,
+    311.14,
+    569.57,
+    341.87
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.6999969482422,
+    23.600000381469727
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4278190080,
+   "size": 18.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/cash/textClip/textContent",
+   "rect": [
+    407.96,
+    337.15,
+    569.57,
+    367.88
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    132.6999969482422,
+    23.600000381469727
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4278190080,
+   "size": 18.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/earnings/textClip/textContent",
+   "rect": [
+    389.26,
+    364.29,
+    578.58,
+    418.06
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    155.8000030517578,
+    42.79999923706055
+   ],
+   "font": 11,
+   "align": 1,
+   "color": 4294305222,
+   "size": 34.0,
+   "multiline": true,
+   "text": "0",
+   "variable": ""
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent2/41",
+   "rect": [
+    334.0,
+    153.16,
+    578.95,
+    303.2
+   ],
+   "picture": 0
+  },
+  {
+   "kind": "image",
+   "path": "/playerContent2/scroller/scrollBar/23",
+   "rect": [
+    561.55,
+    153.11,
+    567.55,
+    303.15
+   ],
+   "picture": 3
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/szFighterNameMov",
+   "rect": [
+    381.94,
+    79.09,
+    575.25,
+    114.32
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    191.3000030517578,
+    33.20000076293945
+   ],
+   "font": 11,
+   "align": 0,
+   "color": 4278190080,
+   "size": 26.0,
+   "multiline": true,
+   "text": " ",
+   "variable": "sName"
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/playerSticker/53",
+   "rect": [
+    373.4,
+    40.97,
+    417.02,
+    76.66
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    33.599998474121094,
+    27.100000381469727
+   ],
+   "font": 52,
+   "align": 0,
+   "color": 4294967295,
+   "size": 18.0,
+   "multiline": true,
+   "text": "P",
+   "variable": "playerText1"
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/playerSticker/54",
+   "rect": [
+    388.1,
+    40.97,
+    431.73,
+    76.66
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    33.599998474121094,
+    27.100000381469727
+   ],
+   "font": 52,
+   "align": 0,
+   "color": 4294967295,
+   "size": 18.0,
+   "multiline": true,
+   "text": "1",
+   "variable": "playerText2"
+  },
+  {
+   "kind": "text",
+   "path": "/playerContent2/playerSticker/55",
+   "rect": [
+    404.03,
+    40.97,
+    447.66,
+    76.66
+   ],
+   "bounds": [
+    -2.0,
+    -2.0,
+    33.599998474121094,
+    27.100000381469727
+   ],
+   "font": 52,
+   "align": 0,
+   "color": 4294967295,
+   "size": 18.0,
+   "multiline": true,
+   "text": "1",
+   "variable": "playerText3"
+  }
+ ]
+}
