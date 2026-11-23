@@ -134,8 +134,8 @@ function knockout(fight, victim, seed, latch) {
   assert.fail("no result");
 }
 
-test("every format ends in a retail knockout driven by pads; the finish latch names Red Hook's fire and nothing else here", async () => {
-  const expected = { demolition: null, inferno: "inferno", window: null, cage: null, ringout: null };
+test("every format ends in a retail knockout driven by pads; the finish latch calls Red Hook's fire and a plain knockout everywhere else", async () => {
+  const expected = { demolition: "ko", inferno: "inferno", window: "ko", cage: "ko", ringout: "ko" };
   for (const mode of Object.keys(expected)) {   // the subway round is decided by the first train (next test)
     const fight = await nativeMatch(SPECIAL[mode].venue), latch = createFinishLatch(fight.memory);
     const victim = mode === "inferno" ? 0 : 1;   // Red Hook's script reaches the fire finish with slot 0 as the loser
@@ -190,6 +190,54 @@ test("cage: the Club Murder cage is a closed 56 x 56 box; the Dragon House ring 
   assert.equal(+scalar(await nativeMatch(5), A[0] + 0x48).toFixed(1), 12.3);
 });
 
-test.todo("ringout: the edge finish needs retail evidence (a fighter standing outside the ring is not finished natively)");
-test.todo("demolition: vehicle damage and the vehicle-total finish need retail evidence");
-test.todo("window: the window KO throw needs retail evidence");
+// Retail routines of the Window and Demolition venues, run natively one at a time (their callers are the throw-into-object
+// states, which pads cannot yet be scripted into).
+test("window (Crow's Office): the retail window-hit routine 0x31a660 ends the round for a fighter who is KO-ready, and only for them", async () => {
+  const run = async ready => {
+    const fight = await nativeMatch(17), m = fight.memory;
+    for (let i = 0; i < 30; i++) fight.tick([idle, idle]);
+    const objects = word(fight, 0x4c1ae0);
+    let window = null;
+    for (let i = 0; i < word(fight, 0x4c1adc) && window === null; i++) {
+      const record = objects + i * 0x48;
+      if (word(fight, word(fight, record + 0x44)) & 0x4000000) window = record;   // the three window definitions carry this flag
+    }
+    assert.ok(window, "the venue has window objects");
+    if (ready) m.setUint16(A[1] + 0x926, m.getUint16(A[1] + 0x926, true) | 4, true);
+    const hit = fight.kernel.call(0x31a660, A[1], window, 0, 0);
+    return { hit, flags: A.map(a => m.getUint16(a + 0x932, true)), g1c0: word(fight, G + 0x1c0) };
+  };
+  assert.deepEqual(await run(false), { hit: 0, flags: [0, 0], g1c0: 0 });
+  const ko = await run(true);
+  assert.equal(ko.hit, 1);
+  assert.deepEqual(ko.flags, [0x100, 0x200], "the other fighter wins, the one hit is out");
+  assert.equal(ko.g1c0 & 0x40, 0x40, "window KO mark in the match flags");
+});
+
+test("demolition (Gun Hill Garage): a car with two of its five key panels destroyed is totalled (0x308910 marks its owner 0x40)", async () => {
+  const fight = await nativeMatch(19), m = fight.memory;
+  for (let i = 0; i < 30; i++) fight.tick([idle, idle]);
+  const typesOf = base => [0, 1, 2, 3, 4].map(i => word(fight, base + 4 * i)), entry = type => 0x3994e0 + type * 0x38;
+  const left = typesOf(0x39c388), right = typesOf(0x39c388 + 0x14);
+  assert.deepEqual([left, right], [[81, 83, 97, 96, 98], [101, 99, 100, 91, 93]], "the two cars' panel types");
+  for (const type of [...left, ...right]) assert.equal(word(fight, entry(type) + 0x14), 3, "each panel takes three strikes (the A, B, C events)");
+  const mark = () => A.map(a => m.getUint16(a + 0x932, true));
+  const scan = () => fight.kernel.call(0x308910, 0, 0, 0, 0);
+  assert.deepEqual([scan(), mark()], [0, [0, 0]]);
+  m.setUint32(entry(left[0]) + 0x14, 0, true);
+  assert.deepEqual([scan(), mark()], [0, [0, 0]], "one panel gone is not enough");
+  m.setUint32(entry(left[1]) + 0x14, 0, true);
+  assert.deepEqual([scan(), mark()], [1, [0x40, 0]], "two panels gone: player one's car is totalled");
+  m.setUint16(A[0] + 0x932, 0, true);
+  m.setUint32(entry(left[0]) + 0x14, 3, true); m.setUint32(entry(left[1]) + 0x14, 3, true);
+  m.setUint32(entry(right[2]) + 0x14, 0, true); m.setUint32(entry(right[4]) + 0x14, 0, true);
+  assert.deepEqual([scan(), mark()], [1, [0, 0x40]], "and the other car marks player two (a totalled car costs its owner the round)");
+  // The referee's mask table (0x3f1088) lists 0x40: a totalled car loses the round for its owner.
+  for (let i = 0; i < 4; i++) fight.tick([idle, idle]);
+  assert.deepEqual([fight.outcome().over, fight.outcome().winner, fight.outcome().loser, fight.outcome().method], [true, 0, 1, "ko"]);
+  assert.deepEqual([...Array(6)].map((_, i) => m.getUint16(0x3f1088 + 2 * i * 2, true)), [1, 2, 4, 0x10, 0x20, 0x40], "the referee's elimination marks");
+  assert.deepEqual([...Array(6)].map((_, i) => m.getUint16(0x3f1088 + 2 * i * 2 + 2, true)), [0x20, 8, 0x80, 0x100, 0x200, 0x400], "and their result types");
+});
+
+test.todo("ringout: retail shows no finish for a fighter outside the ring (reference run), so the Dragon House railings (events 05A_n) are the only rule found");
+test.todo("end to end window KO and car totalling by pad-driven throws");

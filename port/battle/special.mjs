@@ -26,12 +26,21 @@ export const SPECIAL_IDS = Object.freeze(Object.keys(SPECIAL));
 export const specialOf = venue => SPECIAL_IDS.find(mode => SPECIAL[mode].venue === venue) ?? null;
 export const specialByType = id => SPECIAL_IDS.find(mode => SPECIAL[mode].id === id) ?? null;
 
-// The loser marks retail 0x30bb40 sets in a special venue (actor +0x932): the cinematic and banner each one selects.
+// How a round can end. The referee 0x2e6260 eliminates a fighter whose flags (actor +0x932) carry one of the masks of its table at
+// 0x3f1088, and posts the result type beside it:  mark -> result
+//   0x1 knockout -> 0x20      0x2 submission -> 0x8      0x4 Red Hook fire -> 0x80
+//   0x10 subway knockout -> 0x100      0x20 window -> 0x200      0x40 car totalled (Demolition) -> 0x400
+// 0x8 is the subway train's own hit (0x2e78d0). Every mark lands on the loser; the referee turns it into the result flags
+// (winner 0x100, loser 0x200) a frame later. The routines that set them in this venue:
+//   Inferno 0x2df464 (the fire), Subway 0x2e78d0 (train) and 0x30bb40, Window 0x31a660 (a KO-ready fighter hits a window) and
+//   0x30bb40, Demolition 0x308910 (two of a car's five key panels at zero health mark the car's owner; each panel takes three
+//   strikes, the A, B and C events of the stage XML).
+export const FINISH_MARKS = Object.freeze({ 0x1: "ko", 0x2: "submission", 0x4: "inferno", 0x8: "train", 0x10: "subway", 0x20: "window", 0x40: "demolition" });
+export const FINISH_RESULTS = Object.freeze({ ko: 0x20, submission: 0x8, inferno: 0x80, subway: 0x100, window: 0x200, demolition: 0x400 });
 const ACTORS = [0x4bc170, 0x4bd468, 0x4be760, 0x4bfa58];
-const MARKS = Object.freeze({ 0x4: "inferno", 0x8: "train", 0x10: "subway", 0x20: "window" });
 
-// Latches how a special finish was delivered. The referee rewrites the marks into its result flags a frame later, so call
-// observe() after every tick: kind() is "inferno" (burned), "train" (hit by the subway train), "subway", "window", or null.
+// Latches how the round was ended. The referee rewrites the marks into its result flags a frame later, so call observe() after
+// every tick: kind() is one of FINISH_MARKS' names, or null while the round runs (a time-up leaves no mark).
 export function createFinishLatch(memory, count = 2) {
   let kind = null;
   return {
@@ -39,7 +48,7 @@ export function createFinishLatch(memory, count = 2) {
       if (kind) return kind;
       for (const actor of ACTORS.slice(0, count)) {
         const flags = memory.getUint16(actor + 0x932, true);
-        for (const [bit, name] of Object.entries(MARKS)) if (flags & bit) return (kind = name);
+        for (const [bit, name] of Object.entries(FINISH_MARKS)) if (flags & bit) return (kind = name);
       }
       return null;
     },

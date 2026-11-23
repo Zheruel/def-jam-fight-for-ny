@@ -1,5 +1,6 @@
 // Headless retail capture of a special Battle format (Subway, Ringout, ...) with the reference harness.
 //   node verification/capture-special.mjs <type> [venue] [outDir]      (type: demolition|inferno|subway|window|cage|ringout|single)
+//   EXPERIMENT=name ARGS=1,2 node verification/capture-special.mjs <type>   runs verification/special-experiments.mjs[name] on the live match
 // Uses the Battle overlay merged with the unlock overlay so every special card and venue is offered. Menu text is read by OCR.
 import path from "node:path";
 import {execFileSync} from "node:child_process";
@@ -80,6 +81,9 @@ try {
       if(base<0 || base+0x2000000>heap.length || words[(base+0x471230)/4]!==0x445330)continue;
       window.readEe=offset=>heap.slice(base+offset,base+offset+1048576).toBase64();
       window.eeWord=address=>words[(base+address)/4];
+      window.eeFloat=address=>new Float32Array(heap.buffer,base+address,1)[0];
+      window.eePoke=(address,value)=>{words[(base+address)/4]=value>>>0;};
+      window.eePokeFloat=(address,value)=>{new Float32Array(heap.buffer,base+address,1)[0]=value;};
       return true;
     }
     return false;
@@ -91,6 +95,12 @@ try {
   };
   for(let i=0;i<120;i++) { if(await run.page.evaluate(()=>window.eeWord(0x4bbf98)===1))break; await run.waitFrames(15); }
   await run.waitFrames(60);
+  if(process.env.EXPERIMENT) {   // a RAM-poke experiment instead of the dumps: see verification/special-experiments.mjs
+    const {experiments}=await import("./special-experiments.mjs");
+    await experiments[process.env.EXPERIMENT](run,{outDir,type,args:(process.env.ARGS??"").split(",").filter(Boolean).map(Number)});
+    console.log("DONE");
+    process.exit(0);
+  }
   await dump("fight-start.bin");await run.shot("fight-start");
   await run.waitFrames(600);
   await dump("fight-later.bin");await run.shot("fight-later");
