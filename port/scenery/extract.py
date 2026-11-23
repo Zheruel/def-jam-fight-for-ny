@@ -616,6 +616,143 @@ def train_models(disc: Disc, venue: str, names: list[str]) -> dict[str, bytes]:
         retail.decode_packet, export_fighters.read_member = original
 
 
+# ---------------------------------------------------------------- Demolition cars (Gun Hill Garage)
+#
+# <demolitionmatch> lists the two cars of Gun Hill Garage as containers: a whole-car model (the body without its breakable
+# panels) and one model per breakable panel. A panel's model holds its damage states as consecutive display-list blocks that
+# each open with the skin microcode relocation: block 0 is `base`, then `break1`..`break3` (the order of its <geometry>
+# names). A block draws one or more position packets, each with its own SHAPENAME material: that is the display map.
+# A state named in an environment attack but not modelled hides the panel: `null` (the inner windscreen pieces) and
+# `break4` (the fourth stage of a window, which has no mesh of its own).
+#
+# The models are in car space (front towards +x, left flank towards -z, floor at y = 0). The stage XML places no car. Each
+# car sits where its glass and headlight particle emitters (the environment attacks' `<particle>` world positions) meet
+# the centres of the panels they break. Fitting a yaw and a translation to those anchors (CAR_ANCHORS, checked by
+# test_extract.py) leaves at most 1.7 units of residual, which is the precision of the hand-placed emitters.
+CAR_PLACEMENT = {   # container -> rotate Y (degrees, the stage XML convention) and translate
+    "V2BG_17A_B": {"translate": [-51.0, 0.0, -44.6], "rotate": [0.0, -30.0, 0.0]},
+    "V2BG_17A_A": {"translate": [47.9, 0.0, -43.4], "rotate": [0.0, -150.0, 0.0]},
+}
+# panel -> (centre x, centre z in car space, emitter x, z in the world) for every anchor used
+CAR_ANCHORS = {
+    "V2BG_17A_B": {"P": (2.05, 10.75, -54, -34), "O": (14.65, 10.7, -45, -29), "N": (21.35, 0.0, -33, -34),
+                   "L": (37.85, 9.55, -22, -17), "K": (37.85, -9.55, -13, -33), "Q": (-10.5, 10.8, -66, -41)},
+    "V2BG_17A_A": {"L": (17.8, 0.0, 32, -35), "M": (11.4, -11.5, 45, -28), "N": (-1.85, -11.5, 55, -34),
+                   "O": (-14.65, -11.7, 66, -40)},
+}
+STATE_HIDDEN = ("break4", "null")
+
+
+def demolition_match(objects_xml: str) -> list[dict]:
+    """<demolitionmatch>: each car container and its models, whole-car model first."""
+    try:
+        body = section(objects_xml, "demolitionmatch")
+    except ValueError:
+        return []
+    return [{"name": values(c, "name")[0], "models": values(c, "model")} for c in blocks(body, "container")]
+
+
+def car_blocks(blob: bytes, name: str, mesh: dict, states: bool = True) -> list[list[tuple[int, str]]]:
+    """The display map of a model: per damage state, the (part index, SHAPENAME) it draws."""
+    data, local, external = elf_links(blob, f"__Model:::{name}_branch")
+    word = lambda at: U32.unpack_from(data, at)[0]
+    parts = {p["packet"]: i for i, p in enumerate(mesh["parts"])}
+    found, groups, shape, current = [], {}, None, None
+    for at in sorted(local.keys() | external.keys()):
+        symbol = external.get(at)
+        if symbol is not None:
+            if "__EAGLMicroCode" in symbol:
+                current, shape = [], None
+                groups.setdefault(symbol, []).append(current)
+            match = re.search(r";SHAPENAME=(\w{4}),1;", symbol)
+            if match:
+                shape = match[1]
+            continue
+        target = local[at]
+        draws = []
+        if word(at - 4) == 0x04000002 and word(target) == 0x50000000:
+            tag = local[target + 4]
+            while (head := word(tag)) >> 28 in (0, 1, 3):
+                if head >> 28 == 3 and local.get(tag + 4) in parts:
+                    draws.append(parts[local[tag + 4]])
+                tag += 16 if head >> 28 != 1 else 16 + 16 * (head & 0xFFFF)
+        elif target in parts and word(at - 4) >> 28 == 3:
+            draws.append(parts[target])
+        if draws and current is not None:
+            current.extend((index, shape) for index in draws)
+    # A panel drawn with two skin microcodes lists the blocks of each microcode in turn: state k is the k-th block of every group.
+    counts = {len(blocks_) for blocks_ in groups.values()} if states else {1}
+    if not states:   # the whole-car model has no states: everything it draws, in order
+        groups = {"": [sum((b for blocks_ in groups.values() for b in blocks_), [])]}
+    if len(counts) != 1:
+        raise ValueError(f"{name}: microcode groups of {sorted(len(b) for b in groups.values())} blocks")
+    found = [sum((blocks_[k] for blocks_ in groups.values()), []) for k in range(counts.pop())]
+    reached = sorted(i for block in found for i, _ in block)
+    if reached != list(range(len(mesh["parts"]))):
+        raise ValueError(f"{name}: display lists reach parts {reached} of {len(mesh['parts'])}")
+    return found
+
+
+def car_model(disc: Disc, venue: str, container: dict, objects: dict[str, list[str]]) -> tuple[bytes, dict]:
+    """One car as a DJF1 mesh (bind pose, like a weapon). Each batch names its panel and damage state; the whole-car
+    model's batches carry no panel and are always drawn."""
+    ssh = textures(member(disc, STAGE, venue + ".ssh"))
+    vertices, elements, batches, panels, images = bytearray(), [], [], [], {}
+    import export_fighters
+    original = retail.decode_packet
+    try:
+        for name in container["models"]:
+            blob = member(disc, STAGE, name + ".o")
+            cache = {}
+            retail.decode_packet = lambda d, p, cache=cache: train_decode_packet(d, p, cache)
+            # Panels are drawn in car space, unskinned: no bone transform is applied, so the skeleton is not decoded.
+            elf = retail.Elf(blob)
+            mesh = retail.build_mesh(elf, [{} for s, _, _ in elf.symbols if s.startswith("__Bone:::root.")])
+            states = objects.get(name)
+            display = car_blocks(blob, name, mesh, states is not None)
+            if states is not None:
+                if len(display) > len(states):
+                    raise ValueError(f"{name}: {len(display)} blocks for states {states}")
+                panels.append({"name": name, "states": states, "hidden": [s for s in STATE_HIDDEN if s not in states],
+                               "modelled": states[:len(display)]})
+            base = len(vertices) // export_fighters.VERTEX.size
+            for i in range(len(mesh["positions"]) // 3):
+                values_ = []
+                for key, n in (("positions", 3), ("normals", 3), ("uvs", 2), ("joints", 4), ("weights", 4)):
+                    values_.extend(mesh[key][n * i:n * (i + 1)])
+                vertices.extend(export_fighters.VERTEX.pack(*values_))
+            for k, block in enumerate(display):
+                for shape in dict.fromkeys(shape for _, shape in block):
+                    triangles = [i + base for part, material in block if material == shape
+                                 for i in mesh["indices"][mesh["parts"][part]["firstIndex"]:
+                                                          mesh["parts"][part]["firstIndex"] + mesh["parts"][part]["indexCount"]]]
+                    if shape not in ssh:
+                        raise ValueError(f"{name}: material {shape} is not in {venue}.ssh")
+                    images[shape] = ssh[shape]
+                    entry = {"shape": shape, "first": len(elements), "count": len(triangles)}
+                    if states is not None:
+                        entry.update({"object": name, "state": states[k]})
+                    batches.append(entry)
+                    elements.extend(triangles)
+    finally:
+        retail.decode_packet = original
+    if len(vertices) // export_fighters.VERTEX.size > 65535:
+        raise ValueError(f"{container['name']}: too many vertices for 16-bit indices")
+    payload = bytearray(vertices)
+    payload.extend(struct.pack(f"<{len(elements)}H", *elements))
+    textures_ = {}
+    for shape, image in sorted(images.items()):
+        textures_[shape] = [len(payload), len(image)]
+        payload.extend(image)
+    meta = {"model": container["name"], "vertices": len(vertices) // export_fighters.VERTEX.size,
+            "indices": len(elements), "batches": batches, "textures": textures_, "bones": []}
+    header = json.dumps(meta, separators=(",", ":")).encode()
+    header += b" " * (-len(header) % 4)
+    blob = gzip.compress(b"DJF1" + U32.pack(len(header)) + header + bytes(payload), compresslevel=9, mtime=0)
+    return blob, {"name": container["name"], "file": f"cars/{container['name']}.skin.gz", "approximate": True,
+                  "placement": CAR_PLACEMENT[container["name"]], "objects": panels}
+
+
 def build_weapons(iso: Path) -> dict[str, bytes]:
     disc = Disc(str(iso))
     try:
@@ -722,6 +859,18 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
             skipped = [x for x in skipped if x["name"] not in subway["objects"]]
             for name in subway["objects"]:
                 sources[name + ".o"] = sha256(member(disc, STAGE, name + ".o"))
+        cars = []
+        car_files = {}
+        for container in optional(demolition_match, objects_xml, default=[]):
+            states = {o["name"]: o["geometry"] for o in stage_objects(objects_xml) if o["geometry"]}
+            blob, entry = car_model(disc, venue, container, states)
+            car_files[entry["file"]] = blob
+            cars.append(entry)
+            taken = set(container["models"])
+            skipped = [x for x in skipped if x["name"] not in taken]
+            objects = [o for o in objects if o["name"] not in taken]
+            for name in container["models"]:
+                sources[name + ".o"] = sha256(member(disc, STAGE, name + ".o"))
         props = props_header = None
         if objects:
             props, props_header = pack_props(objects, decoded, textures(ssh_blob))
@@ -797,6 +946,8 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
     }
     if subway:
         scenery["subway"] = subway
+    if cars:
+        scenery["cars"] = cars
     files = {"scenery.json": None}
     if lighting:
         scenery["lighting"] = {"file": "lighting.json", "settings": [x["name"] for x in lighting]}
@@ -806,6 +957,7 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
         files["props.scene.gz"] = props
     for name, blob in trains.items():
         files[f"trains/{name}.skin.gz"] = blob
+    files.update(car_files)
     if crowd_header:
         scenery["instancedCrowd"] = {"model": CROWD_MODEL, "layout": layout_name,
                                      "frames": crowd_header["frames"], "loops": crowd_header["loops"],
@@ -852,6 +1004,8 @@ def main(argv: list[str] | None = None) -> int:
                         "undecodedProps": [p["name"] for p in manifest["undecodedProps"]]}
         if manifest.get("subway"):
             index[venue]["trains"] = manifest["subway"]["objects"]
+        if manifest.get("cars"):
+            index[venue]["cars"] = [car["file"] for car in manifest["cars"]]
         for name, blob in built.items():
             path = OUTPUT.parent / directory(venue) / name
             path.parent.mkdir(parents=True, exist_ok=True)

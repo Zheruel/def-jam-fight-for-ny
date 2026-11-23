@@ -74,6 +74,10 @@ export async function loadScenery(venue, { signal, base = new URL("./", import.m
   await Promise.all((manifest.subway?.objects ?? []).map(async model => {
     weapons.set(model, parseSkinned(await fetchPacked(new URL(`trains/${model}.skin.gz`, dir), signal)));
   }));
+  // Gun Hill Garage's two cars: one mesh each (the body and every panel's damage states), in the venue's cars/ folder.
+  await Promise.all((manifest.cars ?? []).map(async car => {
+    weapons.set(car.name, parseSkinned(await fetchPacked(new URL(car.file, dir), signal)));
+  }));
   return { manifest, props, crowd, weapons };
 }
 
@@ -198,6 +202,9 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
   const identity = placementMatrix({translate:[0,0,0], rotate:[0,0,0]});
   const placements = new Map(manifest.props.map(p => [p.name, p.placement ? placementMatrix(p.placement) : identity]));
   const hidden = new Set((manifest.hiddenWeapons ?? []).map(name => "weapon_" + name));
+  const placedCars = (manifest.cars ?? []).map(car => ({
+    car, matrix: placementMatrix(car.placement), light: lighting ? sampleIrradiance(lighting, car.placement.translate) : null,
+  }));
   const placedWeapons = (manifest.weapons ?? []).map(base => ({
     base, matrix: placementMatrix(base), light: lighting ? sampleIrradiance(lighting, base.translate) : null,
   }));
@@ -289,13 +296,15 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     gl.uniform1i(uniform.diffuse, 0);
     state.weapons = { prog, models, uniform };
     const lightBuffer = new Float32Array(30);
-    drawWeapon = (name, matrix, at, light) => {
+    drawWeapon = (name, matrix, at, light, panels = null) => {
       const model = models.get(name);
       if (!model) return;
       if (lighting) gl.uniform3fv(uniform.irradianceCoefficients, light ?? sampleIrradiance(lighting, at, lightBuffer));
       gl.uniformMatrix4fv(uniform.model, false, matrix);
       gl.bindVertexArray(model.vao);
-      for (const { shape, first, count } of model.batches) {
+      for (const { shape, first, count, object, state } of model.batches) {
+        // A car's batches belong to a panel in one damage state (`panels` is the choice per panel); the body has neither.
+        if (object !== undefined && state !== (panels[object] ?? "base")) continue;
         gl.bindTexture(gl.TEXTURE_2D, model.textures.get(shape) ?? null);
         gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, first * 2);
       }
@@ -353,6 +362,8 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
           drawWeapon(w.model, over.matrix ?? placementMatrix(w), w.translate);
         } else drawWeapon(base.model, matrix, base.translate, light);
       }
+      // Cars: the placed body and each panel in the damage state the environment events chose (`props` names panels too).
+      for (const { car, matrix, light } of placedCars) drawWeapon(car.name, matrix, car.placement.translate, light, choice);
       // Weapons the match holds or has dropped: a model and a world matrix (column-major, translation last).
       for (const { model, matrix } of dynamicWeapons) drawWeapon(model, matrix, [matrix[12], matrix[13], matrix[14]]);
     }

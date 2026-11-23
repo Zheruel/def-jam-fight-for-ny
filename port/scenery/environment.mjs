@@ -98,7 +98,9 @@ export function carriedMatrix(slot, fighter) {
 
 export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, weaponModels = [] } = {}) {
   const attacks = new Map((manifest.environmentAttacks ?? []).map(a => [a.name, a]));
-  const propStates = new Map((manifest.props ?? []).map(p => [p.name, new Set(p.states)]));
+  // A car's panels take events like props do; `null` and `break4` are valid and draw nothing (no mesh of their own).
+  const propStates = new Map([...(manifest.props ?? []), ...(manifest.cars ?? []).flatMap(c => c.objects)]
+    .map(p => [p.name, new Set([...p.states, ...(p.hidden ?? [])])]));
   const placed = new Map((manifest.weapons ?? []).map(w => [short(w.name), w]));
   const hidden = new Set(manifest.hiddenWeapons ?? []);
   const train = manifest.subway ? createSubwayTrain(manifest.subway) : null;

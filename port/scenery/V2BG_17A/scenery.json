@@ -15,6 +15,54 @@
    "V2BG_17A_F.o": "82e5a11b439e62b749f979e509fa7a4d982dbcad88b05d12e3043988ac938e50",
    "V2BG_17A_G.o": "2def0eba7e2e513da4fdaa30052a3c98ef0c684c49b3ba6fb77332f12c29312a",
    "V2BG_17A_H.o": "592e3d35182f28062c1d6e1c89642f85f05432be56e0d0556a8c92e72febca59",
+   "V2BG_17A_B.o": "04a2943e0a6667b7fda8c738143d5e541a878aa134fbef60d2e01edf23c192cf",
+   "V2BG_17A_B_A.o": "c255e9b788f2a15f768b49e522fd96aa1a72d17e756400f4085037f3e5660f0b",
+   "V2BG_17A_B_B.o": "d5bbd9e71d6ac6fcb059ee4bc3a139e7221d6a3f137e468e8458906bacb90a89",
+   "V2BG_17A_B_C.o": "b97a8e3084673fd8c64f47c35bfe6dd3efa703d43315bcc94853532feba2ea8a",
+   "V2BG_17A_B_D.o": "cfe1110268a0375a75991ba3c53e0e119b17eecf5ab34366f9438cc9c81458c0",
+   "V2BG_17A_B_E.o": "47bd78b390222adac284ff852ee3bcee6ca4151c352a6801b2bafce0d5e4cf57",
+   "V2BG_17A_B_F.o": "b208989baf58b232699f85e88cc846774fb58008cf9eb8a8278763040ca49106",
+   "V2BG_17A_B_G.o": "5ea8d02b12ac1d5a8203f99762990e4826031833b32c9bb89c92c0dca8ae9194",
+   "V2BG_17A_B_H.o": "11f931068cadb8b3a79164ef076403ca1110a9456be38c6eaee2240f4867f44c",
+   "V2BG_17A_B_I.o": "6f6f69fa7f96dfc1c7123fb2bf955c8511870e1c9411628cd13322f87363ffcf",
+   "V2BG_17A_B_J.o": "f043914741e278648ccfd1c3d1e8edf69fbbba6f3620e03a3770700957df1078",
+   "V2BG_17A_B_K.o": "eef26977ac190ecde7dd4cb7d1e309af966d6cddec1e6185bc038569dfed1445",
+   "V2BG_17A_B_L.o": "09837e886868f68c9bdf458f4066f6845e42d6787cf197508b0c18979f983730",
+   "V2BG_17A_B_M.o": "853685274baa4b8ac67d8a185f1c06806f933273b1c7f73db2857f7d7058bdc8",
+   "V2BG_17A_B_N.o": "97028fabbf767958383b4f27d177a4fa11e83af1d505b05a9df6632903ba5289",
+   "V2BG_17A_B_O.o": "8c7c04058a1b2092f48fb15489d6817aef99a693c514d1a928b9f3f735774a5b",
+   "V2BG_17A_B_P.o": "bf49bb07af6574dfab08e576dc18f4e8eae233c9f1f6122a1e7a3f11046afe46",
+   "V2BG_17A_B_Q.o": "fc92f72a4e8dadd30452c5368d4e8f559f8f0544d66fc006931c5b551338f1ba",
+   "V2BG_17A_B_R.o": "50b0251ae6c4be3e5d3aee7767f96971bfa13754747a118bd29802294cb6c5c5",
+   "V2BG_17A_B_S.o": "98ee01f6192679b5447d4a52e401f604ff33e78240339e1be8ed6e37e95a93a2",
+   "V2BG_17A_B_T.o": "cf0df9aa6f8e182a070b06408f2a8e7be9d662a1e14ae07f66ff8d45f1e88ba2",
+   "V2BG_17A_B_U.o": "a24ad668b96819387e3fb27da6a1266e3fc4880a341a84192cc02597aa2b1f24",
+   "V2BG_17A_B_V.o": "69720b5d94734b46739f719989667e0c3ed4da615e6014642d18a33a450546a6",
+   "V2BG_17A_B_W.o": "b9760406d81206e003848d39227a076aa36cea7328a7c0d7c8261d81b3738dcc",
+   "V2BG_17A_B_X.o": "678e65697bbcb37f99f1bd540b236a5d7d7a11a430a038b47e46e853107969f5",
+   "V2BG_17A_A.o": "c029b903149aee4374d2de223f2e2bd651599681d8d61bc8fe25bf5a8c9f21a4",
+   "V2BG_17A_A_A.o": "60c68cceb7b3a3492091059b490f587c5b7c7aef1c9659086dd0c517dbdfaa89",
+   "V2BG_17A_A_B.o": "aab4ca7b436ff680f719ff8e2d46ddd91327d1de200c7ef862ee09de25c6ff35",
+   "V2BG_17A_A_C.o": "70f075e3aaa053ee3c0ca3656bc04e10621f518e24e8c5690283c2cc7194eae4",
+   "V2BG_17A_A_D.o": "90978dff895c1f8611af1c97acbdd2a315ef631c0f71e1d55230d4c8d33b5792",
+   "V2BG_17A_A_E.o": "bb2ab8a8b58dad6cb290accd429f90b962c0d522592161c2ab6be02bd5aeacd0",
+   "V2BG_17A_A_F.o": "a85b83e00b422ba3ea69b0b3fae0d47ff0239058a0775e2b5a5d39cabd2399f6",
+   "V2BG_17A_A_G.o": "5584031a385d513805a0d23c31ae2f4be04ec74c45a52c6781cf5c7029ae7b2b",
+   "V2BG_17A_A_H.o": "1d52f9c599daece2e3195e8c388656f24cf81740d46508a3365b46af1564adf4",
+   "V2BG_17A_A_I.o": "b44014003facc7d73f9186751be26f14ebe194a8adb11b5f3028056bc0ebaf17",
+   "V2BG_17A_A_J.o": "9d3df5d0c48e3e83ec521d36c26015e51d714cc6bb11f41fa89d894f343304c6",
+   "V2BG_17A_A_K.o": "fb13212db4fd3f4fbc0eeb042f3b5e6458ee364c8b16d296c6f7e68a9c178241",
+   "V2BG_17A_A_L.o": "842eaf5626d58a29725415c1cc4994491b0886613ae20a85df775d6e38e50f86",
+   "V2BG_17A_A_M.o": "d92faef7d98c5fad6a009e19057737e3a872968d07c5ba8bb972891370f2498b",
+   "V2BG_17A_A_N.o": "2fc7596d37b013bb3e746675b5a0d7ce8f7496f74849126de73565ec81c94466",
+   "V2BG_17A_A_O.o": "a0b87226e9cd5fbd840c1d81206035c7881bc68452fe259d4e5005511c2f862d",
+   "V2BG_17A_A_P.o": "8e4b257d608e2e4fdb57a2de548f496ab80a75ee2e9209a53f19fea0c22a50f5",
+   "V2BG_17A_A_Q.o": "7880700148b809af22d625a56721571a63b438bb50e3ca0d27a60e13dbd17b3c",
+   "V2BG_17A_A_R.o": "d9357e21e13a343dd749b82e752c3d08bfa41ff4606d9b7bb4b1e6cfb292510b",
+   "V2BG_17A_A_S.o": "70c243dff9edb6f729b83e70e1f56279e120d52169c6b3531bc7d693ee81be4a",
+   "V2BG_17A_A_T.o": "eb8c3dc821a916d71267662d416075da67865079bef9e54c2b95262fbe6510ba",
+   "V2BG_17A_A_U.o": "8ff5e268785e9fec3c96f008896e825c82394aa5ecfb06461f7d6b0373afba31",
+   "V2BG_17A_A_V.o": "a1f4ff46d04973c389df203637bcc46641be9c9d30a5109b02162c216a02d1cf",
    "V2BG17A.irr": "3f814de90c346fdeb82483861a531075d1f73fc5f60543555287faf78061658e",
    "V2BG17A_nis.irr": "3f814de90c346fdeb82483861a531075d1f73fc5f60543555287faf78061658e",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
@@ -123,198 +171,6 @@
   }
  ],
  "undecodedProps": [
-  {
-   "name": "V2BG_17A_A",
-   "reason": "V2BG_17A_A: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_A",
-   "reason": "V2BG_17A_A_A: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_B",
-   "reason": "V2BG_17A_A_B: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_C",
-   "reason": "V2BG_17A_A_C: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_D",
-   "reason": "V2BG_17A_A_D: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_E",
-   "reason": "V2BG_17A_A_E: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_F",
-   "reason": "V2BG_17A_A_F: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_G",
-   "reason": "V2BG_17A_A_G: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_H",
-   "reason": "V2BG_17A_A_H: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_I",
-   "reason": "V2BG_17A_A_I: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_J",
-   "reason": "V2BG_17A_A_J: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_K",
-   "reason": "V2BG_17A_A_K: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_L",
-   "reason": "V2BG_17A_A_L: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_M",
-   "reason": "V2BG_17A_A_M: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_N",
-   "reason": "V2BG_17A_A_N: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_O",
-   "reason": "V2BG_17A_A_O: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_P",
-   "reason": "V2BG_17A_A_P: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_Q",
-   "reason": "V2BG_17A_A_Q: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_R",
-   "reason": "V2BG_17A_A_R: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_S",
-   "reason": "V2BG_17A_A_S: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_T",
-   "reason": "V2BG_17A_A_T: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_U",
-   "reason": "V2BG_17A_A_U: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_A_V",
-   "reason": "V2BG_17A_A_V: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B",
-   "reason": "V2BG_17A_B: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_A",
-   "reason": "V2BG_17A_B_A: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_B",
-   "reason": "V2BG_17A_B_B: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_C",
-   "reason": "V2BG_17A_B_C: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_D",
-   "reason": "V2BG_17A_B_D: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_E",
-   "reason": "V2BG_17A_B_E: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_F",
-   "reason": "V2BG_17A_B_F: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_G",
-   "reason": "V2BG_17A_B_G: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_H",
-   "reason": "V2BG_17A_B_H: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_I",
-   "reason": "V2BG_17A_B_I: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_J",
-   "reason": "V2BG_17A_B_J: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_K",
-   "reason": "V2BG_17A_B_K: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_L",
-   "reason": "V2BG_17A_B_L: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_M",
-   "reason": "V2BG_17A_B_M: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_N",
-   "reason": "V2BG_17A_B_N: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_O",
-   "reason": "V2BG_17A_B_O: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_P",
-   "reason": "V2BG_17A_B_P: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_Q",
-   "reason": "V2BG_17A_B_Q: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_R",
-   "reason": "V2BG_17A_B_R: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_S",
-   "reason": "V2BG_17A_B_S: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_T",
-   "reason": "V2BG_17A_B_T: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_U",
-   "reason": "V2BG_17A_B_U: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_V",
-   "reason": "V2BG_17A_B_V: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_W",
-   "reason": "V2BG_17A_B_W: unexpected position payload"
-  },
-  {
-   "name": "V2BG_17A_B_X",
-   "reason": "V2BG_17A_B_X: unexpected position payload"
-  },
   {
    "name": "V2BG_17A_C",
    "reason": "V2BG_17A_C: unexpected position payload"
@@ -4239,6 +4095,914 @@
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
  "instancedCrowd": null,
+ "cars": [
+  {
+   "name": "V2BG_17A_B",
+   "file": "cars/V2BG_17A_B.skin.gz",
+   "approximate": true,
+   "placement": {
+    "translate": [
+     -51.0,
+     0.0,
+     -44.6
+    ],
+    "rotate": [
+     0.0,
+     -30.0,
+     0.0
+    ]
+   },
+   "objects": [
+    {
+     "name": "V2BG_17A_B_A",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_B",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_C",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_D",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_E",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_F",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_G",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_H",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_I",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_J",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_K",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_L",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_M",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_N",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_O",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_P",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_Q",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_R",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_S",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_T",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_U",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_V",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_W",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_B_X",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "V2BG_17A_A",
+   "file": "cars/V2BG_17A_A.skin.gz",
+   "approximate": true,
+   "placement": {
+    "translate": [
+     47.9,
+     0.0,
+     -43.4
+    ],
+    "rotate": [
+     0.0,
+     -150.0,
+     0.0
+    ]
+   },
+   "objects": [
+    {
+     "name": "V2BG_17A_A_A",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_B",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_C",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_D",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_E",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_F",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_G",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_H",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_I",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_J",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_K",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_L",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_M",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_N",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_O",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_P",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_Q",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_R",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_S",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_T",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_U",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ]
+    },
+    {
+     "name": "V2BG_17A_A_V",
+     "states": [
+      "base",
+      "break1",
+      "break2",
+      "break3"
+     ],
+     "hidden": [
+      "break4",
+      "null"
+     ],
+     "modelled": [
+      "base"
+     ]
+    }
+   ]
+  }
+ ],
  "lighting": {
   "file": "lighting.json",
   "settings": [

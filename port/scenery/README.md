@@ -40,7 +40,7 @@ node port/scenery/compare.mjs      # headless Chrome; no emulator
 | V2BG_13A | The Pit | 16 (28 meshes) | 0 | - | 35 |
 | V2BG_14A | Club Murder | 10 (10 meshes) | 0 | 120 | 30 |
 | V2BG_15A | Crow's Office | 18 (31 meshes) | 2 | - | - |
-| V2BG_17A | Gun Hill Garage | 5 (5 meshes) | 51 | - | 30 |
+| V2BG_17A | Gun Hill Garage | 5 (5 meshes) + 2 cars | 3 (car shadows, a flat light sprite) | - | 30 |
 | V2BG_19A | The Terrordome | 8 (8 meshes) | 1 | 60 | 30 |
 | V2BG_20A | The Limit | 19 (23 meshes) | 2 | - | 35 |
 | V2BG_21A | Babylon | 6 (8 meshes) | 3 | - | 30 |
@@ -48,7 +48,7 @@ node port/scenery/compare.mjs      # headless Chrome; no emulator
 | V2BG_22B | 7th Heaven | 5 (5 meshes) | 1 | 100 | 28 |
 | V2BG_23A | Red Room | 8 (8 meshes) | 2 | 100 | 29 |
 
-Undecoded props are skinned, bone-animated models (`*_Skin` microcode, e.g. the Gun Hill Garage cars) or use a VIF layout `port/geometry/venues.py` does not handle; they are listed by name in `scenery.json` `undecodedProps`.
+Undecoded props are skinned, bone-animated models (`*_Skin` microcode, e.g. the Gun Hill Garage car shadows `V2SD_17A_*`, planar-shadow skins) or use a VIF layout `port/geometry/venues.py` does not handle; they are listed by name in `scenery.json` `undecodedProps`.
 
 Not decoded: the `nearCrowd` characters (modular V2CM people with their `animcr` clips; see below), prop colour morphs (`V2BG_02A_A1.o`…), the per-instance retail animation phase, instance variant 5, the rim and shadow light terms in `.irr`, and the engine's ambient mix into the first coefficient.
 
@@ -129,3 +129,16 @@ Retail keeps weapons in a manager (`0x133180` returns `0x472144` in a battle): 1
 - `createEnvironment(...)` follows the train: `state().dynamicWeapons` has the car; `effects()` has `{kind:"train", action: siren | audio | volume | hit}`. `createTrainAudio(audio, {fighters})` plays the sound and the `Train_Kill_Female/Male` scream (female for fighters whose retail grunt set is a Girl set). The viewer wires both.
 - Controller-driven: a closed-loop pad script that walks both fighters to the platform edge and mashes buttons (`hazard.test.mjs`) puts a fighter in a retail hazard state or over the track bed; the first train ends the round at tick 1002 as `hazard`.
 - `node port/scenery/train-browser.mjs` runs the real battle page headless (venue 4) and checks the car's path and the sound's start.
+
+## Gun Hill Garage cars (`V2BG_17A/cars/`)
+
+`<demolitionmatch>` in `V2BG_17A_O.xml` lists two car containers: the left car `V2BG_17A_B` (24 panels `B_A`..`B_X`, `17A_1`..`13`, `27`) and the right car `V2BG_17A_A` (22 panels, `14`..`26`, `28`). Each ships as one DJF1 mesh, `cars/<container>.skin.gz`, drawn unskinned in car space with the weapon shader (irradiance-lit):
+
+- The container model is the body without its breakable panels. Its batches carry no `object`.
+- A panel's model stores its damage states as consecutive display-list blocks that each open with the skin microcode relocation: `base`, `break1`..`break3`, in the order of its `<geometry>` names. A panel drawn with two skin microcodes lists the blocks of each microcode in turn; state *k* is the *k*-th block of every group. A block draws one or more packets, each with a `SHAPENAME` material. That mapping (block → part → shape) is the display map, and it is stored as batches `{object, state, shape, first, count}`.
+- `A_V` and `B_X` (the inner windscreen pieces) have one block only. Environment attacks hide them with state `null`. The window attacks `17A_5D`, `6C` and `21D` ask for `break4`, which has no mesh; both are valid states that draw nothing (the fourth stage is the glass gone: inferred, no retail frame yet).
+- `manifest.cars[].objects[]` has `name`, `states` (the `<geometry>` names), `modelled` (those with a mesh) and `hidden` (`null`, `break4`). `environment.mjs` takes these panels as props, so `17A_3A..C` drive `V2BG_17A_B_P` through `break1`..`break3`. `render({props})` picks the state per panel.
+- **Placement is approximate.** The stage XML places no car. The glass and headlight particle emitters in the environment attacks have world positions, and the panels they break have known centres in car space. A yaw and translation fitted to those anchors puts the left car at `(-51, 0, -44.6)` with rotate Y -30 and the right at `(47.9, 0, -43.4)` with rotate Y -150. The residual is at most 1.7 units, the precision of the hand-placed emitters. `test_extract.py` checks the anchors. A retail frame of Gun Hill is needed to tighten it.
+- Not decoded: the car shadows `V2SD_17A_A/B` (planar-shadow skins) and `V2BG_17A_C` (a 9.6 x 8 flat animated sprite).
+
+`node --test port/scenery/cars.test.mjs` checks the mesh batches, every attack's panel and state, the event-driven states and the floor contact.
