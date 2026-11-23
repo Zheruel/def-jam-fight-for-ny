@@ -7,7 +7,7 @@ import { decodePoseBank } from "../motion/pose-bank.mjs";
 import library from "../motion/library.json" with { type: "json" };
 import { createFoundationFight } from "../battle/fight.mjs";
 import { venueAudio } from "./venue.mjs";
-import { chooseTune, createMusic } from "./music.mjs";
+import { chooseTune, createMusic, songQueue } from "./music.mjs";
 import { createMatchAudio } from "./match.mjs";
 import { audioMusic } from "./files.mjs";
 
@@ -44,14 +44,23 @@ function harness() {
   return { requests, sources, tracks, options: { fetcher, Context, doc, win: { addEventListener() {}, removeEventListener() {} } } };
 }
 
-test("music manifest: levels, playlist and every track's loop point agree with the files", () => {
+test("music manifest: levels, the captured battle list and every track's loop point agree with the files", () => {
   assert.equal(music.default, "dirty");
-  assert.equal(music.playlist.length, 12);
+  const { set, primary, captures } = music.battleSongs;
+  assert.equal(set.length, 16);
+  assert.equal(primary, "dirty");
+  assert.equal(captures.length, 2);
+  for (const capture of captures) {
+    assert.equal(capture.songs.length, 17);          // 16 tunes, "dirty" twice
+    assert.equal(capture.songs[0], "dirty");
+    assert.deepEqual([...new Set(capture.songs)].sort(), set);
+  }
+  assert.notDeepEqual(captures[0].songs, captures[1].songs, "the two real matches shuffled the list differently");
   assert.equal(music.gain, mix.gain.Music_Vol * mix.gain.Master_Vol);
   assert.equal(music.levels.Music_Vol, 60);
-  for (const name of [music.default, ...music.playlist]) assert.ok(music.tracks[name], name);
+  assert.deepEqual(Object.keys(music.tracks).sort(), [...set].sort());
   assert.equal(Object.keys(music.tunes).length, 33);
-  assert.equal(audioMusic.length, 13);
+  assert.equal(audioMusic.length, set.length);
   for (const track of Object.values(music.tracks)) {
     assert.ok(existsSync(new URL(track.file, here)), track.file);
     assert.equal(track.rate, 48000);
@@ -63,7 +72,6 @@ test("music manifest: levels, playlist and every track's loop point agree with t
       assert.ok(Math.abs(Number(out.stdout) - track.seconds) < 0.02, `${track.name} ${out.stdout}`);
     }
   }
-  assert.deepEqual(Object.values(music.tracks).filter(track => !track.loops).map(track => track.name).sort(), ["minitrack2", "nwa"]);
 });
 
 test("the retail tune table stays consistent with the graph summary", () => {
@@ -76,12 +84,18 @@ test("the retail tune table stays consistent with the graph summary", () => {
   }
 });
 
-test("a tune is chosen by name, else by seed from the playlist, else the retail default", () => {
+test("retail's song selection: an empty list falls back to dirty, otherwise dirty leads and the rest shuffles by seed", () => {
+  assert.deepEqual(songQueue(music, { songs: [] }), ["dirty"]);
+  assert.deepEqual(songQueue(music, { songs: ["nope"] }), ["dirty"]);
+  const queue = songQueue(music, { seed: 7 });
+  assert.equal(queue[0], "dirty");
+  assert.deepEqual([...queue].sort(), [...music.battleSongs.set].sort());
+  assert.deepEqual(queue, songQueue(music, { seed: 7 }));
+  assert.notDeepEqual(queue, songQueue(music, { seed: 8 }));
+  assert.deepEqual(songQueue(music, { songs: ["hitem", "pump"], seed: 1 }).sort(), ["hitem", "pump"]);
   assert.equal(chooseTune(music, { tune: "hitem" }), "hitem");
-  assert.throws(() => chooseTune(music, { tune: "nope" }));
-  assert.equal(chooseTune(music, { seed: 3 }), music.playlist[3]);
-  assert.equal(chooseTune(music, { seed: 3 }), chooseTune(music, { seed: 3 }));
-  assert.equal(chooseTune({ ...music, playlist: [] }, {}), "dirty");
+  assert.throws(() => chooseTune(music, { tune: "nwa" }));
+  assert.equal(chooseTune(music, {}), "dirty");
 });
 
 test("nothing loads until the music starts, then only music.json and the one track; the track loops on the retail loop point", async () => {
@@ -100,18 +114,22 @@ test("nothing loads until the music starts, then only music.json and the one tra
   assert.equal(player.tune, undefined);
 });
 
-test("a non-looping tune ends and the next playlist tune follows", async () => {
-  const { tracks, options } = harness();
-  const audio = venueAudio("V2BG_02A", options);
-  const player = createMusic(audio, { tune: "nwa", fetcher: options.fetcher });
-  await player.start();
-  const first = tracks().at(-1);
-  assert.equal(first.loop, false);
-  first.onended();
+test("a tune that ends is followed by the next song in the queue", async () => {
+  const played = [];
+  const audio = { track: async (path, options) => { const handle = { path, options, stop() { handle.stopped = true; } }; played.push(handle); return handle; } };
+  const player = createMusic(audio, { songs: ["hitem", "pump"] });
+  const [first, second] = songQueue(music, { songs: ["hitem", "pump"] });
+  assert.equal(await player.start(), first);
+  assert.deepEqual(player.queue, [first, second]);
+  played[0].options.onEnded();                                  // the track plays out
   await new Promise(resolve => setTimeout(resolve, 10));
-  assert.notEqual(player.tune, "nwa");
-  assert.ok(music.playlist.includes(player.tune));
+  assert.equal(player.tune, second);
+  assert.equal(played[1].path, `music/${second}.ogg`);
+  played[1].options.onEnded();
+  await new Promise(resolve => setTimeout(resolve, 10));
+  assert.equal(player.tune, first, "the queue wraps");
   player.stop();
+  assert.equal(played[2].stopped, true);
 });
 
 test("a native Blaze/Doc fight keeps its music in the host mix while combat cues play beside it", async () => {
@@ -124,13 +142,13 @@ test("a native Blaze/Doc fight keeps its music in the host mix while combat cues
     null, packed("port/kernel/match-rules.gz"));
   const { sources, tracks, options } = harness();
   const audio = venueAudio("V2BG_02A", options);
-  const player = createMusic(audio, { seed: 5, fetcher: options.fetcher });
+  const player = createMusic(audio, { seed: 5, fetcher: options.fetcher });  // the captured list, dirty first
   const venue = venues.venues.find(entry => entry.file === "V2BG_02A");
   const cues = [];
   const match = createMatchAudio({ combat, tags, mix, venue, fighters: [{ coreID: 5 }, { coreID: 10 }], clips: library,
     play: (bank, subsong, opts) => { cues.push([bank, subsong]); return audio.cue(bank, subsong, opts); } });
   const tune = await player.start();                       // match start
-  assert.equal(tune, music.playlist[5]);
+  assert.equal(tune, "dirty");
   const track = tracks().at(-1);
   assert.equal(track.buffer.path, `music/${tune}.ogg`);
   const inputs = JSON.parse(readFileSync(new URL("verification/native-fight-inputs.json", root)));

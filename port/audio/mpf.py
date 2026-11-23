@@ -71,7 +71,7 @@ def _forward(nodes, start, limit=4):
     return out
 
 
-def fight_path(graph, seed=1, start=0):
+def _walk(graph, seed, start):
     """Walk the graph from `start`: returns {"nodes": [...], "loopAt": index or None, "ends": bool}.
 
     Weighted branches draw from the seeded generator; a cycle with no branch in it is a waiting loop,
@@ -106,6 +106,18 @@ def fight_path(graph, seed=1, start=0):
         else:
             draw = rng.random() * 127
             i = next((t for lo, hi, t in subs if lo <= draw < hi), subs[-1][2])
+
+
+def fight_path(graph, seed=1):
+    """The walk from node 0; a tune whose first section holds no sample (popoff's is a three-node stub)
+    starts at the next section's first node instead."""
+    nodes = graph["nodes"]
+    firsts = [0] + [n["i"] for prev, n in zip(nodes, nodes[1:]) if n["section"] != prev["section"]]
+    for start in firsts:
+        path = _walk(graph, seed, start)
+        if samples_of(graph, path["nodes"]):
+            return {**path, "start": start}
+    raise ValueError("no playable section")
 
 
 def samples_of(graph, nodes):

@@ -118,3 +118,29 @@ test("a second run picks the same cues", async () => {
   const [a, b] = [await exchange(), await exchange()];
   assert.deepEqual(a.played, b.played);
 });
+
+test("stage XML <sound> and <weaponsound> effects play the venue bank's smash, surface and weapon cues", () => {
+  const routed = {};
+  for (const entry of venues.venues) {
+    const played = [];
+    const adapter = createMatchAudio({ combat, tags, mix, venue: entry, fighters: [{ coreID: 5 }, { coreID: 10 }], clips: library,
+      play: (bank, subsong, options) => played.push({ bank, subsong, ...options }) });
+    adapter.environment([{ at: 0, event: "10A_1", kind: "sound", sound: "hit" }, { at: 3, event: "02A_1B", kind: "sound", sound: "break" },
+      { at: 5, event: "x", kind: "weaponSound", weapon: "029_11", sound: "hit" }, { at: 9, event: "x", kind: "weaponSound", weapon: "029_11", sound: "break" },
+      { at: 9, event: "x", kind: "particle", particle: "dust" }]);
+    const events = adapter.drain();
+    assert.ok(events.every(event => event.clip.startsWith("environment:")));
+    for (const event of events.filter(event => event.bank)) {
+      assert.equal(event.bank, entry.sounds, entry.file);
+      assert.ok(cues.banks[event.bank].cues.some(cue => cue.i === event.cue), `${event.bank} #${event.cue}`);
+      assert.ok(["Environmental_Smash", "Surface_Hit", "Weapon_Drop", "Weapon_Break"].includes(event.event));
+    }
+    assert.equal(played.length, events.filter(event => event.bank).length);
+    routed[entry.file] = events.filter(event => event.bank).map(event => event.event);
+  }
+  const some = event => Object.values(routed).filter(list => list.includes(event)).length;
+  assert.ok(some("Environmental_Smash") >= 10, "smash cues: " + some("Environmental_Smash"));
+  assert.ok(some("Weapon_Break") >= 10 && some("Weapon_Drop") >= 10);
+  // The Foundation (Bsmnt) bank has both a smash and weapon modules, so all of its effects sound.
+  assert.deepEqual(routed.V2BG_02A.sort(), ["Environmental_Smash", "Environmental_Smash", "Weapon_Break", "Weapon_Drop"]);
+});

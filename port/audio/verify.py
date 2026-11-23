@@ -91,6 +91,13 @@ def main():
         if shipped_combat["venueOut"] != sorted(v["coreID"] for v in venues if v["flag"]):
             failures.append("combat.json outdoor venues differ from the venue table")
         music = json.loads((HERE / "music.json").read_text())
+        names = set(extract.tune_names(disc))
+        recorded = music["battleSongs"]
+        if sorted(music["tracks"]) != recorded["set"] or not names.issuperset(recorded["set"]):
+            failures.append("music tracks differ from the battle song set")
+        present = [p for p in extract.CAPTURES if Path(p).exists()]
+        if present and extract.captured_battle_songs(present, names) != recorded["captures"][:len(present)]:
+            failures.append("battleSongs differ from the captured RAM")
         for tune, track in music["tracks"].items():
             graph = extract.load_graph(disc, tune)
             path = mpf.fight_path(graph, track["seed"])
@@ -102,7 +109,7 @@ def main():
             graph = extract.load_graph(disc, tune)
             if extract.tune_summary(graph, mpf.fight_path(graph, extract.MUSIC_SEED)) != music["tunes"][tune]:
                 failures.append(f"music {tune}: summary differs")
-        for tune in ("nwa", "hitem"):  # decode the retail path again and correlate with the shipped Opus
+        for tune in ("mother", "hitem"):  # decode the retail path again and correlate with the shipped Opus
             with tempfile.TemporaryDirectory() as temp:
                 again = extract.build_track(disc, args.decoder, tune, Path(temp) / "t.ogg")
                 if again != music["tracks"][tune]:

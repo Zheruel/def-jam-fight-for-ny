@@ -107,13 +107,15 @@ export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, pl
   function fire(slot, name, tag) {
     const [frame, , cls, ...words] = tag;
     const spec = combat.classes[cls];
-    if (!spec?.events.length) return;
+    if (!spec?.events.length) return false;
+    let routed = false;
     for (const event of spec.events) {
       const target = route(slot, event, words);
       const entry = { tick: ticks, slot, clip: name, frame, class: cls, event, ...(target ?? { bank: null }) };
       if (record) log.push(entry);
-      if (target) play?.(target.bank, target.cue, { gain: target.gain });
+      if (target) { routed = true; play?.(target.bank, target.cue, { gain: target.gain }); }
     }
+    return routed;
   }
 
   return {
@@ -133,6 +135,20 @@ export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, pl
         for (const tag of walkers[slot].step(name, frame)) fire(slot, name, tag);
       });
       ticks++;
+    },
+    // Stage-environment effects (env.effects()): the stage XML's <sound> and <weaponsound> commands. Retail turns
+    // them into bus events 0xf100000b (0x1b3e20) and 0xf100000a (0x1b3d98); their listeners 0x131898 and
+    // 0x131690 inject an animation-tag class into the tag dispatcher 0x12d310, so they sound like any tag.
+    environment(effects) {
+      for (const effect of effects ?? []) {
+        const name = "environment:" + (effect.event ?? effect.kind);
+        const tag = cls => [effect.at ?? ticks, 5, cls, 0, 0, 0, 0, 0];
+        // <sound hit|break>: Environmental_Smash (class 64), or Surface_Hit (67) when no fighter caused it. The
+        // effect carries no attacker, so a venue without a smash module falls back to the surface hit.
+        if (effect.kind === "sound") { if (!fire(0, name, tag(64))) fire(0, name, tag(67)); }
+        // <weaponsound hit> posts Weapon_Drop (49); <weaponsound break> Weapon_Break (48).
+        else if (effect.kind === "weaponSound") fire(0, name, tag(effect.sound === "break" ? 48 : 49));
+      }
     },
     // Drain the events since the last call (for tests and diagnostics).
     drain() { return log.splice(0); },

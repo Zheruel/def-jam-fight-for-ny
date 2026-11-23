@@ -80,29 +80,34 @@ Each of the 33 tunes is an EA PathFinder pair: `tune.mpf` (the node graph, littl
 
 **Confirmed from the disc**
 - The graph, sample table and `.mus` pairing: every main-track sample's table length equals its decoded length; the shipped tracks re-decode from the retail files at correlation 1.0000 (`verify.py`).
-- Structure: a tune starts at node 0 in an intro/waiting loop, leaves it, then plays a song body of 88–134 bar-sized nodes whose bars draw one of four lanes, and the body closes back on its first node (a loop of 120–350 s). `nwa`, `minitrack2`, `asiandragon` and `venu` do not loop; they end after 114–142 s.
+- Structure: a tune starts at node 0 in an intro/waiting loop, leaves it, then plays a song body of 88–134 bar-sized nodes whose bars draw one of four lanes, and the body closes back on its first node (a loop of 120–350 s). `nwa`, `minitrack2`, `asiandragon` and `venu` do not loop; they end after 114–142 s (none is in a captured battle list).
 - Levels, from `AUDIO/TV.TXT`: `Music_Vol` 60 % × `Master_Vol` (32767) = gain 0.6; `FE_Music_Vol` 50 %; `Music_Fade_Time` 30; duckers `Crowd_Ducker` 65, `Crowd_Ducker_2` 50, `Ambient_Ducker` 50, `SFX_Ducker` 0. The engine also loads two music filters (`cribfilt1c.fx`, `djlopass1.fx`).
-- The match-start routines (`0x110a38`, `0x111520`, called from the stage start at `0x127bec`/`0x127c04`) build a `BACKEND::BATTLESONGS` list from the game data and, when it is empty, log "Setting primary song to default song" and use the tune `dirty`.
+- The match-start routines (`0x110a38`, `0x111520`, called from the stage start at `0x127bec`/`0x127c04`) build a `BACKEND::BATTLESONGS` list from the profile's songs and, when it is empty, log "Setting primary song to default song" and use the tune `dirty`.
 
-**Not confirmed (stated as such in `music.json`)**
-- Which tune a match plays. The twelve tunes `arewecuttin getintoit getitnow ricache mamasaid nuffrespect pump poppalarge seizetheday hitem nwa minitrack2` sit right after the `BACKEND::BATTLESONGS` tag in the executable's string pool, but no instruction references them, so `playlist` is a candidate list, not a recovered selection. `createMusic` takes an explicit `tune`, else picks `playlist[seed % 12]`, else `dirty`.
+**Which tunes a match plays (BACKEND::BATTLESONGS)**
+- Confirmed from live RAM captured in two retail VS matches (`private/verification/ps2-match/*/fighter-ram-0.bin`): the list is one 0x10-byte heap block per song name at `0x4e20a0`. Both matches hold the same 16 tunes (`dirty makeithurt nuffrespect flipside hitem getintoit whatshappening beezle mamasaid arewecuttin cnnyessir amermostwant pump popoff letsgo mother`, 17 entries with `dirty` twice), in a different shuffle each time, `dirty` first and `mother` last. `music.json` `battleSongs` records both lists and `extract.py` re-reads them (`verify.py` checks them when the dumps are present). The twelve names stored after the `BACKEND::BATTLESONGS` tag in the executable, which an earlier build guessed as the playlist, are not it and are no longer shipped.
+- Retail fallback (confirmed from the code): an empty list logs "Setting primary song to default song" and uses `dirty`.
+- Not confirmed: which listed tune plays and when the next starts (the music player is on the IOP, not in the EE RAM dump), and how the list depends on the profile. The captured profile came from a memory card save, song unlocks are not decoded, and the port has no song unlock state, so a fresh profile's list may be shorter. `createMusic` therefore plays `songs` if given (an empty list gives `dirty`), else the captured set: `dirty` first as in both captures, the rest in a seeded shuffle; non-looping tunes would hand over to the next entry.
+
+**Other things not confirmed (also in `music.json`)**
 - What retail's 27 music events (action lists after the nodes) send to leave a waiting loop. `fight_path` plays each waiting loop once and leaves it by the first loop router that leads back into the path.
 - The lane draws. Retail draws them as it plays; each shipped track is one realization (`seed` 1, node list in `music.json`), and the song body repeats that realization.
 - Ducking, fades and the two filters are recorded, not applied.
 - `tunes[*].introSeconds/loopSeconds` come from the sample table, whose lengths are wrong for RAM-bank samples (up to ~8 s off for `pump`); the shipped files carry the decoded lengths.
 
-13 tracks ship (`dirty` plus the twelve, 40 kb/s Opus, 13.9 MB; `--only music` rebuilds them, `--music TUNE` builds any other tune). Nothing loads until `start()`:
+16 tracks ship (the captured set, 40 kb/s Opus, 18 MB; `--only music` rebuilds them, `--music TUNE` builds any other tune). Nothing loads until the first gesture:
 
 ```js
 import { venueAudio } from "../audio/venue.mjs";
 import { createMusic } from "../audio/music.mjs";
-const audio = venueAudio(arena.file);
-const music = createMusic(audio, { seed });   // or { tune: "hitem" }
-await music.start();                           // fetches music.json and one ~1 MB track, plays through audio's bus
-music.stop();                                  // match end
+const audio = venueAudio(arena.file, { onStart: () => createMusic(audio).start() });   // onStart runs on the first gesture
 ```
 
-The track goes through the same bus as the ambience and cues, so it is in the host's `MediaStream` and WebRTC guests hear it (`browser-check.mjs` plays `hitem` and `nwa` in headless Chrome and measures the host mix and a loopback guest). Looping tunes loop on `introSeconds` to the end of the file; `nwa` and `minitrack2` end and the next playlist tune starts. `music.test.mjs` also runs the native Blaze/Doc exchange with the music playing and combat cues beside it.
+The game page (`port/viewer/viewer.mjs`) does exactly that, next to the combat-audio load. The track goes through the same bus as the ambience and cues, so it is in the host's `MediaStream` and WebRTC guests hear it. `browser-check.mjs` measures the host mix and a loopback guest in headless Chrome (`hitem`, `mother`), and `page-check.mjs` drives the real game page (host, WebRTC guest, a few seconds of fighting): no audio file loads before the gesture, the host's click brings in `music.json` and `music/dirty.ogg` only, the guest's audio level rises from 0.065 (bed) to 0.207 (bed and music), and the combat cue banks load as the fight is fought. `music.test.mjs` also runs the native Blaze/Doc exchange with the music playing and combat cues beside it.
+
+## Stage environment sounds
+
+Stage XML `<sound hit|break>` and `<weaponsound hit|break>` commands reach `createMatchAudio().environment(effects)` through the scenery adapter's `env.effects()` (the viewer already calls it each tick). Retail: `0x192a14` runs the `sound` command and calls `0x1b3e20`, which posts bus event `0xf100000b`; `0x1b3d98` posts `0xf100000a` for `weaponsound`. Their listeners (`0x131898`, `0x131690`) inject a tag into the dispatcher `0x12d310`: `sound` becomes class 64 `Environmental_Smash` (class 67 `Surface_Hit` when the request's second field is -1), `weaponsound hit` class 49 `Weapon_Drop`, `weaponsound break` class 48 `Weapon_Break` (class 47 `Weapon_Strike` for two weapon types, 73 `Falling_Wood` for one). Those are ordinary tag classes, so they play the venue SFX bank's module of that event exactly like animation tags do (`match.test.mjs` checks all 24 venues). Not decoded: the per-weapon variant byte (table at `0x3767a8`) that picks among a venue bank's repeated weapon modules, so the first module stands in, and the scenery effects carry no attacker, so `sound` uses the smash module and falls back to the surface hit.
 
 ## Not decoded
 

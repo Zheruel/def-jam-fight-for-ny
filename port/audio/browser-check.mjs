@@ -91,7 +91,7 @@ try {
   // Match music: nothing but music.json and one track is fetched on start, the track decodes to the recorded
   // length, loops on the retail loop point, is audible in the host stream and reaches a WebRTC guest.
   const musicManifest = JSON.parse(readFileSync(new URL("music.json", here)));
-  for (const tune of ["hitem", "nwa"]) {
+  for (const tune of ["hitem", "mother"]) {
     const track = musicManifest.tracks[tune];
     const tab = await browser.newPage();
     const fetched = [];

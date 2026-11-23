@@ -367,7 +367,11 @@ async function display() {
     const { battleCamera } = await import("../battle/camera.mjs");
     const { createHud } = await import("../hud/hud.mjs");
     const { venueAudio } = await import("../audio/venue.mjs");
+    let music;
     const audio = venueAudio(arena.file,{onStart: async () => {
+      // First gesture: the retail battle music joins the same bus (and so the guests' stream) as the cues.
+      import("../audio/music.mjs").then(async ({createMusic}) => { music = createMusic(audio); await music.start(); })
+        .catch(error => console.error("Could not start battle music",error));
       try {
         const [{loadMatchAudio},{default:clips}] = await Promise.all([
           import("../audio/match.mjs"),import("../motion/library.json",{with:{type:"json"}})
@@ -398,7 +402,7 @@ async function display() {
       if (event.key === "Enter" && result.result && result.ticksSinceOver >= 120) document.getElementById("restart").click();
     });
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
-      ...fight.diagnostics(), renderedFrames, paused, network:controls.connection(), environment:environment?.state() }) });
+      ...fight.diagnostics(), renderedFrames, paused, network:controls.connection(), environment:environment?.state(), music:music?.tune }) });
     draw();
   }
 }

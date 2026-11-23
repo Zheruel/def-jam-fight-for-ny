@@ -342,16 +342,37 @@ def music_member(disc, tune, name):
     return None
 
 
-# Retail battle music. CGameAudio's match-start builders (0x110a38 story, 0x111520 other modes, called from
-# the stage start 0x127bec/0x127c04) build the "BACKEND::BATTLESONGS" list and fall back to the tune
-# "dirty" ("[BACKEND] Setting primary song to default song"). The twelve tune names stored right after
-# that allocation tag in the executable's string pool (0x3ad340..0x3ad3d0) are the candidate list; nothing
-# in the executable references them directly, so the list is recorded as unconfirmed.
+# Retail battle music. The match-start builders (0x110a38 story, 0x111520 other modes, called from the stage
+# start 0x127bec/0x127c04) build the "BACKEND::BATTLESONGS" list: one 0x10-byte heap block per song name, copied
+# from the profile's song list, and when it is empty they log "[BACKEND] Setting primary song to default song"
+# and use the tune "dirty". The list of a real match is read back from live PS2 RAM captured during two retail
+# VS matches (private/verification/ps2-match/*/fighter-ram-0.bin): the same 16 tunes in both, in a different
+# shuffle each time, "dirty" first and last-but-one, "mother" last.
 DEFAULT_SONG = "dirty"
-BATTLE_SONGS = ["arewecuttin", "getintoit", "getitnow", "ricache", "mamasaid", "nuffrespect", "pump",
-                "poppalarge", "seizetheday", "hitem", "nwa", "minitrack2"]
+CAPTURES = ["private/verification/ps2-match/run-BjNMn0/fighter-ram-0.bin",
+            "private/verification/ps2-match/run-zUpaXW/fighter-ram-0.bin"]
 MUSIC_SEED = 1
 MUSIC_BITRATE = "40k"
+
+
+def captured_battle_songs(paths, tunes):
+    """BATTLESONGS lists found in RAM dumps: the longest run of 0x10-aligned blocks that each hold a tune name."""
+    lists = []
+    for path in paths:
+        ram = Path(path).read_bytes()
+        best, run = [], []
+        for at in range(0x4e0000, 0x4e4000, 0x10):
+            name = ram[at:at + 16].split(b"\0")[0].decode("latin1")
+            if name in tunes:
+                run.append(name)
+                continue
+            if len(run) > len(best):
+                best = run
+            run = []
+        if len(run) > len(best):
+            best = run
+        lists.append({"capture": Path(path).parent.name, "address": 0x4e20a0, "songs": best})
+    return lists
 
 
 def load_graph(disc, tune):
@@ -407,7 +428,16 @@ def build_track(disc, decoder, tune, target):
 def build_music(disc, decoder, tunes=None):
     out = HERE / "music"
     out.mkdir(exist_ok=True)
-    wanted = tunes or [DEFAULT_SONG] + BATTLE_SONGS
+    names = tune_names(disc)
+    captured = captured_battle_songs([p for p in CAPTURES if Path(p).exists()], set(names))
+    if not captured:
+        old = json.loads((HERE / "music.json").read_text())["battleSongs"]["captures"]
+        captured = old  # the RAM dumps are private; keep what an earlier build recorded
+    sets = [sorted(set(c["songs"])) for c in captured]
+    if any(x != sets[0] for x in sets):
+        raise SystemExit("captured battle song sets differ")
+    battle = sets[0]
+    wanted = tunes or battle
     shipped = []
     for tune in wanted:
         entry = build_track(disc, decoder, tune, out / f"{tune}.ogg")
@@ -421,12 +451,18 @@ def build_music(disc, decoder, tunes=None):
     mix = json.loads((HERE / "mix.json").read_text())
     (HERE / "music.json").write_text(json.dumps({
         "format": "def-jam-music/2",
-        "default": DEFAULT_SONG, "playlist": BATTLE_SONGS,
+        "default": DEFAULT_SONG,
+        "battleSongs": {"set": battle, "primary": captured[0]["songs"][0], "captures": captured,
+                        "source": "BACKEND::BATTLESONGS heap blocks read from RAM captured in two retail VS matches"},
         "confirmed": ["PFDx v4 node graph, sample table and .mus pairing (shipped tracks re-decode at correlation 1.0)",
                       "tune start, waiting loops, loop routers, four-lane weighted bars, looping song body",
                       "Music_Vol 60% x Master_Vol = gain 0.6; ducker, fade and filter settings",
-                      "match-start builders create BACKEND::BATTLESONGS and fall back to the tune dirty"],
-        "unconfirmed": ["which tune a match plays: playlist is the unreferenced string-pool list after the BATTLESONGS tag",
+                      "match-start builders create BACKEND::BATTLESONGS and fall back to the tune dirty when it is empty",
+                      "BATTLESONGS in two real matches: the same 16 tunes (battleSongs.set), dirty first, in a different shuffle each time"],
+        "unconfirmed": ["which listed tune a match plays and when the next starts: the music player lives on the IOP, not in the EE RAM dumps; "
+                        "dirty is first in both captures, so it is used first",
+                        "how the list depends on the profile: the captured profile came from a memory card save and song unlocks are not decoded, "
+                        "so a fresh profile's list may be shorter; the port has no song unlock state and uses the captured set",
                         "the music events that leave a waiting loop (router exits stand in)",
                         "runtime lane draws (one seeded realization is shipped per tune)",
                         "ducking, fades and the two music filters are recorded, not applied",
