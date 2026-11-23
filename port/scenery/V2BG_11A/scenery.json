@@ -10,6 +10,8 @@
    "V2BG_11A.xml": "bc89e50791da88622a8c9102f689349bc2a72f78484306097fe0458c9ab96c72",
    "V2BG_11A_O.xml": "ed6606352cc78506b00e674be487e5ff5e893167ea8a668780e9f13a04fd01fe",
    "V2BG_11A.ssh": "9201b7506674ad5d199d8f4ff2f6210eebe10b3db1e54221150000ed2cd06356",
+   "V2BG11A.irr": "b6c4cd47bbec6e55cb56f54ee62ab02c729c02c955b0131f889939e8c40bafbf",
+   "V2BG11A_nis.irr": "669a516c1661a1aa16070f9854a3d712703e2d7a8c6138feefbf7242c0848c4c",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
   }
  },
@@ -142,5 +144,12 @@
  },
  "defaultParticles": [],
  "propsFile": null,
- "instancedCrowd": null
+ "instancedCrowd": null,
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG11A",
+   "V2BG11A_nis"
+  ]
+ }
 }

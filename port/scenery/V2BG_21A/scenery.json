@@ -16,6 +16,14 @@
    "V2BG_21A_H.o": "f06bf60ba195b0db1ed0954ff0c0593200203b782612281bdf7e21f4d2476d80",
    "V2BG_21A_L.o": "640d7fa4b1e8154561bc7af01a660cd1384c34e8f18e35f136318ee01e4f3d29",
    "V2BG_21A_M.o": "9e63e9cac2575911019be813353a3452cf48c1e3d3f3ab3e43d178165877c787",
+   "V2BG21A0.irr": "8af22f8dd245f041d8c8d9128efe61d1973d92d84b29d1a7f109613d15160b7b",
+   "V2BG21A1.irr": "7b667a82941613d3cc7a4be46bd47db7ff43198ab98b04d519446971b6a8e8e6",
+   "V2BG21A2.irr": "18efdca074cf51933ad2af73c91ab19b8387c3c1fb8780961ac545ca2296145e",
+   "V2BG21A3.irr": "b7dc4bb0620c96cf69c51941154ea3b7ccbf290d6a5ca6830d82e41a19272e03",
+   "V2BG21A0_nis.irr": "196410fe8ed9ead054cb3adb79ef2cd66fc36c28e18c9b87b73e10b9a96718ab",
+   "V2BG21A1_nis.irr": "f3ed4a5ea2bec93862359aa9e95641d01df65f619742f3b724eb2f9ba15c3c73",
+   "V2BG21A2_nis.irr": "18efdca074cf51933ad2af73c91ab19b8387c3c1fb8780961ac545ca2296145e",
+   "V2BG21A3_nis.irr": "b7dc4bb0620c96cf69c51941154ea3b7ccbf290d6a5ca6830d82e41a19272e03",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
   }
  },
@@ -1230,5 +1238,18 @@
  },
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
- "instancedCrowd": null
+ "instancedCrowd": null,
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG21A0",
+   "V2BG21A1",
+   "V2BG21A2",
+   "V2BG21A3",
+   "V2BG21A0_nis",
+   "V2BG21A1_nis",
+   "V2BG21A2_nis",
+   "V2BG21A3_nis"
+  ]
+ }
 }

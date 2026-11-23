@@ -414,6 +414,66 @@ def crowd_loops(crowd: dict, xml: str) -> dict:
     return {"idle": [0, idle], "excited": [frames - excited, frames], "rest": rest}
 
 
+# ---------------------------------------------------------------- lighting (.irr)
+
+def parse_irr(blob: bytes) -> list[dict]:
+    """Each .irr holds light sets of irradiance spheres: probe positions, four intensity floats,
+    ten (r, g, b) coefficients of a symmetric 4x4 irradiance matrix per probe, and a ten-float list
+    the engine copies into the coefficients' fourth lane. EAGL loads two sets per file."""
+    lines = blob.decode("latin-1").replace("\r", "").split("\n")
+    sets, i = [], 0
+
+    def blank():
+        nonlocal i
+        while i < len(lines) and not lines[i].strip():
+            i += 1
+
+    def rows(count, width):
+        nonlocal i
+        blank()
+        out = [[float(v) for v in lines[i + k].split(",")] for k in range(count)]
+        i += count
+        if any(len(r) != width for r in out):
+            raise ValueError("unexpected .irr row width")
+        return out
+
+    while i < len(lines):
+        if not lines[i].startswith("intensityMultiplier"):
+            i += 1
+            continue
+        head = {}
+        while i < len(lines) and lines[i].strip():
+            key, value = lines[i].split()
+            head[key] = float(value)
+            i += 1
+        spheres, rim, shadows = int(head["numSphere"]), int(head["numRim"]), int(head["numShadows"])
+        entry = {"intensityMultiplier": head["intensityMultiplier"],
+                 "rim": {k: head[k] for k in ("rimShadowBias", "rimLightness", "rimFalloff", "rimfade")},
+                 "shadow": {"colour": [head[f"shadowColour{c}"] for c in "RGBA"],
+                            "toneDown": head["shadowToneDown"], "blend": int(head["shadowBlend"])},
+                 "spheres": rows(spheres, 3), "rimLights": rows(rim, 3), "shadowLights": rows(shadows, 3),
+                 "intensity": rows(spheres, 4)}
+        blank()
+        entry["lane"] = [float(lines[i + k]) for k in range(10)]
+        i += 10
+        entry["matrices"] = [rows(10, 3) for _ in range(spheres)]
+        sets.append(entry)
+    if len(sets) != 2:
+        raise ValueError(f"expected two light sets, found {len(sets)}")
+    return sets
+
+
+def entity_lighting(entity_text: str) -> dict[str, list[str]]:
+    """venue -> its lighting setting names, in ENTITY.XML order."""
+    found = {}
+    for body in re.findall(r"<entity>(.*?)</entity>", entity_text, re.S):
+        name = values(body, "name")[0]
+        light = re.search(r"<lighting>(.*?)</lighting>", body, re.S)
+        if name.startswith("V2BG_") and light:
+            found[name] = re.findall(r"<name>(.*?)</name>", light[1])
+    return found
+
+
 # ---------------------------------------------------------------- build
 
 def optional(fn, *args, default):
@@ -486,6 +546,14 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
         if objects:
             props, props_header = pack_props(objects, decoded, textures(ssh_blob))
         layout_name = crowd_locators(entity_blob.decode("latin-1")).get(venue)
+        lighting = []
+        for setting in entity_lighting(entity_blob.decode("latin-1")).get(venue, []):
+            try:
+                irr = get(STAGE, setting + ".irr")
+            except (KeyError, ValueError):
+                continue
+            sources[setting + ".irr"] = sha256(irr)
+            lighting.append({"name": setting, "sets": parse_irr(irr)})
         sources["ENTITY.XML"] = sha256(entity_blob)
         crowd = layout = None
         if layout_name:
@@ -542,6 +610,10 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
         "instancedCrowd": None,
     }
     files = {"scenery.json": None}
+    if lighting:
+        scenery["lighting"] = {"file": "lighting.json", "settings": [x["name"] for x in lighting]}
+        files["lighting.json"] = (json.dumps({"format": "def-jam-ps2-irradiance/1", "settings": lighting},
+                                             separators=(",", ":")) + "\n").encode()
     if props:
         files["props.scene.gz"] = props
     if crowd_header:
@@ -586,6 +658,7 @@ def main(argv: list[str] | None = None) -> int:
                         "propStates": {p["name"]: p["states"] for p in manifest["props"]},
                         "crowdInstances": crowd["instances"] if crowd else 0,
                         "nearCrowdPositions": len(manifest["nearCrowd"]),
+                        "lighting": manifest.get("lighting", {}).get("settings", []),
                         "undecodedProps": [p["name"] for p in manifest["undecodedProps"]]}
         for name, blob in built.items():
             path = OUTPUT.parent / directory(venue) / name

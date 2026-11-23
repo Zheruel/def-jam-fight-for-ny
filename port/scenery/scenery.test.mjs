@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import test from "node:test";
+import { irradiance, sampleIrradiance } from "./irradiance.mjs";
 import { crowdFrame, instancePhase, parseCrowd, parseProps, placementMatrix } from "./scenery.mjs";
 
 const readBuffer = url => {
@@ -99,4 +100,34 @@ test("every Battle venue has an index entry, valid props and a crowd layout wher
   }
   assert.equal(shared.mesh.frames, 383);
   assert.equal(crowdVenues, 10);
+});
+
+test("irradiance lighting: every venue setting has two coherent light sets and the sampler blends them", () => {
+  const dir = new URL("./", import.meta.url);
+  const index = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
+  let settings = 0;
+  for (const [venue, entry] of Object.entries(index)) {
+    const { settings: list } = JSON.parse(readFileSync(new URL(`${entry.dir}/lighting.json`, dir), "utf8"));
+    assert.deepEqual(list.map(x => x.name), entry.lighting, venue);
+    for (const { sets } of list) {
+      settings++;
+      assert.equal(sets.length, 2, venue);
+      for (const set of sets) {
+        assert.equal(set.matrices.length, set.spheres.length);
+        assert.equal(set.intensity.length, set.spheres.length);
+        for (const m of set.matrices) assert.equal(m.length, 10);
+        assert.ok(set.intensityMultiplier > 0 && set.lane.length === 10, venue);
+      }
+    }
+  }
+  assert.equal(settings, 88);
+  const { settings: foundation } = JSON.parse(readFileSync(new URL("foundation/lighting.json", dir), "utf8"));
+  const set = foundation[0].sets[0];
+  // On a probe the blend is dominated by that probe; far away it is the normalised average.
+  const [x, y, z] = set.spheres[0];
+  const near = sampleIrradiance(set, [x + 1e-3, y, z]);
+  assert.ok(Math.abs(near[0] - set.intensityMultiplier * set.matrices[0][0][0]) < 0.05);
+  const up = irradiance(sampleIrradiance(set, [0, 10, 0]), [0, 1, 0]);
+  const down = irradiance(sampleIrradiance(set, [0, 10, 0]), [0, -1, 0]);
+  assert.ok(up[0] > down[0], "the Foundation is lit from above");
 });

@@ -31,6 +31,10 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 23,
+  "lighting": [
+   "V2BG01A",
+   "V2BG01A_nis"
+  ],
   "undecodedProps": [
    "V2BG_01A_A"
   ]
@@ -59,6 +63,10 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 0,
+  "lighting": [
+   "V2BG01B",
+   "V2BG01B_nis"
+  ],
   "undecodedProps": [
    "V2BG_01B_A",
    "V2BG_01B_D",
@@ -121,6 +129,16 @@
   },
   "crowdInstances": 60,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG02A0",
+   "V2BG02A2",
+   "V2BG02A1",
+   "V2BG02A3",
+   "V2BG02A0_nis",
+   "V2BG02A2_nis",
+   "V2BG02A1_nis",
+   "V2BG02A3_nis"
+  ],
   "undecodedProps": []
  },
  "V2BG_03A": {
@@ -143,6 +161,10 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG03A",
+   "V2BG03A_nis"
+  ],
   "undecodedProps": [
    "V2BG_03A_A"
   ]
@@ -206,6 +228,22 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 0,
+  "lighting": [
+   "V2BG04A0",
+   "V2BG04A1",
+   "V2BG04A2",
+   "V2BG04A3",
+   "V2BG04A4",
+   "V2BG04A5",
+   "V2BG04A6",
+   "V2BG04A0_nis",
+   "V2BG04A1_nis",
+   "V2BG04A2_nis",
+   "V2BG04A3_nis",
+   "V2BG04A4_nis",
+   "V2BG04A5_nis",
+   "V2BG04A6_nis"
+  ],
   "undecodedProps": [
    "V2BG_04A_H",
    "V2BG_04A_I",
@@ -366,6 +404,10 @@
   },
   "crowdInstances": 100,
   "nearCrowdPositions": 15,
+  "lighting": [
+   "V2BG05A0",
+   "V2BG05A0_nis"
+  ],
   "undecodedProps": []
  },
  "V2BG_06A": {
@@ -404,6 +446,10 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 29,
+  "lighting": [
+   "V2BG06A",
+   "V2BG06A_nis"
+  ],
   "undecodedProps": []
  },
  "V2BG_07A": {
@@ -438,6 +484,12 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 0,
+  "lighting": [
+   "V2BG07A0",
+   "V2BG07A1",
+   "V2BG07A0_nis",
+   "V2BG07A1_nis"
+  ],
   "undecodedProps": [
    "V2BG_07A_E"
   ]
@@ -448,6 +500,10 @@
   "propStates": {},
   "crowdInstances": 100,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG09A",
+   "V2BG09A_nis"
+  ],
   "undecodedProps": [
    "V2BG_09A_A"
   ]
@@ -458,6 +514,12 @@
   "propStates": {},
   "crowdInstances": 100,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG09B0",
+   "V2BG09B1",
+   "V2BG09B0_nis",
+   "V2BG09B1_nis"
+  ],
   "undecodedProps": [
    "V2BG_09B_A"
   ]
@@ -494,6 +556,10 @@
   },
   "crowdInstances": 120,
   "nearCrowdPositions": 36,
+  "lighting": [
+   "V2BG10A",
+   "V2BG10A_nis"
+  ],
   "undecodedProps": [
    "V2BG_10A_A"
   ]
@@ -542,6 +608,10 @@
   },
   "crowdInstances": 120,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG10B",
+   "V2BG10B_nis"
+  ],
   "undecodedProps": [
    "V2BG_10B_A"
   ]
@@ -552,6 +622,10 @@
   "propStates": {},
   "crowdInstances": 0,
   "nearCrowdPositions": 6,
+  "lighting": [
+   "V2BG11A",
+   "V2BG11A_nis"
+  ],
   "undecodedProps": [
    "V2BG_11A_A"
   ]
@@ -576,6 +650,10 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 34,
+  "lighting": [
+   "V2BG12A",
+   "V2BG12A_nis"
+  ],
   "undecodedProps": []
  },
  "V2BG_13A": {
@@ -662,6 +740,16 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 35,
+  "lighting": [
+   "V2BG13A0",
+   "V2BG13A1",
+   "V2BG13A2",
+   "V2BG13A3",
+   "V2BG13A0_nis",
+   "V2BG13A1_nis",
+   "V2BG13A2_nis",
+   "V2BG13A3_nis"
+  ],
   "undecodedProps": []
  },
  "V2BG_14A": {
@@ -712,6 +800,10 @@
   },
   "crowdInstances": 120,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG14A",
+   "V2BG14A_nis"
+  ],
   "undecodedProps": []
  },
  "V2BG_15A": {
@@ -807,6 +899,12 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 0,
+  "lighting": [
+   "V2BG15A0",
+   "V2BG15A1",
+   "V2BG15A0_nis",
+   "V2BG15A1_nis"
+  ],
   "undecodedProps": [
    "V2BG_15A_I",
    "V2BG_15A_J"
@@ -840,6 +938,10 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG17A",
+   "V2BG17A_nis"
+  ],
   "undecodedProps": [
    "V2BG_17A_A",
    "V2BG_17A_A_A",
@@ -934,6 +1036,12 @@
   },
   "crowdInstances": 60,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG19A0",
+   "V2BG19A1",
+   "V2BG19A0_nis",
+   "V2BG19A1_nis"
+  ],
   "undecodedProps": [
    "V2BG_19A_I"
   ]
@@ -1026,6 +1134,12 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 35,
+  "lighting": [
+   "V2BG20A0",
+   "V2BG20A1",
+   "V2BG20A0_nis",
+   "V2BG20A1_nis"
+  ],
   "undecodedProps": [
    "V2BG_20A_B",
    "V2BG_20A_C"
@@ -1065,6 +1179,16 @@
   },
   "crowdInstances": 0,
   "nearCrowdPositions": 30,
+  "lighting": [
+   "V2BG21A0",
+   "V2BG21A1",
+   "V2BG21A2",
+   "V2BG21A3",
+   "V2BG21A0_nis",
+   "V2BG21A1_nis",
+   "V2BG21A2_nis",
+   "V2BG21A3_nis"
+  ],
   "undecodedProps": [
    "V2BG_21A_C",
    "V2BG_21A_F",
@@ -1099,6 +1223,10 @@
   },
   "crowdInstances": 100,
   "nearCrowdPositions": 28,
+  "lighting": [
+   "V2BG22A",
+   "V2BG22A_nis"
+  ],
   "undecodedProps": [
    "V2BG_22A_A"
   ]
@@ -1131,6 +1259,10 @@
   },
   "crowdInstances": 100,
   "nearCrowdPositions": 28,
+  "lighting": [
+   "V2BG22B",
+   "V2BG22B_nis"
+  ],
   "undecodedProps": [
    "V2BG_22B_A"
   ]
@@ -1175,6 +1307,10 @@
   },
   "crowdInstances": 100,
   "nearCrowdPositions": 29,
+  "lighting": [
+   "V2BG23A",
+   "V2BG23A_nis"
+  ],
   "undecodedProps": [
    "V2BG_23A_E",
    "V2BG_23A_F"

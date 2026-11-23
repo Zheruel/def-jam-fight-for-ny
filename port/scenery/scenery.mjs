@@ -9,6 +9,7 @@
 // Coverage: props are static meshes with discrete break states (pick one state per prop);
 // the instanced crowd is vertex-animated (383 retail frames, idle and excited loops).
 import { fetchPacked } from "../viewer/scene.mjs";
+import { irradiance, sampleIrradiance } from "./irradiance.mjs";
 
 const U32 = 4;
 
@@ -88,7 +89,7 @@ void main() {
   gl_Position = viewProjection * model * vec4(position, 1.0);
 }`;
 const CROWD_VERTEX = `#version 300 es
-in vec2 uv; in vec4 instance; in vec2 style;
+in vec2 uv; in vec4 instance; in vec2 style; in vec3 shade;
 uniform highp usampler2D frames;   // 16-bit XYZ per vertex (x) per retail frame (y)
 uniform mat4 viewProjection; uniform vec3 scale;
 uniform vec2 loop;                 // first frame, frame count of the active cycle
@@ -102,7 +103,7 @@ void main() {
   p = vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z) + instance.xyz;
   // The 256x256 atlas holds four outfits; the model's UVs cover the lower-right one (variant 4).
   float v = mod(style.x - 1.0, 4.0);   // variant 5 (rare, other venues) is not decoded: wrap onto the atlas
-  texcoord = uv - vec2(mod(v, 2.0) < 0.5 ? 0.5 : 0.0, v < 1.5 ? 0.5 : 0.0); tint = vec3(1.0);
+  texcoord = uv - vec2(mod(v, 2.0) < 0.5 ? 0.5 : 0.0, v < 1.5 ? 0.5 : 0.0); tint = shade;
   gl_Position = viewProjection * vec4(p, 1.0);
 }`;
 const FRAGMENT = `#version 300 es
@@ -151,7 +152,7 @@ async function texture(gl, png) {
  *                   false hides it (e.g. after the retail break animation removes it)
  *   crowd           false hides the instanced crowd; otherwise tick/excited drive its frame
  */
-export async function createSceneryRenderer(gl, { manifest, props, crowd }) {
+export async function createSceneryRenderer(gl, { manifest, props, crowd }, { lighting = null, lightScale = 1 } = {}) {
   const state = { props: null, crowd: null };
   const placements = new Map(manifest.props.map(p => [p.name, p.placement]));
 
@@ -185,14 +186,18 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd }) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, crowd.indices, gl.STATIC_DRAW);
     const list = crowd.mesh.instances;
-    const data = new Float32Array(list.flatMap((i, n) =>
-      [...i.translate, i.yawDegrees * Math.PI / 180, i.variant, instancePhase(n)]));
+    const data = new Float32Array(list.flatMap((i, n) => {
+      const yaw = i.yawDegrees * Math.PI / 180;
+      // The crowd mesh has no normals: shade each figure once, by the irradiance toward where it faces.
+      const light = lighting ? irradiance(sampleIrradiance(lighting, i.translate), [Math.sin(yaw), 0, Math.cos(yaw)]) : [1, 1, 1];
+      return [...i.translate, yaw, i.variant, instancePhase(n), ...(lighting ? light.map(v => Math.min(1.5, Math.max(0, v * lightScale))) : light)];
+    }));
     gl.bindBuffer(gl.ARRAY_BUFFER, instances);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    for (const [key, size, offset] of [["instance", 4, 0], ["style", 2, 16]]) {
+    for (const [key, size, offset] of [["instance", 4, 0], ["style", 2, 16], ["shade", 3, 24]]) {
       const at = gl.getAttribLocation(prog, key);
       gl.enableVertexAttribArray(at);
-      gl.vertexAttribPointer(at, size, gl.FLOAT, false, 24, offset);
+      gl.vertexAttribPointer(at, size, gl.FLOAT, false, 36, offset);
       gl.vertexAttribDivisor(at, 1);
     }
     const frames = gl.createTexture();

@@ -26,6 +26,14 @@
    "V2BG_13A_N.o": "fd71c9527392539fa2cf283204c659c496f8370177db9841ac70003ead7d18e5",
    "V2BG_13A_O.o": "317096ecf6a63e0e8c7e2cd3aa5ecfe55ec1cd3cce8218aa7e8423a065f1bca6",
    "V2BG_13A_V.o": "e1035b670d37cfa6af12fe41eb4d117564a3302d3c77b071d0b7742ea082eba1",
+   "V2BG13A0.irr": "700e4c3dcd3e95e0a587c7340f5ae5dc44536151147b099a683b29eecc8e905e",
+   "V2BG13A1.irr": "3fb572a55031e6d8410b1b24995cbf8b17c6bcf687c4cf74b549b9bd44afaedd",
+   "V2BG13A2.irr": "0eb4f891990d3c27bb178a07f3c8f8de1610cc72f8ae830ecb4e5b075ff5c337",
+   "V2BG13A3.irr": "e1a3ffc54c60a42213f5098f6626cb30b57f69368c35a72a3f52b4cf672395d5",
+   "V2BG13A0_nis.irr": "700e4c3dcd3e95e0a587c7340f5ae5dc44536151147b099a683b29eecc8e905e",
+   "V2BG13A1_nis.irr": "3fb572a55031e6d8410b1b24995cbf8b17c6bcf687c4cf74b549b9bd44afaedd",
+   "V2BG13A2_nis.irr": "0eb4f891990d3c27bb178a07f3c8f8de1610cc72f8ae830ecb4e5b075ff5c337",
+   "V2BG13A3_nis.irr": "e1a3ffc54c60a42213f5098f6626cb30b57f69368c35a72a3f52b4cf672395d5",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
   }
  },
@@ -1739,5 +1747,18 @@
  },
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
- "instancedCrowd": null
+ "instancedCrowd": null,
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG13A0",
+   "V2BG13A1",
+   "V2BG13A2",
+   "V2BG13A3",
+   "V2BG13A0_nis",
+   "V2BG13A1_nis",
+   "V2BG13A2_nis",
+   "V2BG13A3_nis"
+  ]
+ }
 }

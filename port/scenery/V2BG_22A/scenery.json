@@ -15,6 +15,8 @@
    "V2BG_22A_D.o": "f73004f5f201ebfb533776d49c9b904016a1fbdaf3fd944c54c3fff691cc4486",
    "V2BG_22A_E.o": "3e4289d64dec041ed04ffef2f8e8fbfba1047a5e0a9d7375f0356d40a8c02d6d",
    "V2BG_22A_F.o": "a26fef2d97dce7081035178508ee53e9cb6fdf30b63fa63cc26f5cd4f873691d",
+   "V2BG22A.irr": "7e81ce108d09666ed9bd695e3dabdf68c1090231047476707ccfdaf95bc1e28d",
+   "V2BG22A_nis.irr": "dbba7c9662d91431d22e74f75c2d15144e18eb990ae81355d6915af93f54ad80",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13",
    "icl_22A.o": "d669aac056a028ebb16c0a0892c18b92bfdf4e5db17a5bf223d8e804ac7dd486",
    "icrowd01.o": "5f14531c8e9ba0d63959175801c4196b666486a0ccb0e835a96b3e3b2a5d8b81",
@@ -2604,6 +2606,13 @@
     ],
     "yawDegrees": 104.0625
    }
+  ]
+ },
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG22A",
+   "V2BG22A_nis"
   ]
  }
 }

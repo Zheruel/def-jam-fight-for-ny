@@ -17,6 +17,8 @@
    "V2BG_06A_L.o": "a545ec5db5c2634f05a91901a742b20b7f7c3d7847897086e3e6c03098dcf074",
    "V2BG_06A_M.o": "76634219e7cbf81b0cf3759aafcb2e036eb75df443f149260c68d3da974c76b2",
    "V2BG_06A_O.o": "3436c7c9e117654b23e2fb18a62776d0e90817c82ff7848d78fa35f92d185cff",
+   "V2BG06A.irr": "8806df9969aad6ccec0c18acfb295a2fe0459e76e20466f2781924dccd04413e",
+   "V2BG06A_nis.irr": "4e37fd87606c5834920d311f26f30fbc7cb02d004d5587628260d6488366e33e",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
   }
  },
@@ -603,5 +605,12 @@
  },
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
- "instancedCrowd": null
+ "instancedCrowd": null,
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG06A",
+   "V2BG06A_nis"
+  ]
+ }
 }

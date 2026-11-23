@@ -18,6 +18,10 @@
    "V2BG_19A_F.o": "f32d3125eb6bd5626d8c46708ea12613a3b9d826d6b055e49d96054e4299ed16",
    "V2BG_19A_G.o": "131a1b4bc5ab357f2681a46f75378d38511b265a1fbe4e7ec11deb5ec509edd4",
    "V2BG_19A_J.o": "78d2b3d8ac8202b8bb23b39e5b70dbb2adeff2bf19de8b89cf31fec879a53fae",
+   "V2BG19A0.irr": "aeb4292fee9690133d3a6fcda5058db8f58642161696172a6d9a698fb7900cba",
+   "V2BG19A1.irr": "f470a8ed7d06c3b663b0401319d599ce895a519ac71b104570a8b1e8fb89734a",
+   "V2BG19A0_nis.irr": "e938c2b44d70dbb745d6d5ab92d6e03de48af543c632b5e8615fcb858dea231b",
+   "V2BG19A1_nis.irr": "616c36538f1fc3f3924a20e102d3560a3f535dc77e4086967ec9da539b7990c2",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13",
    "icl_19A.o": "bc8a4dccb3997dfe37c619fd61e56c00e8061d8b0de162bc24e3384a72abf689",
    "icrowd01.o": "5f14531c8e9ba0d63959175801c4196b666486a0ccb0e835a96b3e3b2a5d8b81",
@@ -1747,6 +1751,15 @@
     ],
     "yawDegrees": -88.875
    }
+  ]
+ },
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG19A0",
+   "V2BG19A1",
+   "V2BG19A0_nis",
+   "V2BG19A1_nis"
   ]
  }
 }

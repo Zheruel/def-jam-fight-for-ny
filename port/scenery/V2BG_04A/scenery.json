@@ -20,6 +20,20 @@
    "V2BG_04A_O.o": "6a61541eba03e823a47c980da43669cccf87501df22b2d1d0b8ebce090d6adea",
    "V2BG_04A_P.o": "5845cee1774754fc36a9ebd73d11d5ed0c7f004baf4f52675e475b6dc5ad6e13",
    "V2BG_04A_T.o": "56f3e1b026084904d78ad158070ed25a4a9f18399366398ca03408683f9340f4",
+   "V2BG04A0.irr": "1744a6064dbd191297845bb250c5d2974dbde23a513191791c82c65a01610adc",
+   "V2BG04A1.irr": "b737018d57da31de48a567eb2ef6d08911f9be99cc08756178e29c1a95819c94",
+   "V2BG04A2.irr": "00cc164522eb81a9692d119db96975a805fb176aecdfc8f5efaee44e4a74d9ce",
+   "V2BG04A3.irr": "a7dcb40e99b095a970a4087262972becc700dcf021ce4e87d11dd345a3b0082e",
+   "V2BG04A4.irr": "1981710a396abed39ec91f743d115410465f8425b54db152f29b5b62f0b3d05c",
+   "V2BG04A5.irr": "be9726d2f667dd3d65a11f68ca8afeb02e2e239170c142752d602fea218e5568",
+   "V2BG04A6.irr": "99ac5b02c214b2e3ccf50c9d4d30937cbe041909de7f3c3c3e86623c18b00113",
+   "V2BG04A0_nis.irr": "9fd4b4f623fd7f86cb1c75d2ba54733fbfee42204462013e305d46ace00008ae",
+   "V2BG04A1_nis.irr": "9fd4b4f623fd7f86cb1c75d2ba54733fbfee42204462013e305d46ace00008ae",
+   "V2BG04A2_nis.irr": "9fd4b4f623fd7f86cb1c75d2ba54733fbfee42204462013e305d46ace00008ae",
+   "V2BG04A3_nis.irr": "a7dcb40e99b095a970a4087262972becc700dcf021ce4e87d11dd345a3b0082e",
+   "V2BG04A4_nis.irr": "1981710a396abed39ec91f743d115410465f8425b54db152f29b5b62f0b3d05c",
+   "V2BG04A5_nis.irr": "1981710a396abed39ec91f743d115410465f8425b54db152f29b5b62f0b3d05c",
+   "V2BG04A6_nis.irr": "1981710a396abed39ec91f743d115410465f8425b54db152f29b5b62f0b3d05c",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
   }
  },
@@ -852,5 +866,24 @@
  "crowdModelRatio": null,
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
- "instancedCrowd": null
+ "instancedCrowd": null,
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG04A0",
+   "V2BG04A1",
+   "V2BG04A2",
+   "V2BG04A3",
+   "V2BG04A4",
+   "V2BG04A5",
+   "V2BG04A6",
+   "V2BG04A0_nis",
+   "V2BG04A1_nis",
+   "V2BG04A2_nis",
+   "V2BG04A3_nis",
+   "V2BG04A4_nis",
+   "V2BG04A5_nis",
+   "V2BG04A6_nis"
+  ]
+ }
 }

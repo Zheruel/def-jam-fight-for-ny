@@ -10,6 +10,10 @@
    "V2BG_09B.xml": "993cd178117057c418ec40ee01acff53b3fa6f6dfe14d296d0fb4a01cd4951ce",
    "V2BG_09B_O.xml": "4f6777e5ae229482b6289d3888cc05922ca61efe1e76acc5dd46151243eaadf9",
    "V2BG_09B.ssh": "3197d5f68019a83477e2751e9fe0280a4b69f4409a507e7ec64d8c7bc0923691",
+   "V2BG09B0.irr": "16b105c3681bf2bf2e36f816bc433710275c6e60488cd542e2e3fcece95d34dd",
+   "V2BG09B1.irr": "3157cd403ec9714a665da9da6ac01330cd4184aa882f33786326cd590c20d458",
+   "V2BG09B0_nis.irr": "6560e1f13eff3a0e894f15045195c7805d37e9d1ea06dc0466eca9bc8dc17a29",
+   "V2BG09B1_nis.irr": "e61d45d86808458334943d765045a7f3a302e98eb2b78db0228ec6fd6480beb3",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13",
    "icl_09B.o": "530bc6b104adc59fc9bc8e94f4ad8de13f7949fa02d7091e91d6dda880971242",
    "icrowd01.o": "5f14531c8e9ba0d63959175801c4196b666486a0ccb0e835a96b3e3b2a5d8b81",
@@ -2284,6 +2288,15 @@
     ],
     "yawDegrees": 90.5625
    }
+  ]
+ },
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG09B0",
+   "V2BG09B1",
+   "V2BG09B0_nis",
+   "V2BG09B1_nis"
   ]
  }
 }

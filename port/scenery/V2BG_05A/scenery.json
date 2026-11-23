@@ -34,6 +34,8 @@
    "V2BG_05A_W.o": "67fc1527d24c9768334fe448b06eaf9a1cb2e12fe78f9f215dfa76dc7848d1ee",
    "V2BG_05A_X.o": "f3859c76002178a6a474f9ec3775d926a27f1eaac980fe3dbd04192fada6a501",
    "V2BG_05A_Z.o": "f92dc0e8e05675585b32e1c0a3ed6f6154bc9c7e01fcf5c74e5ab44a04817570",
+   "V2BG05A0.irr": "255febe722508e26e9c84c2bedf70bc9fd77119cf4dfd55019d6719f36d9e84f",
+   "V2BG05A0_nis.irr": "f26ec2bcf18df03c1b4869f2d30337fef0b09478c183e912c487018240cfeec4",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13",
    "icl_05A.o": "f30368ccd8b734771d88e3ed8d774419aa841c83332566368dfc7fac89430614",
    "icrowd01.o": "5f14531c8e9ba0d63959175801c4196b666486a0ccb0e835a96b3e3b2a5d8b81",
@@ -5233,6 +5235,13 @@
     ],
     "yawDegrees": 10.125
    }
+  ]
+ },
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG05A0",
+   "V2BG05A0_nis"
   ]
  }
 }

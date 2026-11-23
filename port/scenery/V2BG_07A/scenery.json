@@ -13,6 +13,10 @@
    "V2BG_07A_A.o": "59290d98969ad53d46f50c05b6276ca03d2ca39f4d73ea54acbb0aae141e92da",
    "V2BG_07A_B.o": "659775e5f9843dbd844fbd7760c4561bb0bd6370e4cf7208de2c52dc9d6a4b61",
    "V2BG_07A_C.o": "b200868646cc4682ef5bed9a0a58a5d26ab768f04a259465a7bc5356f054175a",
+   "V2BG07A0.irr": "c8cbeb12cd1a328a0e3ce7c2724a0f3e971b0c00908488a896417d1d4b85fcfc",
+   "V2BG07A1.irr": "366d4a6f51e2537c197654646cd8dcdd614aece51bfbb46f635fce2dc7b4b69b",
+   "V2BG07A0_nis.irr": "002791d0848cf76bdb04bbc4f0ab190cbb5df56e95451e727ce292fac4848768",
+   "V2BG07A1_nis.irr": "e5b26491bf3417e229e62b15fffefa667b5c4b8c152d1565aaa291fdf038ca88",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
   }
  },
@@ -679,5 +683,14 @@
  "crowdModelRatio": null,
  "defaultParticles": [],
  "propsFile": "props.scene.gz",
- "instancedCrowd": null
+ "instancedCrowd": null,
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG07A0",
+   "V2BG07A1",
+   "V2BG07A0_nis",
+   "V2BG07A1_nis"
+  ]
+ }
 }

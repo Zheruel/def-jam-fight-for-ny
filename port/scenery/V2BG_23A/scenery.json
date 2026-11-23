@@ -18,6 +18,8 @@
    "V2BG_23A_L.o": "23a52a1dfdc88c60b948cebb995bbf883dd0ccc8e97a04b5c25672d00ea47acb",
    "V2BG_23A_M.o": "e3af95de135cc5a4493d554121d29887dff96dcee9beb06ebc1ad13286c7bdab",
    "V2BG_23A_N.o": "eacbd0f9d9cf36d64c595184484805d9b9e16cf6dc6952ce3c3adb4efc6513c9",
+   "V2BG23A.irr": "f7eb31425a0212e3b8f244e259d8b478eaec6151f1b2498b301491770de40d78",
+   "V2BG23A_nis.irr": "56439f036c1b5edb35c0592aacb54022a59f07039a71234c98acf37843a35868",
    "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13",
    "icl_23A.o": "f646c937a86f96d5caa61beafce2e434c7dac6d713dc283ab615f49a9e0beae7",
    "icrowd01.o": "5f14531c8e9ba0d63959175801c4196b666486a0ccb0e835a96b3e3b2a5d8b81",
@@ -2442,6 +2444,13 @@
     ],
     "yawDegrees": 90.5625
    }
+  ]
+ },
+ "lighting": {
+  "file": "lighting.json",
+  "settings": [
+   "V2BG23A",
+   "V2BG23A_nis"
   ]
  }
 }

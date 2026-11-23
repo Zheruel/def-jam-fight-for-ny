@@ -50,7 +50,22 @@ node port/scenery/compare.mjs      # headless Chrome; no emulator
 
 Undecoded props are skinned, bone-animated models (`*_Skin` microcode, e.g. the Gun Hill Garage cars) or use a VIF layout `port/geometry/venues.py` does not handle; they are listed by name in `scenery.json` `undecodedProps`.
 
-Not decoded: the `nearCrowd` characters (modular V2CM people with their `animcr` clips; see below), weapon/bottle models (`V2WP.VIV`), prop colour morphs (`V2BG_02A_A1.o`…), the per-instance retail animation phase, instance variant 5, and the character spherical-harmonic lighting (`V2BG02A*.irr`) that makes the retail crowd darker toward the camera.
+Not decoded: the `nearCrowd` characters (modular V2CM people with their `animcr` clips; see below), weapon/bottle models (`V2WP.VIV`), prop colour morphs (`V2BG_02A_A1.o`…), the per-instance retail animation phase, instance variant 5, the rim and shadow light terms in `.irr`, and the engine's ambient mix into the first coefficient.
+
+## Irradiance lighting
+
+`<VENUE>/lighting.json` holds every retail `.irr` setting for the venue (88 across the 24 venues; names and order from `ENTITY.XML`, e.g. `V2BG02A0..3` and `_nis`). Each setting has two light sets of probe spheres. `irradiance.mjs` ports the engine's CPU step (SLUS-21004 `0x16ae00`: inverse-distance blend of the probes, times `intensityMultiplier`) and evaluates the ten (r, g, b) coefficients as a symmetric 4x4 irradiance matrix, `[M33, M00, M11, M22, M01, M02, M12, M03, M13, M23]`: `sampleIrradiance(set, position)`, `irradiance(coefficients, normal)`, and `irradianceGLSL`. The VU1 microcode that consumes the coefficients is not disassembled, so the coefficient order and the final scale are inferred. Set 0 of the first setting lights the Foundation fight; the scenery renderer takes `{ lighting: set, lightScale }`.
+
+Check against retail frame 21 (mean grayscale, same camera, fighters posed from the saved trace):
+
+| Region | Retail | Unlit / flat | Irradiance |
+| --- | --- | --- | --- |
+| Foreground spectator A | 16 | 48 | 18 (scale 1) |
+| Foreground spectator B | 21 | 53 | 22 (scale 1) |
+| Blaze's jersey | 96 | 132 | 97 (scale 1.2) |
+| Doc's jersey | 69 | 109 | 69 (scale 1.2) |
+
+The crowd mesh has no normals, so each figure is shaded once by the irradiance toward where it faces. Fighter shading uses the same sampler with their skinned normals; `compare.mjs` renders both. The scales are fitted to this one frame.
 
 ## Near crowd (not done)
 
