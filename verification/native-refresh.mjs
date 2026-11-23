@@ -11,6 +11,12 @@ try {
   browser = await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});
   const page = await browser.newPage({viewport:{width:1600,height:1000},deviceScaleFactor:2});
   await page.addInitScript(() => {
+    const getLocation=WebGL2RenderingContext.prototype.getUniformLocation;
+    window.uniformQueries=0;
+    WebGL2RenderingContext.prototype.getUniformLocation=function(...args) {
+      window.uniformQueries++;
+      return getLocation.apply(this,args);
+    };
     const request = window.requestAnimationFrame.bind(window);
     window.requestAnimationFrame = callback => {
       if (callback.name !== "frame") return request(callback);
@@ -24,6 +30,7 @@ try {
     const result = await page.evaluate(hz => {
       document.querySelector("#restart").click();
       const initial = nativeBattle.diagnostics();
+      const queriesBefore=window.uniformQueries;
       for (let i=0;i<=hz*2;i++) {
         const next = window.nextMatchFrame;
         window.nextMatchFrame = null;
@@ -31,9 +38,10 @@ try {
       }
       const {ticks,renderedFrames,paused} = nativeBattle.diagnostics();
       const canvas = document.querySelector("canvas");
-      return {ticks,frames:renderedFrames-initial.renderedFrames,paused,size:[canvas.width,canvas.height]};
+      return {ticks,frames:renderedFrames-initial.renderedFrames,paused,uniformQueries:window.uniformQueries-queriesBefore,size:[canvas.width,canvas.height]};
     },hz);
     assert.deepEqual([result.ticks,result.frames,result.paused],[120,120,false]);
+    assert.equal(result.uniformQueries,0,"Resolve shader uniforms before the first gameplay frame");
     assert.ok(result.size[0] <= 1280 && result.size[1] <= 960);
     console.log(`${hz} Hz: ${result.frames} draws in 2 simulated seconds at ${result.size.join(" × ")}.`);
   }

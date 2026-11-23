@@ -106,11 +106,10 @@ export async function createHud(gl) {
   }
   // `rematch` (port/hud/rematch.mjs) is the YES/NO choice; its card replaces the banner's plain rematch line.
   return function draw({actors,ticks,outcome,rematch}) {
-    const second=Math.floor(ticks/60);
+    const {minutes,seconds}=outcome.clock;
     const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin,a.eliminated]);
     const four=actors.length>2;
     if(four) {
-      popups=popups.slice(0,actors.length);
       actors.forEach((a,i)=>{
         if(scores[i]!==undefined && ticks<popups[i]?.tick) popups[i]=undefined; // the match restarted
         if(scores[i]!==undefined && a.score>scores[i]) popups[i]={delta:a.score-scores[i],tick:ticks};
@@ -119,18 +118,21 @@ export async function createHud(gl) {
       });
     }
     const fade=i=>popups[i]?Math.floor((ticks-popups[i].tick)/5)+":"+popups[i].delta:"";
-    const key=[second,...bars.flat(),...(four?actors.map((a,i)=>(a.health<1)+fade(i)):[])].join(",");
+    // Only upload the HUD strip whose visible pixels changed. The clock belongs to the top strip.
+    const seatKey=(bar,i)=>four ? bar.join(",")+"/"+fade(i) : bar.join(",");
+    const topKey=minutes+":"+seconds+"/"+seatKey(bars[0],0)+"/"+seatKey(bars[1],1);
+    const lowerKey=four ? seatKey(bars[2],2)+(bars[3] ? "/"+seatKey(bars[3],3) : "") : "";
     gl.bindTexture(gl.TEXTURE_2D,texture);
-    if(four && (key!==lastLower)) {
-      lastLower=key;
+    if(four && lowerKey!==lastLower) {
+      lastLower=lowerKey;
       lowerCtx.clearRect(0,0,640,96);
       for(let seat=2;seat<actors.length;seat++) drawSeat(lowerCtx,actors[seat],seat,bars[seat],popups[seat],ticks);
       gl.bindTexture(gl.TEXTURE_2D,lowerTexture);
       gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,lower);
       gl.bindTexture(gl.TEXTURE_2D,texture);
     }
-    if(key!==last) {
-      last=key;
+    if(topKey!==last) {
+      last=topKey;
       ctx.clearRect(0,0,640,96);
       if(four) for(let seat=0;seat<2;seat++) drawSeat(ctx,actors[seat],seat,bars[seat],popups[seat],ticks);
       else for(let i=0;i<2;i++) {
@@ -145,7 +147,7 @@ export async function createHud(gl) {
         label(actors[i].name.toUpperCase(),...anchors["text_"+id+"_name"],14,"names",i?"right":"left");
         label(String(score),...anchors["text_"+id+"_totalscore"],18,"numbers",i?"right":"left");
       }
-      const clock=[Math.floor(second/60),second%60].map(n=>String(n).padStart(2,"0")).join(":");
+      const clock=[minutes,seconds].map(n=>String(n).padStart(2,"0")).join(":");
       label(clock,320,37,30,"numbers","center");
       gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,surface);
     }

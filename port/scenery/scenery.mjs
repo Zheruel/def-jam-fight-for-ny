@@ -195,7 +195,13 @@ async function texture(gl, png) {
 export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map() }, { lighting = null, lightScale = 1 } = {}) {
   const state = { props: null, crowd: null, weapons: null };
   let drawWeapon = () => {};
-  const placements = new Map(manifest.props.map(p => [p.name, p.placement]));
+  const identity = placementMatrix({translate:[0,0,0], rotate:[0,0,0]});
+  const placements = new Map(manifest.props.map(p => [p.name, p.placement ? placementMatrix(p.placement) : identity]));
+  const hidden = new Set((manifest.hiddenWeapons ?? []).map(name => "weapon_" + name));
+  const placedWeapons = (manifest.weapons ?? []).map(base => ({
+    base, matrix: placementMatrix(base), light: lighting ? sampleIrradiance(lighting, base.translate) : null,
+  }));
+  const uniforms = (prog, names) => Object.fromEntries(names.map(name => [name, gl.getUniformLocation(prog, name)]));
 
   if (props) {
     const prog = program(gl, PROP_VERTEX);
@@ -213,7 +219,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, props.indices, gl.STATIC_DRAW);
     const textures = new Map();
     for (const [shape, png] of props.textures) textures.set(shape, await texture(gl, png));
-    state.props = { prog, vao, vbo, ibo, textures };
+    state.props = { prog, vao, vbo, ibo, textures, uniform: uniforms(prog, ["viewProjection","model"]) };
   }
   if (crowd) {
     const prog = program(gl, CROWD_VERTEX);
@@ -249,7 +255,12 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     const atlas = await texture(gl, crowd.texture);
-    state.crowd = { prog, vao, uv, ibo, instances, frames, atlas, count: list.length };
+    const uniform = uniforms(prog, ["viewProjection","scale","loop","tick","frames","diffuse"]);
+    gl.useProgram(prog);
+    gl.uniform3fv(uniform.scale, crowd.mesh.scale);
+    gl.uniform1i(uniform.frames, 1);
+    gl.uniform1i(uniform.diffuse, 0);
+    state.crowd = { prog, vao, uv, ibo, instances, frames, atlas, count: list.length, uniform };
   }
   if (weapons.size) {
     const prog = program(gl, WEAPON_VERTEX, WEAPON_FRAGMENT);
@@ -271,12 +282,18 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       for (const [shape, png] of data.textures) textures.set(shape, await texture(gl, png));
       models.set(name, { vao, vbo, ibo, textures, batches: data.mesh.batches });
     }
-    state.weapons = { prog, models };
-    drawWeapon = (name, matrix, at) => {
+    const uniform = uniforms(prog, ["viewProjection","model","irradianceCoefficients","lit","lightScale","diffuse"]);
+    gl.useProgram(prog);
+    gl.uniform1i(uniform.lit, lighting ? 1 : 0);
+    gl.uniform1f(uniform.lightScale, lightScale);
+    gl.uniform1i(uniform.diffuse, 0);
+    state.weapons = { prog, models, uniform };
+    const lightBuffer = new Float32Array(30);
+    drawWeapon = (name, matrix, at, light) => {
       const model = models.get(name);
       if (!model) return;
-      if (lighting) gl.uniform3fv(gl.getUniformLocation(prog, "irradianceCoefficients"), sampleIrradiance(lighting, at));
-      gl.uniformMatrix4fv(gl.getUniformLocation(prog, "model"), false, matrix);
+      if (lighting) gl.uniform3fv(uniform.irradianceCoefficients, light ?? sampleIrradiance(lighting, at, lightBuffer));
+      gl.uniformMatrix4fv(uniform.model, false, matrix);
       gl.bindVertexArray(model.vao);
       for (const { shape, first, count } of model.batches) {
         gl.bindTexture(gl.TEXTURE_2D, model.textures.get(shape) ?? null);
@@ -288,9 +305,9 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
 
   function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
     if (state.props) {
-      const { prog, vao, textures } = state.props;
+      const { prog, vao, textures, uniform } = state.props;
       gl.useProgram(prog);
-      gl.uniformMatrix4fv(gl.getUniformLocation(prog, "viewProjection"), false, viewProjection);
+      gl.uniformMatrix4fv(uniform.viewProjection, false, viewProjection);
       gl.bindVertexArray(vao);
       const type = props.mesh.indexBytes === 2 ? gl.UNSIGNED_SHORT : gl.UNSIGNED_INT;
       for (const object of props.mesh.objects) {
@@ -298,9 +315,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
         if (want === false) continue;
         const shown = object.states.find(s => s.name === want);
         if (!shown) throw new Error(`${object.name} has no state ${want}`);
-        const place = placements.get(object.name);
-        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "model"), false,
-          place ? placementMatrix(place) : placementMatrix({ translate: [0, 0, 0], rotate: [0, 0, 0] }));
+        gl.uniformMatrix4fv(uniform.model, false, placements.get(object.name) ?? identity);
         for (const { shape, first, count } of shown.batches) {
           gl.bindTexture(gl.TEXTURE_2D, textures.get(shape) ?? null);
           gl.drawElements(gl.TRIANGLES, count, type, first * props.mesh.indexBytes);
@@ -308,40 +323,35 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
       }
     }
     if (state.crowd && showCrowd) {
-      const { prog, vao, frames, atlas, count } = state.crowd;
+      const { prog, vao, frames, atlas, count, uniform } = state.crowd;
       const [from, to] = excited ? crowd.mesh.loops.excited : crowd.mesh.loops.idle;
       gl.useProgram(prog);
-      gl.uniformMatrix4fv(gl.getUniformLocation(prog, "viewProjection"), false, viewProjection);
-      gl.uniform3fv(gl.getUniformLocation(prog, "scale"), crowd.mesh.scale);
-      gl.uniform2f(gl.getUniformLocation(prog, "loop"), from, to - from);
-      gl.uniform1f(gl.getUniformLocation(prog, "tick"), tick);
+      gl.uniformMatrix4fv(uniform.viewProjection, false, viewProjection);
+      gl.uniform2f(uniform.loop, from, to - from);
+      gl.uniform1f(uniform.tick, tick);
       gl.bindVertexArray(vao);
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, frames);
-      gl.uniform1i(gl.getUniformLocation(prog, "frames"), 1);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, atlas);
-      gl.uniform1i(gl.getUniformLocation(prog, "diffuse"), 0);
       gl.drawElementsInstanced(gl.TRIANGLES, crowd.mesh.indices, gl.UNSIGNED_SHORT, 0, count);
     }
     if (state.weapons) {
-      const { prog, models } = state.weapons;
+      const { prog, uniform } = state.weapons;
       // hiddenWeapons: true reveals every hidden weapon at its placement; an array of names reveals only those.
-      const hidden = new Set((manifest.hiddenWeapons ?? []).map(n => "weapon_" + n));
       const revealed = new Set(Array.isArray(hiddenWeapons) ? hiddenWeapons.map(n => n.startsWith("weapon_") ? n : "weapon_" + n) : []);
       gl.useProgram(prog);
-      gl.uniformMatrix4fv(gl.getUniformLocation(prog, "viewProjection"), false, viewProjection);
-      gl.uniform1i(gl.getUniformLocation(prog, "lit"), lighting ? 1 : 0);
-      gl.uniform1f(gl.getUniformLocation(prog, "lightScale"), lightScale);
-      gl.uniform1i(gl.getUniformLocation(prog, "diffuse"), 0);
+      gl.uniformMatrix4fv(uniform.viewProjection, false, viewProjection);
       gl.activeTexture(gl.TEXTURE0);
-      for (const base of manifest.weapons ?? []) {
+      for (const {base, matrix, light} of placedWeapons) {
         const choice = shown[base.name];
         // A weapon entry is false (gone), or { translate, rotate } to show it somewhere else, such as a dropped bottle.
         const over = choice && typeof choice === "object" ? choice : null;
         if (choice === false || (!over && hidden.has(base.name) && hiddenWeapons !== true && !revealed.has(base.name))) continue;
-        const w = over ? { ...base, ...over } : base;
-        drawWeapon(w.model, over?.matrix ?? placementMatrix(w), w.translate);
+        if (over) {
+          const w = {...base, ...over};
+          drawWeapon(w.model, over.matrix ?? placementMatrix(w), w.translate);
+        } else drawWeapon(base.model, matrix, base.translate, light);
       }
       // Weapons the match holds or has dropped: a model and a world matrix (column-major, translation last).
       for (const { model, matrix } of dynamicWeapons) drawWeapon(model, matrix, [matrix[12], matrix[13], matrix[14]]);
