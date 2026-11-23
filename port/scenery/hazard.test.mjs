@@ -111,6 +111,45 @@ test("subway: the natural train hits a fighter in the pit; they lose at full hea
   assert.equal(fight.outcome().over, false);
 });
 
+// Controller-driven: a closed-loop pad script (nothing is placed). Both fighters walk to the platform edge and mash the
+// buttons; one is pushed or thrown over it. The pit is what retail tests (the floor word at +932 below -1: the track bed).
+// Returns what the retail code did when the first train hit.
+const edgeButtons = [...buttons, 0x2100, 0x2400, 0x2800, 0x2200, 0x8800, 0x8400, 0x4800];
+function edgeFight(fight, seed) {
+  const m = fight.memory, word = a => m.getUint32(a, true), scalar = a => m.getFloat32(a, true);
+  let random = seed * 7919 + 1, held = [0, 0];
+  const next = () => (random = (Math.imul(random, 1664525) + 1013904223) >>> 0);
+  const at = i => [scalar(ACTORS[i] + 0x44), scalar(ACTORS[i] + 0x4c)];
+  const go = (i, tx, tz) => { const [x, z] = at(i), dx = tx - x, dz = tz - z, d = Math.hypot(dx, dz); return d < 2 ? { x: 0, z: 0 } : { x: dx / d, z: -dz / d }; };
+  const attacker = seed % 2, victim = 1 - attacker, warning = [];
+  for (let tick = 0; tick < 1100; tick++) {
+    if (fight.outcome().over) return { tick, warning, outcome: fight.outcome(), actors: fight.diagnostics().actors };
+    if (tick % 12 === 0) held = [edgeButtons[next() % 19], edgeButtons[next() % 19]];
+    const [vx, vz] = at(victim);
+    const pads = tick < 500 ? [go(attacker, vx, vz + 6), go(victim, (seed % 5 - 2) * 6, -37)] : [go(attacker, vx, vz + 5), go(victim, vx, -40)];
+    pads[attacker] = { ...pads[attacker], buttons: tick > 300 && tick % 12 < 4 ? held[attacker] : 0 };
+    pads[victim] = { ...pads[victim], buttons: tick > 300 && tick % 12 < 3 && seed % 3 === 0 ? held[victim] : 0 };
+    fight.tick(pads);
+    if (tick === 995) for (const a of ACTORS) warning.push({ state: word(a + 0x30), floor: scalar(a + 932), zone: half(m, a + 2344) });
+  }
+  return null;
+}
+
+test("subway: a pad-driven fight at the platform edge ends under the first train as a hazard result", async () => {
+  const results = {};
+  for (const seed of [3, 2, 6]) {
+    const fight = await match(4);
+    const r = edgeFight(fight, seed);
+    assert.ok(r, "round over before tick 1100");
+    results[seed] = [r.tick, r.outcome.winner, r.outcome.loser, r.outcome.method, r.actors.map(a => a.health > 0)];
+    // Retail marked whoever was in a hazard state or over the track bed as the train came in.
+    const lost = r.outcome.winner === null ? [0, 1] : [r.outcome.loser];
+    for (const slot of lost) assert.ok(r.warning[slot].floor < -1 || [12, 13, 19, 86, 90, 91].includes(r.warning[slot].state), JSON.stringify(r.warning[slot]));
+  }
+  // Seed 3 and 2: one fighter is in the pit, the other wins. Seed 6: both are over the track, so nobody wins.
+  assert.deepEqual(results, { 3: [1002, 0, 1, "hazard", [true, true]], 2: [1002, 0, 1, "hazard", [true, true]], 6: [1002, null, 0, "hazard", [true, true]] });
+});
+
 test("subway: with nobody in the pit the natural train hits nothing", async () => {
   const fight = await match(4);
   assert.equal(runTrain(fight, null), null);
