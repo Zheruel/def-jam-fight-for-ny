@@ -23,3 +23,9 @@ python3 port/kernel/build.py private/native-kernel/generated --out private/nativ
 node verification/native-combat.mjs --seed CAPTURE/fighter-ram-0.bin private/native-kernel/tracked/battle.wasm port/kernel/foundation-start.gz
 node verification/native-combat.mjs
 ```
+
+The native player loads the original MAIN_ALL.DAT through the compiled match rules parser. Its WPAR tables supply the 75 roster records in either player slot. The profile test compares the complete 232-byte output for Blaze and Doc against the reference snapshot. Rebuild or check the rules from the disc with the motion extractor.
+
+```sh
+python3 port/motion/extract.py private/ps2/reference.iso --check
+```

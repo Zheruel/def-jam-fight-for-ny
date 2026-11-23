@@ -1,3 +1,4 @@
+import { loadMatchRules } from "./roster.mjs";
 import { installArena,loadArena } from "./arena.mjs";
 import { instantiateBattle } from "../kernel/runtime.mjs";
 import { poseIndex } from "../motion/pose-bank.mjs";
@@ -7,15 +8,16 @@ const ACTOR = [0x4bc170,0x4bd468];
 const rad = Math.PI / 180;
 
 export async function loadFoundationFight(fighters,venue) {
-  const [source,seed,arena]=await Promise.all([
+  const [source,seed,arena,rules]=await Promise.all([
     fetchPacked(new URL("../kernel/battle.wasm.gz",import.meta.url)),
     fetchPacked(new URL("../kernel/foundation-start.gz",import.meta.url)),
     venue.file==="V2BG_02A" ? null : loadArena(venue),
+    fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
   ]);
-  return createFoundationFight(fighters,source,seed,arena);
+  return createFoundationFight(fighters,source,seed,arena,rules);
 }
 
-export async function createFoundationFight(fighters,source,seed,arena) {
+export async function createFoundationFight(fighters,source,seed,arena,rules) {
   let memory;
   const word = address => memory.getUint32(address,true);
   const scalar = address => memory.getFloat32(address,true);
@@ -82,6 +84,7 @@ export async function createFoundationFight(fighters,source,seed,arena) {
       const page = file.getUint32(at,true);
       bytes.set(new Uint8Array(seed,at+4,4096),page*4096);
     }
+    if(rules) loadMatchRules(kernel,rules);
     if(arena) installArena(kernel,arena,ACTOR);
     ACTOR.forEach((a,i) => {
       place(i,a+0xc4,a+0xd0);

@@ -1,5 +1,6 @@
 """Extract the retail motion-name tables, per-fighter move slots and loaded clip lists."""
 import argparse
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -98,13 +99,17 @@ def main():
     disc = Disc(args.iso)
     try:
         library, settings = build(disc)
+        rules = disc.read("/MOTION/MAIN_ALL.DAT", 0, disc.iso.entry("/MOTION/MAIN_ALL.DAT").size)
+        rules_file = ROOT / "port/kernel/match-rules.gz"
         encoded = json.dumps(library,separators=(",",":"))+"\n"
     finally:
         disc.close()
     if args.check:
-        if OUTPUT.read_text() != encoded or (HERE / "motion-settings.bin").read_bytes() != settings:
+        if (OUTPUT.read_text() != encoded or (HERE / "motion-settings.bin").read_bytes() != settings
+                or gzip.decompress(rules_file.read_bytes()) != rules):
             raise SystemExit("Motion library differs from retail")
     else:
+        rules_file.write_bytes(gzip.compress(rules, mtime=0))
         OUTPUT.write_text(encoded)
         (HERE / "motion-settings.bin").write_bytes(settings)
 
