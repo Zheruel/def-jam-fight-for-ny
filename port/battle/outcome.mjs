@@ -7,6 +7,7 @@
 // while their health ratio (+0x35c) is below 0.1. 0x30bb40 then zeroes their health, flags them (+0x932 bit 0x20) and
 // the referee 0x2e6260 posts the result event through 0x2e67c8. 0x2dbbd8 turns that into phase 2 and 3 and stores the
 // winning slot at G+0x14 / G+0x18. Flags 0x100 (winner) and 0x200 (loser) are left in each actor's +0x932.
+// A time limit (timer setting 0x4bbd30, table 0x392db8) ends the match through 0x2e5e88 -> 0x2e5ff8 the same way.
 const G = 0x4bbf90;
 const PHASE = Object.freeze({ intro: 0, fight: 1, ending: 2, result: 3 });
 const WINNER = 0x100, LOSER = 0x200;
@@ -31,14 +32,16 @@ export function createOutcome(kernel, actors) {
     const marks = actors.map(a => half(a + 0x932));
     let winner = null, loser = null;
     if (over) {
+      // 0x2e67c8 flags the winner and loser. No flags means a drawn time-up: 0x2e5ff8 only ranks fighters by score when
+      // the match rules enable it (0x4bbd2c bit 0x40, clear in the Foundation start data).
       winner = marks.findIndex(m => m & WINNER);
       loser = marks.findIndex(m => m & LOSER);
-      if (winner < 0) winner = word(G + 0x14);
-      if (loser < 0) loser = actors.findIndex((_, slot) => slot !== winner);
+      if (winner < 0) winner = null;
+      if (loser < 0) loser = null;
     }
     return {
-      phase, over, result: phase >= PHASE.result, winner, loser,
-      method: !over ? null : scalar(actors[loser] + 0x350) <= 0 ? "ko" : "time",
+      phase, over, result: phase >= PHASE.result, winner, loser, draw: over && winner === null,
+      method: !over ? null : loser !== null && scalar(actors[loser] + 0x350) <= 0 ? "ko" : "time",
       // Retail match clock (G+0x1a8 minutes, G+0x1ac seconds); it advances while the referee runs.
       clock: { minutes: word(G + 0x1a8), seconds: word(G + 0x1ac) },
       ticksSinceOver: overFor,

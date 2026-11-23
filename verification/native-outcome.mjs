@@ -23,15 +23,18 @@ const match=await createFoundationFight(fighters,packed("kernel/battle.wasm.gz")
 const ACTOR=[0x4bc170,0x4bd468], buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
 const word=a=>match.memory.getUint32(a,true), scalar=a=>match.memory.getFloat32(a,true);
 
-// Both fighters brawl on a fixed input script; the victim starts nearly spent so a hard knockdown ends the match.
-function play(victim,seed,limit=12000) {
+// Both fighters brawl on a fixed input script. The victim either starts nearly spent (a hard knockdown ends the match
+// quickly) or, with spent=false, plays the whole match from full health on retail's own rules.
+function play(victim,seed,{spent=true,limit=12000}={}) {
   match.rematch();
   const start=match.diagnostics();
   assert.equal(start.outcome.phase,1,"a fresh match starts in the fight phase");
   assert.equal(start.outcome.over,false);
-  const max=scalar(ACTOR[victim]+0x354);
-  match.memory.setFloat32(ACTOR[victim]+0x350,8,true);
-  match.memory.setFloat32(ACTOR[victim]+0x35c,8/max,true);
+  if(spent) {
+    const max=scalar(ACTOR[victim]+0x354);
+    match.memory.setFloat32(ACTOR[victim]+0x350,8,true);
+    match.memory.setFloat32(ACTOR[victim]+0x35c,8/max,true);
+  }
   let random=seed,held=[0,0];
   const next=()=>{random=(Math.imul(random,1664525)+1013904223)>>>0;return random;};
   const phases=[];
@@ -51,9 +54,26 @@ function play(victim,seed,limit=12000) {
   assert.fail(`no result within ${limit} ticks (victim ${victim})`);
 }
 
+// Time limit: timer setting 9 is ten seconds (table 0x392db8). Idle fighters; retail 0x2e5ff8 ranks them by score only when
+// the match rules enable it (0x4bbd2c bit 0x40), otherwise the time-up is a draw.
+function timeUp(scores,ranked) {
+  match.rematch();
+  match.memory.setUint32(0x4bbd30,9,true);
+  if(ranked) match.memory.setUint16(0x4bbd2c,match.memory.getUint16(0x4bbd2c,true)|0x40,true);
+  ACTOR.forEach((a,i)=>match.memory.setUint32(a+0x480,scores[i],true));
+  const phases=[];
+  for(let tick=0;tick<1200;tick++) {
+    const {outcome}=match.diagnostics();
+    if(phases.at(-1)!==outcome.phase) phases.push(outcome.phase);
+    if(outcome.ticksSinceOver>=REMATCH_DELAY+30) return {phases,outcome,tick,names:match.diagnostics().actors.map(a=>a.name)};
+    match.tick([{buttons:0,x:0,z:0},{buttons:0,x:0,z:0}]);
+  }
+  assert.fail("the ten second limit never ended the match");
+}
+
 const rounds=[];
-for(const [victim,seed] of [[1,17],[0,5],[1,9]]) {
-  const r=play(victim,seed), winner=1-victim, {outcome}=r;
+for(const [victim,seed,options] of [[1,17],[0,17],[1,9],[1,17,{spent:false,limit:16000}]]) {
+  const r=play(victim,seed,options), winner=1-victim, {outcome}=r;
   assert.deepEqual(r.phases,[1,2,3],`match phases for victim ${victim}: ${r.phases}`);
   assert.equal(outcome.winner,winner,"the survivor wins");
   assert.equal(outcome.loser,victim);
@@ -77,6 +97,19 @@ const again=play(1,17);
 assert.equal(again.finishTick,rounds[0].finishTick,"rematch reproduces the finish tick");
 assert.deepEqual(again.outcome.clock,rounds[0].outcome.clock);
 
+const timed=[[[300,100],true,0],[[100,300],true,1],[[100,300],false,null]].map(([scores,ranked,winner])=>{
+  const r=timeUp(scores,ranked);
+  assert.deepEqual(r.phases,[1,2,3]);
+  assert.equal(r.outcome.method,"time");
+  assert.equal(r.outcome.winner,winner,`scores ${scores} ranked ${ranked}`);
+  assert.equal(r.outcome.draw,winner===null);
+  assert.deepEqual(r.outcome.clock,{minutes:0,seconds:10},"retail clock stops at the limit");
+  const lines=resultLines(r.outcome,r.names);
+  assert.equal(lines[0].text,"TIME");
+  assert.ok(lines.some(l=>l.text===(winner===null?"DRAW":`${r.names[winner].toUpperCase()} WINS`)));
+  return {...r,winner,ranked};
+});
+
 // Rematch restores a clean match.
 match.rematch();
 const fresh=match.diagnostics();
@@ -87,5 +120,6 @@ assert.deepEqual(fresh.outcome.effects,[]);
 fresh.actors.forEach(a=>assert.equal(a.health,a.maxHealth));
 assert.equal(resultLines(fresh.outcome,[]),null);
 
-console.log(`${rounds.length+1} consecutive native matches ended in a retail KO and rematched cleanly:`);
+console.log(`${rounds.length+1} consecutive native matches ended in a retail KO and rematched cleanly (the last of them from full health):`);
 rounds.forEach(r=>console.log(`  victim slot ${r.victim}: finish at tick ${r.finishTick}, phases ${r.phases.join(">")}, winner ${r.outcome.winner}, clock ${r.outcome.clock.minutes}:${String(r.outcome.clock.seconds).padStart(2,"0")}`));
+timed.forEach(r=>console.log(`  ten second limit, ${r.ranked?"scored":"unscored"}: ${r.winner===null?"draw":"winner slot "+r.winner} at tick ${r.tick}`));
