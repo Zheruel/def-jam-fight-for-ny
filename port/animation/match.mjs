@@ -1,6 +1,6 @@
 import { instantiateSampler } from "./runtime.mjs";
 import { installWrestlingBank } from "./banks.mjs";
-import { composePose, applyBoneEuler } from "../fighters/pose.mjs";
+import { composePose, applyBoneEuler, applyFaceRest } from "../fighters/pose.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
 
 export async function loadMatchAnimation(fighters) {
@@ -19,6 +19,11 @@ export async function createMatchAnimation(source,shared,banks) {
       sampler.ram.set(new Uint8Array(shared,i+4,4096),sharedView.getUint32(i,true)*4096);
     banks.forEach((bank,slot)=>installWrestlingBank(sampler,slot,bank));
   }
+  // The sampler RAM is seeded with Blaze and Doc: give every fighter its own face-bone rest (see pose.mjs faceRest).
+  const blendTarget=slot=>{
+    const character=sampler.memory.getUint32(0x471230+slot*4,true);
+    return new Float32Array(sampler.ram.buffer,sampler.ram.byteOffset+sampler.memory.getUint32(character+0x180,true),94*12);
+  };
   function compose(state,slot) {
     const entries=sampler.pose(slot), pose=composePose(state,entries);
     state.entries=entries;
@@ -43,8 +48,7 @@ export async function createMatchAnimation(source,shared,banks) {
       return;
     }
     const dx=state.actorPosition[0]-from[0], dz=state.actorPosition[2]-from[2], a=state.yaw*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
-    const character=sampler.memory.getUint32(0x471230+slot*4,true);
-    const target=new Float32Array(sampler.ram.buffer,sampler.ram.byteOffset+sampler.memory.getUint32(character+0x180,true),94*12);
+    const target=blendTarget(slot);
     const shown=state.final ?? Float32Array.from(sampler.pose(slot)), {weight}=pending, keep=1-weight;
     // The engine edits the array that holds the previous pose, so this tick's aim joins the lerp (and carries into later blend ticks).
     for(const [id,euler] of pending.aim) applyBoneEuler(shown,id,euler);
@@ -61,6 +65,8 @@ export async function createMatchAnimation(source,shared,banks) {
   return {reset,duration:sampler.duration,finish,
     sample(state,slot,bank,local,frame,blendWeight,transition) {
       const root=sampler.sample(slot,bank,local,frame,{blend:blendWeight,transition});
+      applyFaceRest(state,sampler.pose(slot));
+      if(blendWeight!==undefined) applyFaceRest(state,blendTarget(slot));
       state.pending=blendWeight===undefined ? null : {weight:blendWeight,root:[root[0]-state.root[0],root[2]-state.root[2]],aim:[]};
       compose(state,slot);
       state.root=root;

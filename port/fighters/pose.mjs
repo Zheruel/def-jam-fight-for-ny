@@ -179,3 +179,56 @@ export function boneWorldMatrix(model, entries, actor, boneId, composed = compos
   multiply(composed, bone * 16, actor, 0, out, 0);
   return out;
 }
+
+// ---- per-fighter face rest -------------------------------------------------------------------------------------------
+// Body clips never drive the face bones; the engine leaves their pose entries at the character's rest. The model JSON's bind
+// pose carries that rest per fighter: local translation = bindWorld * inverse(parent bindWorld). Verified against the live
+// Blaze and Doc pose arrays: bones 68-72 and 77-80 equal their own bind-local translation, and the eye bones 73 and 75 hold the
+// bind-local translation of the bones numbered one above them (74, 76; the model JSON's parents for 73-76 are shifted), while 74
+// and 76 stay at the identity. Fingers (21-35, 42-56) are one shared hand pose and need no per-fighter data.
+export const FACE_TRANSLATION_SOURCE = Object.freeze({ 68: 68, 69: 69, 70: 70, 71: 71, 72: 72, 73: 74, 75: 76, 77: 77, 78: 78, 79: 79, 80: 80 });
+
+function invertAffine(m) {
+  const r = new Float64Array(16);
+  const a = m[0], b = m[1], c = m[2], d = m[4], e = m[5], f = m[6], g = m[8], h = m[9], i = m[10];
+  const det = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+  r[0] = (e * i - f * h) / det; r[1] = (c * h - b * i) / det; r[2] = (b * f - c * e) / det;
+  r[4] = (f * g - d * i) / det; r[5] = (a * i - c * g) / det; r[6] = (c * d - a * f) / det;
+  r[8] = (d * h - e * g) / det; r[9] = (b * g - a * h) / det; r[10] = (a * e - b * d) / det;
+  r[15] = 1;
+  for (let j = 0; j < 3; j++) r[12 + j] = -(m[12] * r[j] + m[13] * r[4 + j] + m[14] * r[8 + j]);
+  return r;
+}
+
+const faceRestCache = new WeakMap();
+/** {bone: [x, y, z]} rest translations for the face bones of a fighter (model JSON `bones` with bindWorld, or inverseBind, and parent). */
+export function faceRest(model) {
+  let rest = faceRestCache.get(model.bones);
+  if (rest) return rest;
+  const world = (k) => model.bones[k].bindWorld ?? invertAffine(model.bones[k].inverseBind);
+  const local = (k) => {
+    const parent = model.bones[k].parent;
+    if (parent === null || parent === undefined) return world(k);
+    const out = new Float64Array(16);
+    multiply(world(k), 0, invertAffine(world(parent)), 0, out, 0);
+    return out;
+  };
+  rest = {};
+  for (const [bone, source] of Object.entries(FACE_TRANSLATION_SOURCE)) {
+    if (source >= model.bones.length) continue;
+    const m = local(source);
+    rest[bone] = [m[12], m[13], m[14]];
+  }
+  faceRestCache.set(model.bones, rest);
+  return rest;
+}
+
+/** Write a fighter's own face-bone rest translations into a pose array (engine entry layout). */
+export function applyFaceRest(model, entries) {
+  const rest = faceRest(model);
+  for (const bone in rest) {
+    const t = rest[bone], at = bone * 12 + 8;
+    entries[at] = t[0]; entries[at + 1] = t[1]; entries[at + 2] = t[2];
+  }
+  return entries;
+}

@@ -88,3 +88,13 @@ test("composePose x actorMatrix equals the retail bone world matrices (0x132a28)
     assert.ok(worst < tolerance, `slot ${slot} worst ${worst}`);
   }
 });
+
+test("faceRest reproduces the live Blaze and Doc face-bone rest translations from the model bind pose", async () => {
+  const { faceRest } = await import("./pose.mjs");
+  for (const [file, who] of [["V2IP_113A", "blaze"], ["V2IP_109A", "doc"]]) {
+    const rig = json(`motions/fixture-rig-${who}.json`), rest = faceRest(model(file));
+    for (const bone of Object.keys(rest)) {
+      rest[bone].forEach((v, i) => near(v, rig.defaultTranslations[bone][i], 2e-3));
+    }
+  }
+});

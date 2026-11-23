@@ -87,3 +87,13 @@ the procedural waist/head aim (below).
   v = yaw state at actor+0x78 (|v| <= 45), p = pitch state at actor+0x68 (|p| <= 20); the live residual over the clip is exactly these two rotations
   (|d| = 1, no z), ~0.1 deg at distance 50 and 5-8 deg at distance 8. It moves hands by up to 0.5 units. `0x132b00(slot, eulerVec, posVec)` hands the actor's
   world rotation/position (actor+0xC4 / +0x50) to the skeleton.
+
+## Production adapter behaviour (port/animation/match.mjs, port/battle/fight.mjs)
+
+- `0x132ab8` -> `applyBoneEuler` on the sampler pose in place; `0x132a28` -> `boneWorldMatrix` x actor matrix; `0x132bb8` blends are finished by
+  `animation.finish()` after each tick (previous shown pose lerped toward the +0x180 clip pose by the engine's k/12 weight, bone-0 x/z
+  compensated by the actor's own movement (+0x44) plus the root-offset change; aim joins before the lerp). Game logic keeps reading the
+  un-blended +0x17c pose (`state.entries`/`state.world`); `state.final`/`state.skin` are the shown pose.
+- Face bones: the sampler RAM is seeded with Blaze/Doc, so every sample writes the fighter's own face rest (`faceRest`, bind-local translations;
+  eye bones 73/75 take the bind-local of 74/76). Exact against the live Blaze/Doc rigs.
+- `node port/fighters/verify-native-pose.mjs --offset 1` runs the production match against the recorded run-BjNMn0 poses.
