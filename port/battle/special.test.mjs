@@ -239,5 +239,65 @@ test("demolition (Gun Hill Garage): a car with two of its five key panels destro
   assert.deepEqual([...Array(6)].map((_, i) => m.getUint16(0x3f1088 + 2 * i * 2 + 2, true)), [0x20, 8, 0x80, 0x100, 0x200, 0x400], "and their result types");
 });
 
-test.todo("ringout: retail shows no finish for a fighter outside the ring (reference run), so the Dragon House railings (events 05A_n) are the only rule found");
-test.todo("end to end window KO and car totalling by pad-driven throws");
+// Replays a recorded controller trace (verification/special-traces.mjs): pokes and pad frames only, no logic. Returns what happened.
+async function replay(name) {
+  const trace = JSON.parse(readFileSync(new URL("./special-traces.json", import.meta.url), "utf8"))[name];
+  const { createEnvironment } = await import("../scenery/environment.mjs");
+  const events = JSON.parse(readFileSync(new URL("../scenery/events.json", import.meta.url), "utf8"));
+  const manifest = JSON.parse(readFileSync(new URL(`../scenery/${trace.file}/scenery.json`, import.meta.url), "utf8"));
+  const env = createEnvironment(manifest, events.names, { weaponModels: events.weaponModels });
+  const fight = await nativeMatch(trace.venue), m = fight.memory;
+  for (let t = 0; t < trace.base; t++) fight.tick([idle, idle]);
+  const held = [0, 0], seen = [];
+  let finish = null;
+  for (let t = 0; t < trace.ticks; t++) {
+    for (const [at, slot, x, z] of trace.pokes) {
+      if (at !== t) continue;
+      if (x === "hp") m.setFloat32(A[slot] + 0x350, z, true);
+      else for (const o of [0x44, 0xc4]) { m.setFloat32(A[slot] + o, x, true); m.setFloat32(A[slot] + o + 8, z, true); }
+    }
+    for (const [at, slot, buttons] of trace.pads) if (at === t) held[slot] = buttons;
+    fight.tick(held.map(buttons => ({ buttons, x: 0, z: 0 })));
+    for (const ev of env.update(m, 1, fight.states)) seen.push([t, events.names[ev.id]]);
+    if (fight.outcome().over) { finish = { tick: t, method: fight.outcome().method, loser: fight.outcome().loser, flags: [0, 1].map(i => m.getUint16(A[i] + 0x932, true)) }; break; }
+  }
+  return { trace, fight, seen, finish };
+}
+
+test("ringout: pad-driven throw and slams break a Dragon House rail in three stages (05A_7A, 7B, 7C) and the round goes on", async () => {
+  // Player one grapples (cross), throws with no stick (circle) at the wall, steps up to the slumped fighter and grabs him
+  // again: the retail slam pair, states 103 / 104. Each slam takes one point of the rail's health (3 -> 0).
+  const { trace, fight, seen, finish } = await replay("ringout-rail-break");
+  assert.deepEqual(seen, trace.events, "the recorded events");
+  assert.deepEqual(seen.map(e => e[1]), ["05A_7A", "05A_7B", "05A_7C"]);
+  const health = type => fight.memory.getUint32(0x3994e0 + type * 0x38 + 0x14, true);
+  assert.equal(health(0x9d), 0, "the slammed rail type is broken");
+  assert.equal(finish, null, "breaking a rail ends nothing: no ring out follows from the slams alone");
+});
+
+test("window (Crow's Office): a pad-driven slam into the wall breaks a pane (15A_12); a KO-ready victim loses the round instead", async () => {
+  const slam = await replay("window-slam");
+  assert.deepEqual(slam.seen, [[144, "15A_12"]]);
+  assert.equal(slam.finish, null);
+  const ko = await replay("window-slam-ko-ready");
+  assert.deepEqual(ko.seen, []);
+  assert.deepEqual(ko.finish, { tick: 235, method: "ko", loser: 1, flags: [0x100, 0x200] }, "the same slam on a KO-ready fighter is a knockout (retail 0x308874)");
+});
+
+test("ringout: the referee turns mark 0x80 into the RING OUT result (0x800, G+0x1bc 0x8000) as the retail reference showed", async () => {
+  const fight = await nativeMatch(SPECIAL.ringout.venue), m = fight.memory;
+  for (let i = 0; i < 40; i++) fight.tick([idle, idle]);
+  m.setUint16(A[1] + 0x932, m.getUint16(A[1] + 0x932, true) | 0x80, true);
+  const latch = createFinishLatch(m);
+  assert.equal(latch.observe(), "ringout");
+  fight.tick([idle, idle]);   // the referee frame: it posts the result and the match flags the HUD reads (retail captured 0x8406 / record 0x08010021)
+  assert.ok(m.getUint32(G + 0x1bc, true) & 0x8000, "ring out sets the match flag the HUD reads");
+  assert.equal(m.getUint32(0x4c1c58 + 0xc, true), 0x08010021, "the result record equals the retail capture's");
+  for (let i = 0; i < 3; i++) fight.tick([idle, idle]);
+  const o = fight.outcome();
+  assert.deepEqual([o.over, o.winner, o.loser], [true, 0, 1]);
+  assert.equal(m.getUint16(0x3f1088 + 12 + 2, true), 0x800, "table entry 7: mark 0x80 -> result 0x800");
+});
+
+test.todo("ringout: the natural throw that carries a fighter out of the ring (state 19 with mark 0x80) is not found; retail forced mark 0x80 shows RING OUT");
+test.todo("end to end car totalling by pad-driven throws at the Gun Hill cars");
