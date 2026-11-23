@@ -15,13 +15,13 @@
   </style>
 </head>
 <body data-battle>
-<header><h1>Blaze vs. Doc · The Foundation</h1>
+<header><h1>Blaze vs. Doc</h1><select id="venue" aria-label="Match venue"></select>
 
-  <button id="restart">Restart</button><p id="status" role="status">Loading native Battle…</p>
+  <button id="restart">Restart</button><button id="sound">Mute</button><p id="status" role="status">Loading native Battle…</p>
 </header>
 <main><canvas tabindex="0" aria-label="Native Battle"></canvas><video id="remote" muted autoplay playsinline hidden></video></main>
 <footer><button id="host">Host match</button><input id="code" aria-label="Room code" placeholder="Room code" maxlength="8">
-  <button id="join">Join</button><button id="leave" hidden>Leave</button><output id="network"></output></footer>
-<div hidden><select id="venue"></select><select id="player1"></select><select id="player2"></select><input id="cutaway" type="checkbox" checked></div>
-<script type="module" src="../viewer/viewer.mjs"></script>
+  <button id="join">Join</button><a id="invite" hidden>Room invite</a><button id="leave" hidden>Leave</button><output id="network"></output></footer>
+<div hidden><select id="player1"></select><select id="player2"></select><input id="cutaway" type="checkbox" checked></div>
+<script type="module" src="./entry.mjs"></script>
 </body></html>

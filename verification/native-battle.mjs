@@ -54,11 +54,31 @@ try {
   await host.locator("#host").click();
   await host.waitForFunction(()=>document.querySelector("#code").value.length===8);
   const guest=await open();
-  await guest.goto(url);
+  const guestRequests=[];
+  guest.on("request",request=>guestRequests.push(new URL(request.url()).pathname));
+  await guest.goto(await host.locator("#invite").getAttribute("href"));
   await guest.waitForFunction(()=>window.nativeBattle);
-  await guest.locator("#code").fill(await host.locator("#code").inputValue());
-  await guest.locator("#join").click();
+
   await guest.waitForFunction(()=>document.querySelector("#remote").videoWidth>0 && nativeBattle.diagnostics().network==="connected");
+  assert.ok(guestRequests.every(p=>!/\.(gz|ogg|ttf)$|\/game-assets\//.test(p)),"Guest must only load the stream");
+  await guest.waitForFunction(()=>document.querySelector("#remote").srcObject?.getAudioTracks().some(t=>t.readyState==="live"));
+  await guest.locator("#sound").click();
+  const rms = await guest.evaluate(async () => {
+    const context=new AudioContext();
+    await context.resume();
+    const analyser=context.createAnalyser(),video=document.querySelector("#remote");
+    context.createMediaStreamSource(video.srcObject).connect(analyser);
+    const samples=new Float32Array(analyser.fftSize);
+    let peak=0;
+    for(let i=0;i<75 && peak<0.0001;i++){
+      await new Promise(requestAnimationFrame);
+      analyser.getFloatTimeDomainData(samples);
+      peak=Math.max(peak,Math.sqrt(samples.reduce((sum,x)=>sum+x*x,0)/samples.length));
+    }
+    await context.close();
+    return peak;
+  });
+  assert.ok(rms>0.0001,"Guest should receive audible venue ambience");
   await guest.locator("h1").click();
   await guest.keyboard.down("ArrowLeft");
   try {
@@ -71,7 +91,13 @@ try {
   }
   await guest.keyboard.up("ArrowLeft");
   await guest.locator("#leave").click();
-  console.log("A second browser decoded the host video and moved Doc using the guest keyboard.");
+  console.log("A second browser received host audio and video and moved Doc using the guest keyboard.");
+  await host.locator("#leave").click();
+  await host.selectOption("#venue","V2BG_21A");
+  await host.waitForFunction(()=>document.querySelector("canvas").dataset.venue==="V2BG_21A" && window.nativeBattle?.diagnostics().ticks>=15);
+  const babylon=await host.evaluate(()=>nativeBattle.diagnostics());
+  assert.ok(!babylon.paused);
+  assert.ok(babylon.actors.every(actor=>Math.abs(actor.position[2]+12)<1),"Babylon's starting line has Z = -12");
 } finally {
   await browser?.close();
   await new Promise(resolve=>server.close(resolve));

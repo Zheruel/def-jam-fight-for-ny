@@ -1,3 +1,4 @@
+import { installArena,loadArena } from "./arena.mjs";
 import { instantiateBattle } from "../kernel/runtime.mjs";
 import { poseIndex } from "../motion/pose-bank.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
@@ -5,13 +6,16 @@ import { fetchPacked } from "../viewer/scene.mjs";
 const ACTOR = [0x4bc170,0x4bd468];
 const rad = Math.PI / 180;
 
-export async function loadFoundationFight(fighters) {
-  const [source, seed] = await Promise.all(["battle.wasm.gz","foundation-start.gz"].map(
-    name => fetchPacked(new URL("../kernel/"+name,import.meta.url))));
-  return createFoundationFight(fighters,source,seed);
+export async function loadFoundationFight(fighters,venue) {
+  const [source,seed,arena]=await Promise.all([
+    fetchPacked(new URL("../kernel/battle.wasm.gz",import.meta.url)),
+    fetchPacked(new URL("../kernel/foundation-start.gz",import.meta.url)),
+    venue.file==="V2BG_02A" ? null : loadArena(venue),
+  ]);
+  return createFoundationFight(fighters,source,seed,arena);
 }
 
-export async function createFoundationFight(fighters,source,seed) {
+export async function createFoundationFight(fighters,source,seed,arena) {
   let memory;
   const word = address => memory.getUint32(address,true);
   const scalar = address => memory.getFloat32(address,true);
@@ -78,6 +82,7 @@ export async function createFoundationFight(fighters,source,seed) {
       const page = file.getUint32(at,true);
       bytes.set(new Uint8Array(seed,at+4,4096),page*4096);
     }
+    if(arena) installArena(kernel,arena,ACTOR);
     ACTOR.forEach((a,i) => {
       place(i,a+0xc4,a+0xd0);
       sample(i,word(a+0x84),word(a+0x88),scalar(a+0x9c));

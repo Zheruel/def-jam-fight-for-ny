@@ -13,6 +13,8 @@ const fighters = files.map(model => {
   return { model, body, bank:decodePoseBank(model,packed(`port/motion/poses/${model}.poses.gz`)) };
 });
 
+const inventory=JSON.parse(readFileSync("ps2/content/inventory.json"));
+const starts=JSON.parse(readFileSync("port/battle/lineups.json"));
 const fixture = "verification/native-fight-inputs.json";
 if (process.argv[2] === "--extract") {
   const trace = JSON.parse(readFileSync(process.argv[3]));
@@ -60,4 +62,16 @@ if (makeSeed) {
     compact.push(tag,original.subarray(page*4096,(page+1)*4096));
   }
   writeFileSync(process.argv[5],gzipSync(Buffer.concat(compact)));
+}
+
+if (!makeSeed) {
+  for(const venue of inventory.venues) {
+    const collision=Uint8Array.from(readFileSync(`port/collision/venues/${venue.file}.cli`)).buffer;
+    const match=await createFoundationFight(fighters,wasm,seed,{venue,collision});
+    const d=match.diagnostics();
+    assert.deepEqual(d.actors.map(a=>[a.position[0],a.position[2]]),starts[venue.file].SINGLE,venue.name);
+    for(let i=0;i<90;i++) match.tick([{buttons:0,x:0,z:0},{buttons:0,x:0,z:0}]);
+    for(const actor of match.diagnostics().actors) assert.ok(actor.position.every(Number.isFinite),venue.name);
+  }
+  console.log("Compiled collision and spawn routines loaded all 24 venues and advanced both actors for 90 ticks in each.");
 }

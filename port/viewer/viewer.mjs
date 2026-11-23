@@ -113,7 +113,9 @@ async function display() {
     option.dataset.handle = item.handle;
     venue.add(option);
   }
-  venue.value = "V2BG_02A";
+  const requestedVenue = battle && new URLSearchParams(location.search).get("venue");
+  const arena = inventory.venues.find(v=>v.file===requestedVenue) ?? inventory.venues.find(v=>v.file==="V2BG_02A");
+  venue.value = arena.file;
   const uniform = key => gl.getUniformLocation(program, key);
   const right = uniform("right"), up = uniform("up"), forward = uniform("forward"), scale = uniform("scale");
   const skinned = uniform("skinned"), origin = uniform("origin"), heading = uniform("heading");
@@ -277,20 +279,28 @@ async function display() {
     }
   }
   selectors.forEach(s => s.addEventListener("change", chooseFighters));
-  venue.addEventListener("change", select);
+  venue.addEventListener("change", () => {
+    if (!battle) return select();
+    const destination=new URL(location.href);
+    destination.searchParams.set("venue",venue.value);
+    location.assign(destination);
+  });
   await Promise.all([select(), chooseFighters()]);
   if (battle && selected.length === 2 && scene) {
     const { loadFoundationFight } = await import("../battle/fight.mjs");
     const { battleControls } = await import("../battle/controls.mjs");
     const { foundationCamera } = await import("../battle/camera.mjs");
     const { createHud } = await import("../hud/hud.mjs");
+    const { foundationAudio }=await import("../audio/foundation.mjs");
+    const audio=arena.file==="V2BG_02A" ? foundationAudio() : undefined;
+    if(!audio) document.querySelector("#sound").hidden=true;
     camera=foundationCamera();
     hud=await createHud(gl);
-    controls = battleControls(() => { previousFrame=undefined; draw(); });
-    fight = await loadFoundationFight(selected);
+    controls = battleControls(() => { previousFrame=undefined; draw(); },audio);
+    fight = await loadFoundationFight(selected,arena);
     status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
     document.getElementById("restart").onclick = () => {
-      controls.release(); fight.restart(); camera.reset(); paused=false; previousFrame=undefined; carry=0; draw();
+      controls.release(); fight.restart(); camera.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=0; draw();
       status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
     };
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({

@@ -1,7 +1,7 @@
 const keys = new Set();
 const controlled = new Set(["KeyD","KeyJ","ArrowLeft","KeyK"]);
 
-export function battleControls(redraw) {
+export function battleControls(redraw,audio) {
   let remote, room, guest = false;
   const pads = [null,null];
   let state = "local";
@@ -34,6 +34,7 @@ export function battleControls(redraw) {
     const transport = await import(published ? "../../netplay/peerjs.mjs" : "../../netplay/client.mjs");
     const options = published ? {} : await (await fetch(new URL("../../netplay/config",import.meta.url))).json();
     guest = join;
+    audio?.setActive(!join);
     const onState = (next,error) => {
       state = next;
       button("network").textContent = error?.message ?? (next==="connected" ? "Connected" : next);
@@ -42,11 +43,16 @@ export function battleControls(redraw) {
       room = await transport.joinMatch({...options,code:button("code").value,video:button("remote"),
         onState,onPlaybackBlocked:()=>button("remote").controls = true});
       button("remote").hidden = false;
+      if (audio) { button("sound").hidden=true; button("remote").controls=true; }
       document.querySelector("canvas").hidden = true;
     } else {
-      room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),onState,
+      room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),audioStream:audio?.stream(),onState,
         onInput(p){remote={buttons:p.buttons,x:p.axes[0],z:p.axes[1]};}});
       button("code").value = room.code;
+      const invite=new URL(location.href);
+      invite.searchParams.set("room",room.code);
+      button("invite").href=invite.href;
+      button("invite").hidden=false;
     }
     button("host").disabled = true; button("join").disabled = true;
     button("leave").hidden = false;
@@ -58,7 +64,7 @@ export function battleControls(redraw) {
       catch (error) {
         button("network").textContent = error.message;
         button("host").disabled = button("join").disabled = false;
-        guest = false;
+        guest = false; audio?.setActive(true);
       }
     };
   }
@@ -66,7 +72,8 @@ export function battleControls(redraw) {
     room?.close(); guest=false; remote=undefined; room=undefined; state="local";
     button("host").disabled=button("join").disabled=false;
     button("leave").hidden=true; button("remote").hidden=true; document.querySelector("canvas").hidden=false;
-    button("network").textContent=""; button("code").value=""; redraw();
+    button("network").textContent=""; button("code").value=""; button("invite").hidden=true;
+    button("sound").hidden=false; audio?.setActive(true); redraw();
   };
   return { inputs:() => [input(0),input(1)], isGuest:()=>guest, connection:()=>state,
     setInput(slot,value) { pads[slot]=value; if (guest) send(); },
