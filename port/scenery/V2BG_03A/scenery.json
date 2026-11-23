@@ -489,6 +489,10 @@
  "weapons": [],
  "hiddenWeapons": [],
  "hiddenWeaponModels": [],
+ "stageWeapon": null,
+ "droppedWeaponModels": [
+  "V2WP_013A"
+ ],
  "crowdGroup": {
   "normal": 8,
   "reduced": 8

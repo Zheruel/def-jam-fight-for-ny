@@ -160,7 +160,7 @@ async function display() {
         while (carry >= stepMs) {
           fight.tick(controls.inputs());
           combatAudio?.tick(fight);
-          if(environment) { environment.update(fight.memory); const effects=environment.effects(); combatAudio?.environment?.(effects); }
+          if(environment) { environment.update(fight.memory,1,fight.states); const effects=environment.effects(); combatAudio?.environment?.(effects); }
           camera.step();
           carry -= stepMs;
           advanced = true;
@@ -350,7 +350,7 @@ async function display() {
     scenery = await createSceneryRenderer(gl,stage,{lighting});
     const [{createEnvironment},events] = await Promise.all([import("../scenery/environment.mjs"),
       fetch(new URL("../scenery/events.json",import.meta.url)).then(r=>r.json())]);
-    environment = createEnvironment(stage.manifest,events.names);
+    environment = createEnvironment(stage.manifest,events.names,{weaponModels:events.weaponModels});
     hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio);
     fight = await loadFoundationFight(selected,arena);

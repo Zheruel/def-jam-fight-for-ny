@@ -7,6 +7,7 @@ import { createEnvironment, drainEventQueue, readEventQueue, EVENT_QUEUE, FREE }
 const json = name => JSON.parse(readFileSync(new URL(name, import.meta.url), "utf8"));
 const manifest = json("./foundation/scenery.json");
 const names = json("./events.json").names;
+const weaponModels = json("./events.json").weaponModels;
 
 test("event table: 468 retail names, the Foundation's are 25..44 in script order", () => {
   assert.equal(names.length, 468);
@@ -20,7 +21,7 @@ test("event table: 468 retail names, the Foundation's are 25..44 in script order
 
 test("a pillar breaks in three stages and the third drops its hidden weapon", () => {
   const env = createEnvironment(manifest, names);
-  assert.deepEqual(env.state(), { props: {}, weapons: {}, hiddenWeapons: [] });
+  assert.deepEqual(env.state(), { props: {}, weapons: {}, hiddenWeapons: [], dynamicWeapons: [] });
   env.trigger("02A_1A");
   assert.equal(env.state().props.V2BG_02A_D, "break1");
   env.trigger("02A_1B");
@@ -103,7 +104,7 @@ async function nativeMatch() {
 // event the retail code queued, with the tick it did so on and what the adapter drew afterwards.
 async function playUntil(seed, stop) {
   const match = await nativeMatch();
-  const env = createEnvironment(manifest, names);
+  const env = createEnvironment(manifest, names, { weaponModels });
   const buttons = [0x1000, 0x4000, 0x2000, 0x8000, 0x1100, 0x1400, 0x1800, 0x1200, 0x4400, 0x8100, 0x400, 0x800];
   let random = seed;
   const next = () => (random = (Math.imul(random, 1664525) + 1013904223) >>> 0) / 2 ** 32;
@@ -120,7 +121,7 @@ async function playUntil(seed, stop) {
       env.reset();
       continue;
     }
-    const events = env.update(match.memory);
+    const events = env.update(match.memory, 1, match.states);
     for (const e of events) seen.push({ tick, name: names[e.id], flag: e.flag, state: env.state() });
     if (match.outcome().over) match.rematch();
     if (seen.length && stop(seen)) break;
@@ -135,6 +136,25 @@ test("native match: a fighter's bottle strike queues 02A_3 and the bottle leaves
   assert.equal(hit.tick, 3389);
   assert.equal(hit.state.weapons.weapon_02_029A, false);
   assert.equal(hit.state.weapons.weapon_05_029A, undefined, "the left bottle is still on its speaker");
+});
+
+test("native match: the weapon slots say which pillar weapons are in play and what a fighter carries", async () => {
+  const { seen, env } = await playUntil(2, s => s.some(e => e.name === "02A_3"));
+  const hit = seen.find(e => e.name === "02A_3");
+  // Retail started this match with two of the four pillar weapons in play (setcount 2): pillars A and C.
+  assert.equal(hit.state.weapons.weapon_1C_011D, false);
+  assert.equal(hit.state.weapons.weapon_10C_011D, false);
+  assert.equal(hit.state.weapons.weapon_8C_011D, undefined);
+  assert.equal(hit.state.weapons.weapon_7C_011D, undefined);
+  // The strike is the fighter swinging a bottle it took: a fifth slot of type 52 (V2WP_029A) held by fighter 0.
+  const held = hit.state.dynamicWeapons;
+  assert.equal(held.length, 1);
+  assert.deepEqual([held[0].model, held[0].holder], ["V2WP_029A", 0]);
+  const hand = held[0].matrix;
+  const fighter = env.weaponSlots.find(w => w.slot === held[0].slot);
+  assert.deepEqual(fighter.grip.translate.map(v => +v.toFixed(2)), [1.4, -0.3, -1.5], "the bottle's retail grip, weapon.xml fp");
+  assert.deepEqual(fighter.grip.rotate.map(v => +v.toFixed(0)), [-180, -10, 0], "weapon.xml fr");
+  assert.ok(hand.every(Number.isFinite) && Math.hypot(hand[12] - 14, hand[14] + 42) < 12 && hand[13] > 3 && hand[13] < 22, "in the fighter's raised hand, near the speaker");
 });
 
 test("native match: a fighter hits the right-front pillar and it shows its first break", async () => {

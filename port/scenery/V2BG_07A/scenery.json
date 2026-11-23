@@ -680,6 +680,26 @@
  "weapons": [],
  "hiddenWeapons": [],
  "hiddenWeaponModels": [],
+ "stageWeapon": {
+  "drops": [
+   "11D",
+   "11B",
+   "40A",
+   "13A"
+  ],
+  "weakCatch": null,
+  "strongCatch": null,
+  "life": [],
+  "interval": null,
+  "pass": [],
+  "limit": null
+ },
+ "droppedWeaponModels": [
+  "V2WP_011D",
+  "V2WP_011B",
+  "V2WP_040A",
+  "V2WP_013A"
+ ],
  "crowdGroup": null,
  "crowdModelRatio": null,
  "defaultParticles": [],

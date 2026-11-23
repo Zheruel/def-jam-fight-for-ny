@@ -97,6 +97,16 @@ Verified: `environment.test.mjs` plays the native match with a fixed pad script.
 
 Not recovered: the bottle's tumble (`V2WA_029_11_02A`, an EAGL animation bank) and the pillar weapon's drop are a plain fall (state marks `approximate`); the choice of 1A/1B/1C inside the fighter code is not read, only observed.
 
+### Weapons in play (pickup, carry, break)
+
+Retail keeps weapons in a manager (`0x133180` returns `0x472144` in a battle): 16 slots of 208 bytes from `+12`. A slot has the weapon type at `+4` (index in the sorted V2WP list, `-1` free; 52 is `V2WP_029A`, 22 is `V2WP_011D`), the holder at `+8` (`-1` resting, `0`/`1` carried by that fighter, `-2` in flight), the world matrix at `+12` (translation in the last row), the grip at `+76` (position) and `+88` (rotation, degrees) and the state at `+148` (1 in use, 2 resting, 3..5 breaking). `readWeaponSlots(memory, models)` reads them; `env.weaponSlots` is the live list.
+
+- The Foundation starts with four slots: the two bottles (type 52, resting at the speaker stands) and two pillar weapons (type 22). The XML lists four pillar weapons and `setcount 2`, so only two exist in a match; here pillars A and C. `env.state()` marks the other two `false`.
+- A fighter picks a bottle up by creating a new slot (the kernel does this itself): holder = the fighter, grip copied from `weapon.xml` (`fp`/`fr`, exactly `1.4,-0.3,-1.5` / `-180,-10,0` for the bottle), and the fighter's `W[slot]` record at `0x4c21a8 + 164*slot` points at it. The strike queues `02A_3`/`02A_6`, which deletes the bottle on the stand.
+- Retail's per-frame weapon update (vtable method `0x1c33a0`, which builds the carried matrix from the hand bone) is not in the kernel. `carriedMatrix` rebuilds it as `0x1c11e8` does: grip rotation, grip position, then the carrier's hand (retail bone id 19, the right hand). The result goes out as `dynamicWeapons: [{model, matrix}]`, which `render` draws. The hand placement is not compared with a retail frame; the formula follows the disassembly.
+- Weapons in flight (`holder -2`) and respawns are not drawn: retail computes their path in `0x1c33a0`.
+- `scenery.json` now carries `stageWeapon` (the `<stageweapon>` block: drop list, weak/strong catch, durability steps, drop interval seconds, simultaneous limit, pass weights) and `droppedWeaponModels`, which `loadScenery` fetches.
+
 ## Near crowd (not done)
 
 `nearCrowd` slots (`crowd_act1/act2/stand1_*`) are full V2CM spectators. Recovered so far: the models decode with `port/fighters/retail.py` once its parent table knows the 13-bone crowd rig (`root, L_Leg1, L_Leg2, eff5, R_Leg1, R_Leg2, eff4, Chest, Head, R_Arm1, R_Arm2, L_Arm1, L_Arm2`); a person is several parts (`M1` upper body, `M2` legs, `M3`, `M4_nn` hair/hats) textured by one `cm_m`/`cm_f` skin atlas with clothing layers (`V2CM_M1_02..08.ssh`, one 8-bit layer plus eight `plNN` palettes) stomped onto it. The `animcr*.o` banks hold two objects per clip (`_s`, `_t`) and load into the offline sampler with `port/animation/extract.py`'s packer, but the channel-to-bone mapping is unresolved, so sampled poses do not fit the crowd skeleton.

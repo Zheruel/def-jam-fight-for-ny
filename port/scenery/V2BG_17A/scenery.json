@@ -4159,6 +4159,48 @@
  ],
  "hiddenWeapons": [],
  "hiddenWeaponModels": [],
+ "stageWeapon": {
+  "drops": [
+   "15A",
+   "26B",
+   "26A",
+   "15B",
+   "13A"
+  ],
+  "weakCatch": "29A",
+  "strongCatch": "08A",
+  "life": [
+   75.0,
+   50.0,
+   25.0
+  ],
+  "interval": [
+   2.0,
+   20.0
+  ],
+  "pass": [
+   [
+    "04A",
+    50.0
+   ],
+   [
+    "06A",
+    40.0
+   ],
+   [
+    "06B",
+    10.0
+   ]
+  ],
+  "limit": 3
+ },
+ "droppedWeaponModels": [
+  "V2WP_015A",
+  "V2WP_026B",
+  "V2WP_026A",
+  "V2WP_015B",
+  "V2WP_013A"
+ ],
  "crowdGroup": {
   "normal": 10,
   "reduced": 10

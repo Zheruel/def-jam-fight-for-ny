@@ -1634,6 +1634,50 @@
   "V2WP_011D",
   "V2WP_011D"
  ],
+ "stageWeapon": {
+  "drops": [
+   "11D",
+   "29A",
+   "13A"
+  ],
+  "weakCatch": "30A",
+  "strongCatch": "22A",
+  "life": [
+   80.0,
+   60.0,
+   40.0,
+   20.0,
+   0.0
+  ],
+  "interval": [
+   2.0,
+   10.0
+  ],
+  "pass": [
+   [
+    "29A",
+    50.0
+   ],
+   [
+    "04A",
+    20.0
+   ],
+   [
+    "07A",
+    20.0
+   ],
+   [
+    "03A",
+    10.0
+   ]
+  ],
+  "limit": 3
+ },
+ "droppedWeaponModels": [
+  "V2WP_011D",
+  "V2WP_029A",
+  "V2WP_013A"
+ ],
  "crowdGroup": {
   "normal": 3,
   "reduced": 3

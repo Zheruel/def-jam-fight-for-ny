@@ -14,10 +14,28 @@
 // from scenery.json. Geometry states are exact. The tumble of a bottle (V2WA_029_11_02A, an EAGL animation bank) and
 // the fall of a pillar weapon are not decoded; they are a plain fall and are marked approximate in the state.
 
+import { actorMatrix, boneWorldMatrix } from "../fighters/pose.mjs";
+import { placementMatrix } from "./scenery.mjs";
+
 export const EVENT_QUEUE = 0x476e28;
 export const QUEUE_RECORDS = 2;
 export const QUEUE_STRIDE = 16;
 export const FREE = 0xffffffff;
+
+// Weapon manager (retail 0x133180 returns it for a battle): 16 slots of 208 bytes from +12.
+//   +0 active   +4 weapon type (index in the sorted V2WP list; -1 = free slot)   +8 holder
+//   +12..+75 world matrix (16 floats, translation in the last row)   +76 grip position  +88 grip rotation (degrees)
+//   +144 request bits   +148 state   +176 the weapon number in its name (29 for V2WP_029A)
+// holder: -1 resting, 0 / 1 carried by that fighter, -2 in flight. state: 1 being used, 2 resting on the stage,
+// 3..5 breaking (0x1c1c28 tests for these; 0x1c33a0 walks 3 -> 4 -> 5 and frees the slot).
+// Retail's per-frame weapon update (vtable method 0x1c33a0) is not in the kernel, so a carried weapon's matrix is built
+// here the way 0x1c11e8 builds it: grip rotation, then grip position, then the hand bone (retail bone id 19) of the carrier.
+export const WEAPON_MANAGER = 0x472144;
+export const WEAPON_SLOTS = 16;
+export const WEAPON_STRIDE = 208;
+export const HAND_BONE = 19;
+export const HOLDER = Object.freeze({ resting: -1, flying: -2 });
+const BREAKING = 3;
 
 // Plain stand-in for the weapon fall: units per frame squared, and the frames a bottle takes to leave its stand.
 const GRAVITY = 0.35;
@@ -42,12 +60,47 @@ export function drainEventQueue(memory) {
   return events;
 }
 
-export function createEnvironment(manifest, eventNames, { gravity = GRAVITY } = {}) {
+export function readWeaponSlots(memory, models = [], base = WEAPON_MANAGER) {
+  const out = [];
+  for (let slot = 0; slot < WEAPON_SLOTS; slot++) {
+    const at = base + 12 + slot * WEAPON_STRIDE;
+    const type = memory.getInt32(at + 4, true);
+    if (type === -1) continue;
+    const matrix = new Float32Array(16);
+    for (let i = 0; i < 16; i++) matrix[i] = memory.getFloat32(at + 12 + i * 4, true);
+    const vec = offset => [0, 4, 8].map(k => memory.getFloat32(at + offset + k, true));
+    out.push({ slot, type, model: models[type] ?? null, holder: memory.getInt32(at + 8, true),
+      state: memory.getUint32(at + 148, true), requests: memory.getUint32(at + 144, true),
+      number: memory.getUint32(at + 176, true), matrix, position: [matrix[12], matrix[13], matrix[14]],
+      grip: { translate: vec(76), rotate: vec(88) } });
+  }
+  return out;
+}
+
+// Column-major 4x4 product a * b.
+function multiply(a, b) {
+  const out = new Float32Array(16);
+  for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+    let sum = 0;
+    for (let k = 0; k < 4; k++) sum += a[k * 4 + r] * b[c * 4 + k];
+    out[c * 4 + r] = sum;
+  }
+  return out;
+}
+
+// Where a carried weapon is: the carrier's hand with the weapon's grip applied.
+export function carriedMatrix(slot, fighter) {
+  if (!fighter?.world || !fighter.entries) return null;
+  const hand = boneWorldMatrix(fighter, fighter.entries, actorMatrix(fighter.position, fighter.yaw), HAND_BONE, fighter.world);
+  return multiply(Float32Array.from(hand), placementMatrix(slot.grip));
+}
+
+export function createEnvironment(manifest, eventNames, { gravity = GRAVITY, weaponModels = [] } = {}) {
   const attacks = new Map((manifest.environmentAttacks ?? []).map(a => [a.name, a]));
   const propStates = new Map((manifest.props ?? []).map(p => [p.name, new Set(p.states)]));
   const placed = new Map((manifest.weapons ?? []).map(w => [short(w.name), w]));
   const hidden = new Set(manifest.hiddenWeapons ?? []);
-  let props, weapons, running, emitted, ignored, clock;
+  let props, weapons, running, emitted, ignored, clock, live = null;
 
   function reset() {
     props = {};
@@ -56,6 +109,7 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY } = 
     emitted = [];
     ignored = [];
     clock = 0;
+    live = null;
   }
   reset();
 
@@ -181,10 +235,12 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY } = 
     advance: step,
     reset,
     // Drain the retail queue from the native match, then run one frame. Call once per fight.tick.
-    update(memory, frames = 1) {
+    // fighters (fight.states) lets carried weapons follow the hand.
+    update(memory, frames = 1, fighters = null) {
       const events = drainEventQueue(memory);
       for (const e of events) trigger(e.id, e);
       step(frames);
+      live = { slots: readWeaponSlots(memory, weaponModels), fighters };
       return events;
     },
     // What createSceneryRenderer's render() takes.
@@ -197,8 +253,27 @@ export function createEnvironment(manifest, eventNames, { gravity = GRAVITY } = 
           out["weapon_" + name] = { translate: [...weapon.translate], rotate: [...weapon.rotate] };
         } else if (weapon.shown && hidden.has(name)) revealed.push("weapon_" + name);
       }
-      return { props: { ...props }, weapons: out, hiddenWeapons: revealed };
+      const dynamicWeapons = [];
+      if (live) {
+        const matched = new Set();
+        for (const [name, base] of placed) {
+          const slot = live.slots.find(w => !matched.has(w.slot) && w.model === base.model && w.holder === HOLDER.resting
+            && Math.hypot(...w.position.map((v, i) => v - base.translate[i])) < 0.1);
+          // A placed weapon the match did not put in play (a pillar weapon of a pillar that holds none) is not there.
+          if (slot) matched.add(slot.slot);
+          else if (out["weapon_" + name] === undefined) out["weapon_" + name] = false;
+        }
+        for (const w of live.slots) {
+          if (matched.has(w.slot) || w.state >= BREAKING || !w.model) continue;
+          const matrix = w.holder >= 0 && w.holder < 4 ? carriedMatrix(w, live.fighters?.[w.holder])
+            : w.holder === HOLDER.resting && w.matrix[15] === 1 ? w.matrix : null;
+          if (matrix) dynamicWeapons.push({ slot: w.slot, model: w.model, holder: w.holder, matrix });
+        }
+      }
+      return { props: { ...props }, weapons: out, hiddenWeapons: revealed, dynamicWeapons };
     },
+    // Every weapon slot the match has live right now: what is held, resting or flying.
+    get weaponSlots() { return live ? live.slots : []; },
     // Sounds, particles and light changes the events asked for since the last call.
     effects() { const out = emitted; emitted = []; return out; },
     get running() { return running.map(e => e.name); },

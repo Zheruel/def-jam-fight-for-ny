@@ -101,6 +101,18 @@ def stage_objects(objects_xml: str) -> list[dict]:
     return result
 
 
+def stage_weapon(stage_xml: str) -> dict:
+    """<stageweapon>: the weapons the crowd can drop and how long each lasts (retail 0x1c33a0 reads these)."""
+    body = section(stage_xml, "stageweapon")
+    pair = lambda v: [float(x) for x in v.split(",")]
+    return {"drops": [d.strip() for d in values(body, "drop")],
+            "weakCatch": (values(body, "weakcatch") or [None])[0], "strongCatch": (values(body, "strongcatch") or [None])[0],
+            "life": [float(v) for v in values(body, "life")],
+            "interval": pair(values(body, "time")[0]) if values(body, "time") else None,
+            "pass": [[v.split(",")[0].strip(), float(v.split(",")[1])] for v in values(body, "pass")],
+            "limit": int(values(body, "limit")[0]) if values(body, "limit") else None}
+
+
 def environment_attacks(stage_xml: str) -> list[dict]:
     attacks = []
     for body in blocks(section(stage_xml, "stageenvironment"), "environmentattack"):
@@ -508,6 +520,19 @@ def weapon_decode_packet(data: bytes, part: dict):
     return (table, batches) if table is not None and batches else None
 
 
+def weapon_names(disc: Disc) -> list[str]:
+    """V2WP archive members named V2WP_nnnX, sorted. The index in this list is the retail weapon type number."""
+    table = disc.read(WEAPONS, 0, 16)
+    count, header_size = struct.unpack_from(">II", table, 8)
+    listing = disc.read(WEAPONS, 0, header_size)
+    names, at = [], 16
+    for _ in range(count):
+        end = listing.index(b"\0", at + 8)
+        names.append(listing[at + 8:end].decode("latin-1"))
+        at = end + 1
+    return sorted(n[:-2] for n in names if re.fullmatch(r"V2WP_\d{3}[A-Z]\.o", n))
+
+
 def weapon_models(disc: Disc) -> dict[str, bytes]:
     """Every V2WP_nnnX model as a DJF1 skinned mesh (same container as port/render/fighters)."""
     import export_fighters
@@ -695,6 +720,9 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
         "hiddenWeapons": optional(lambda: values(section(stage_xml, "hiddenweapon"), "name"), default=[]),
         "hiddenWeaponModels": optional(lambda: ["V2WP_" + n.split("_")[-1]
                                                 for n in values(section(stage_xml, "hiddenweapon"), "name")], default=[]),
+        "stageWeapon": optional(stage_weapon, stage_xml, default=None),
+        "droppedWeaponModels": optional(lambda: ["V2WP_0" + d if len(d) == 3 else "V2WP_" + d
+                                                 for d in values(section(stage_xml, "stageweapon"), "drop")], default=[]),
         "crowdGroup": optional(lambda: {k: int(values(stage_xml, f"crowdgroup{k}num")[0])
                                         for k in ("normal", "reduced")}, default=None),
         "crowdModelRatio": optional(lambda: {tag: vector(values(section(stage_xml, "crowdsmodelratio"), tag)[0])
@@ -781,7 +809,8 @@ def main(argv: list[str] | None = None) -> int:
                 path.write_bytes(blob)
         disc = Disc(str(args.iso))
         try:
-            events = {"format": "def-jam-ps2-environment-events/1", "queue": 0x476e28, "names": event_names(disc)}
+            events = {"format": "def-jam-ps2-environment-events/1", "queue": 0x476e28, "names": event_names(disc),
+                      "weaponManager": 0x472144, "weaponModels": weapon_names(disc)}
         finally:
             disc.close()
         blob = (json.dumps(events, indent=1) + "\n").encode()
