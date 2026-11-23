@@ -30,7 +30,7 @@ from pathlib import Path
 
 BONES = ["root", "L_Leg1", "L_Leg2", "eff5", "R_Leg1", "R_Leg2", "eff4", "Chest", "Head", "R_Arm1", "R_Arm2", "L_Arm1", "L_Arm2"]
 PARENTS = [None, 0, 1, 0, 0, 4, 0, 0, 7, 7, 9, 7, 11]
-RECORDS = (0x571000, 0x575000)   # where the crowd_* instance records sit in the Foundation image
+RECORDS = (0x570000, 0x578000)   # where the crowd_* instance records sit in the venue images (0x571100.. in the Foundation)
 ENTRY = 48
 
 
@@ -62,6 +62,25 @@ def instances(ram: bytes) -> list[dict]:
     for each in found:
         each["class"] = order[each["group"]]
     return found
+
+
+# The class record (`u32[record + 0x84]`) lists the part ELFs at +0x294: upper body, legs, accessory, shoes, extra, head.
+CLASS_SLOTS = (0, 1, 2, 3, 5)   # of those, the ones that are drawn (index 4, an M5/F5 extra, has no texture)
+
+
+def class_parts(ram: bytes, group: int) -> list[str]:
+    """Names of a class's drawn parts (`M1_01A`, ...), read from each part ELF's own strtab (bounded by the next ELF)."""
+    ptrs = struct.unpack_from("<7I", ram, group + 0x294)
+    starts = sorted(p for p in ptrs if 0x100000 < p < len(ram))
+    names = []
+    for index in CLASS_SLOTS:
+        at = ptrs[index]
+        end = min([q for q in starts if q > at] + [at + 0x20000])
+        found = re.search(rb"V2CM_([A-Z]\d_\d\d[A-Z])\x00", ram[at:end])
+        if not found:
+            raise ValueError(f"class {group:#x}: no part name at {at:#x}")
+        names.append(found.group(1).decode())
+    return names
 
 
 def matrix(entry: list[float]) -> list[float]:

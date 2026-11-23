@@ -970,6 +970,9 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
             scenery["instancedCrowd"]["modelFile"] = "../crowd/icrowd01.crowd.gz"
             scenery["instancedCrowd"]["placements"] = layout
             files["../crowd/icrowd01.crowd.gz"] = packed_crowd
+    # crowd_bank.py writes <dir>/people.json (retail-rig spectators); the manifest only records that it is there
+    if (OUTPUT.parent / directory(venue) / "people.json").exists():
+        scenery["people"] = True
     files["scenery.json"] = (json.dumps(scenery, indent=1, ensure_ascii=False) + "\n").encode()
     return files
 
@@ -1006,6 +1009,10 @@ def main(argv: list[str] | None = None) -> int:
             index[venue]["trains"] = manifest["subway"]["objects"]
         if manifest.get("cars"):
             index[venue]["cars"] = [car["file"] for car in manifest["cars"]]
+        # crowd_bank.py writes <dir>/people.json (retail-rig spectators); the index only records that it is there
+        shown = OUTPUT.parent / directory(venue) / "people.json"
+        if shown.exists():
+            index[venue]["people"] = len(json.loads(shown.read_text())["spectators"])
         for name, blob in built.items():
             path = OUTPUT.parent / directory(venue) / name
             path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,16 +1,14 @@
-"""The Foundation's near-crowd people as skinned meshes (`foundation/people/class{0,1,2}.skin.gz`, DJF1 layout).
+"""Spectator class meshes and clothed texture atlases, shared by every venue (`people/classes`, `people/outfits`).
 
-The venue loads three crowd classes; each is a set of modular V2CM parts on the shared 13-bone rig (see crowd_pose.py). The
-sets were read from the three class records the spectators point at (`u32[instance record + 0x84]`; record + 0x290 holds the
-part ELFs: M1, M2, M4, M6, -, M3) in the Foundation RAM captures, and each part ELF was named by its strtab:
+A crowd class is a set of modular V2CM parts on the shared 13-bone rig (see crowd_pose.py), read from the class records the
+spectators point at (`u32[instance record + 0x84]`, part ELFs at +0x294; crowd_pose.class_parts): upper body, legs, accessory,
+shoes and head, in the male (`M1 M2 M4 M6 M3`), female (`F1 F2 F4 F6 F3`) and heavy (`B1 B2 M4 B6 M3`) families. Which sets
+exist in a match is random in the retail game; `people/captures.json` and `foundation/crowd-poses.json` hold the sets seen in
+the Foundation, Club Murder, Gun Hill Garage and Dragon House captures.
 
-    class 0 (record 0x158b690): M1_01A  M2_01A  M4_11A  M6_01A  M3_01A
-    class 1 (record 0x158bcc0): M1_08A  M2_01A  M4_08A  M6_01A  M3_01A
-    class 2 (record 0x158c2f0): M1_01A  M2_03A  M4_06A  M6_01A  M3_01A
-
-Parts are decoded unskinned in T-pose (as the fighters are); the file carries the inverse bind matrices so a renderer skins with
-`inverseBind x world` from a pose. Textures are each part's own `V2CM_Mn.ssh` `cm_m` skin atlas: the clothing the engine
-stomps over it is not applied here (see README).
+Parts are decoded unskinned in T-pose (as the fighters are); a class file carries the inverse bind matrices so a renderer skins
+with `inverseBind x world` from a pose. Textures are not in the class file: each spectator wears one atlas per part
+(`outfits/<slot>-<layer>-<palette>.png`, see `outfit`).
 """
 from __future__ import annotations
 
@@ -29,12 +27,21 @@ sys.path.insert(0, str(HERE.parent / "geometry"))
 import ssh as ssh_module  # noqa: E402
 
 VIV = "/ASSETS/V2CM.VIV"
-CLASSES = [
-    ("M1_01A", "M2_01A", "M4_11A", "M6_01A", "M3_01A"),
-    ("M1_08A", "M2_01A", "M4_08A", "M6_01A", "M3_01A"),
-    ("M1_01A", "M2_03A", "M4_06A", "M6_01A", "M3_01A"),
-]
+OUT = HERE / "people"
 VERTEX = struct.Struct("<3f3f2f4B4f")
+
+
+# Every part's UVs address a shared 256x256 skin sheet: torso (digit 1) and head (3) the whole sheet, legs (2) and shoes (6) its
+# lower-left quarter, the head accessory (4) the upper-right quarter. A part's atlas is the sheet cropped to what it needs, so
+# the UVs are rewritten into that crop.
+SHEET = 256
+CROP = {"1": (0, 0, 256, 256), "3": (0, 0, 256, 256), "2": (0, 128, 128, 128), "4": (128, 0, 128, 128), "6": (0, 128, 128, 128)}
+STOMP = {"1": (0, 0), "2": (43, 128), "4": (128, 0), "6": (0, 128)}   # where a clothing layer lands on the sheet
+
+
+def remap(part: str, uv) -> tuple[float, float]:
+    x, y, w, h = CROP[part[1]]
+    return (uv[0] * SHEET - x) / w, (uv[1] * SHEET - y) / h
 
 
 def layer(ssh: bytes, palette: int) -> bytes:
@@ -102,13 +109,13 @@ def rgba_png(width: int, height: int, pixels: bytearray) -> bytes:
             + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
 
 
-def composite(base, top):
-    """`top` laid over `base` at the origin (alpha over). The engine stomps a clothing layer onto the part's skin atlas."""
+def composite(base, top, at_x=0, at_y=0):
+    """`top` laid over `base` at (at_x, at_y) (alpha over). The engine stomps a clothing layer onto the part's skin sheet."""
     bw, bh, pixels = base
     tw, th, over = top
-    for y in range(min(bh, th)):
-        for x in range(min(bw, tw)):
-            i, j = (y * bw + x) * 4, (y * tw + x) * 4
+    for y in range(max(0, min(th, bh - at_y))):
+        for x in range(max(0, min(tw, bw - at_x))):
+            i, j = ((y + at_y) * bw + x + at_x) * 4, (y * tw + x) * 4
             if over[j + 3] >= 128:
                 pixels[i:i + 4] = over[j:j + 4]
     return bw, bh, pixels
@@ -162,7 +169,7 @@ def person(disc, parts: tuple[str, ...]) -> bytes:
         for i in range(len(mesh["positions"]) // 3):
             joints = [int(j) for j in mesh["joints"][4 * i:4 * i + 4]]
             vertices.extend(VERTEX.pack(*mesh["positions"][3 * i:3 * i + 3], *mesh["normals"][3 * i:3 * i + 3],
-                                        *mesh["uvs"][2 * i:2 * i + 2], *joints, *mesh["weights"][4 * i:4 * i + 4]))
+                                        *remap(part, mesh["uvs"][2 * i:2 * i + 2]), *joints, *mesh["weights"][4 * i:4 * i + 4]))
         slot = part[:2]
         batches.append({"shape": slot, "first": len(elements), "count": len(mesh["indices"]), "part": part})
         elements.extend(first + i for i in mesh["indices"])
@@ -177,64 +184,100 @@ def person(disc, parts: tuple[str, ...]) -> bytes:
 
 
 # --- outfits -----------------------------------------------------------------------------------------------
-# Each part is the V2CM_<slot>.ssh skin atlas with a clothing layer stomped over it in one of the layer's palettes
-# (M1 shirts: 8 palettes, M2 jeans: 6, M4 belts/hems: 4-5, M6 boots: 3). The layer follows the class's part model
-# (M1_01A wears the tank top, layer 02; M1_08A the puffer jacket, layer 08; M2/M4 layers are the model's number).
-# WHICH palette each spectator wears is not decoded: the record words +0x154/+0x158/+0x164/+0x1a4 (see
-# crowd_pose.export "styles") are used as a stand-in and a record that has not finished spawning falls back to its name.
-M1_LAYER = {"M1_01A": 2, "M1_07A": 3, "M1_08A": 8}
-PALETTES = {"M1": 8, "M2": 6, "M6": 3}
+# A part's atlas is the skin sheet of its slot (`V2CM_<slot>.ssh`, `bases`; absent for the M6/B6 shoes) with a clothing layer
+# (`V2CM_<slot>_<NN>.ssh`: one 8-bit layer plus palette-only shapes) stomped on at STOMP, cropped to CROP. The layer follows the
+# part model (M2_03A wears layer 03; M1_01A, which has no layer 01, the first one above it); the heavy family (B1, B6) has no
+# layers of its own and wears the male ones. WHICH palette a spectator wears is not decoded: the record words
+# +0x154/+0x158/+0x164/+0x1a4 (crowd_pose "styles") stand in, and a record that has not finished spawning falls back to its name.
+# An atlas key is "<base slot or X>[~<layer slot>-<layer>-<palette>]".
+SLOTS = range(1, 13)
 
 
-def outfit(name: str, klass: int, style: list[int]) -> dict[str, str]:
-    """Texture keys ("<slot>-<layer>-<palette>", or "<slot>" for the bare skin atlas) a spectator wears, by slot."""
+def layers_table(disc) -> dict:
+    """{ "layers": {slot: {"02": palettes}}, "bases": [slots with a skin atlas] } from the archive."""
+    layers, bases = {}, []
+    for family in "MFB":
+        for digit in "123456":
+            slot = f"{family}{digit}"
+            try:
+                scenery.member(disc, VIV, f"V2CM_{slot}.ssh")
+                bases.append(slot)
+            except (FileNotFoundError, KeyError):
+                pass
+            for number in SLOTS:
+                try:
+                    ssh = scenery.member(disc, VIV, f"V2CM_{slot}_{number:02d}.ssh")
+                except (FileNotFoundError, KeyError):
+                    continue
+                layers.setdefault(slot, {})[f"{number:02d}"] = struct.unpack_from("<I", ssh, 8)[0] - 1
+    return {"layers": layers, "bases": bases}
+
+
+def table() -> dict:
+    return json.loads((OUT / "layers.json").read_text())
+
+
+def outfit(name: str, parts: list[str], style: list[int], known: dict) -> dict[str, str]:
+    """Atlas keys ("<slot>-<layer>-<palette>", or "<slot>" for a bare skin atlas) a spectator wears, by part slot."""
     seed = zlib.crc32(name.encode())
     a, b, c, d = (v if v < 32 else None for v in style)
-    parts = {p[:2]: p for p in CLASSES[klass]}
-    layers = {"M1": M1_LAYER[parts["M1"]], "M2": int(parts["M2"][3:5]), "M4": int(parts["M4"][3:5]), "M6": int(parts["M6"][3:5])}
-    m4 = 4 if layers["M4"] <= 6 else 5
-    picks = {"M1": 1 + (b - 1) % 8 if b else 1 + seed % 8,
-             "M2": 1 + ((a or 0) + (c or seed)) % PALETTES["M2"],
-             "M4": 1 + ((a or 0) + (b or seed >> 3)) % m4,
-             "M6": 1 + (d if d is not None else seed >> 5) % PALETTES["M6"]}
-    return {slot: f"{slot}-{layers[slot]:02d}-{picks[slot]}" for slot in ("M1", "M2", "M4", "M6")} | {"M3": "M3"}
+    picks = {"1": lambda n: 1 + (b - 1) % n if b else 1 + seed % n, "2": lambda n: 1 + ((a or 0) + (c or seed)) % n,
+             "4": lambda n: 1 + ((a or 0) + (b or seed >> 3)) % n, "6": lambda n: 1 + (d if d is not None else seed >> 5) % n}
+    worn = {}
+    for part in parts:
+        slot, number = part[:2], int(part[3:5])
+        base = slot if slot in known["bases"] else "X"
+        source = slot if slot in known["layers"] else "M" + slot[1] if slot[0] == "B" and "M" + slot[1] in known["layers"] else None
+        layers = known["layers"].get(source, {})
+        above = sorted(int(k) for k in layers if int(k) >= number)
+        chosen = number if f"{number:02d}" in layers else (above[0] if above and slot[1] in "13" else None)
+        if chosen is None:
+            worn[slot] = base
+        else:
+            count = layers[f"{chosen:02d}"]
+            worn[slot] = f"{base}~{source}-{chosen:02d}-{picks.get(slot[1], lambda n: 1 + seed % n)(count)}"
+    return worn
 
 
-def outfit_png(disc, key: str) -> bytes:
-    slot, *rest = key.split("-")
-    skin = None
-    # Only the torso's UVs address the skin atlas (head, hands); the other slots' meshes are mapped onto the layer itself.
-    if slot in ("M1", "M3"):
-        skin = decode_png(scenery.textures(scenery.member(disc, VIV, f"V2CM_{slot}.ssh"))["cm_m"])
-    clothes = decode_png(layer(scenery.member(disc, VIV, f"V2CM_{slot}_{rest[0]}.ssh"), int(rest[1]))) if rest else None
-    image = composite(skin, clothes) if skin and clothes else skin or clothes
-    return rgba_png(*bleed(image))
+def outfit_png(disc, key: str, known: dict) -> bytes:
+    """The part's skin sheet with its clothing layer stomped on, cropped to the region its UVs use."""
+    base, _, rest = key.partition("~")
+    digit = (rest or base)[1]
+    if base != "X":
+        sheet = decode_png(scenery.textures(scenery.member(disc, VIV, f"V2CM_{base}.ssh")).popitem()[1])
+    else:
+        sheet = (SHEET, SHEET, bytearray(SHEET * SHEET * 4))
+    if rest:
+        source, number, palette = rest.split("-")
+        sheet = composite(sheet, decode_png(layer(scenery.member(disc, VIV, f"V2CM_{source}_{number}.ssh"), int(palette))), *STOMP[digit])
+    x0, y0, w, h = CROP[digit]
+    pixels = bytearray()
+    for y in range(y0, y0 + h):
+        pixels += sheet[2][(y * SHEET + x0) * 4:(y * SHEET + x0 + w) * 4]
+    return rgba_png(*bleed((w, h, pixels)))
 
 
-def outfits() -> dict[str, dict[str, str]]:
-    poses = json.loads((HERE / "foundation" / "crowd-poses.json").read_text())
-    return {name: outfit(name, poses["classes"][name], poses["styles"][name]) for name in sorted(poses["classes"])}
+def class_id(parts: list[str]) -> str:
+    return "-".join(parts)
 
 
-def build(iso: Path) -> dict[str, bytes]:
+def build(iso: Path, classes: list[list[str]], outfits: set[str]) -> dict[str, bytes]:
+    """`people/layers.json`, the class meshes and the atlases asked for."""
     disc = scenery.Disc(str(iso))
     try:
-        files = {f"people/class{i}.skin.gz": person(disc, parts) for i, parts in enumerate(CLASSES)}
-        for key in sorted({key for worn in outfits().values() for key in worn.values()}):
-            files[f"people/outfits/{key}.png"] = outfit_png(disc, key)
+        known = layers_table(disc)
+        files = {"people/layers.json": (json.dumps(known, separators=(",", ":")) + "\n").encode()}
+        for parts in classes:
+            files[f"people/classes/{class_id(parts)}.skin.gz"] = person(disc, tuple(parts))
+        for key in sorted(outfits):
+            files[f"people/outfits/{key}.png"] = outfit_png(disc, key, known)
         return files
     finally:
         disc.close()
 
 
-def main() -> int:
-    out = HERE / "foundation"
-    for name, blob in build(scenery.DEFAULT_ISO).items():
-        (out / name).parent.mkdir(parents=True, exist_ok=True)
-        (out / name).write_bytes(blob)
-        print(name, len(blob))
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+def write(files: dict[str, bytes]) -> None:
+    for name, blob in files.items():
+        path = HERE / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(blob)

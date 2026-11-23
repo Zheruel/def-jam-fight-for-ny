@@ -37,7 +37,8 @@
   ],
   "undecodedProps": [
    "V2BG_01A_A"
-  ]
+  ],
+  "people": 23
  },
  "V2BG_01B": {
   "dir": "V2BG_01B",
@@ -139,7 +140,8 @@
    "V2BG02A1_nis",
    "V2BG02A3_nis"
   ],
-  "undecodedProps": []
+  "undecodedProps": [],
+  "people": 30
  },
  "V2BG_03A": {
   "dir": "V2BG_03A",
@@ -167,7 +169,8 @@
   ],
   "undecodedProps": [
    "V2BG_03A_A"
-  ]
+  ],
+  "people": 30
  },
  "V2BG_04A": {
   "dir": "V2BG_04A",
@@ -409,7 +412,8 @@
    "V2BG05A0",
    "V2BG05A0_nis"
   ],
-  "undecodedProps": []
+  "undecodedProps": [],
+  "people": 15
  },
  "V2BG_06A": {
   "dir": "V2BG_06A",
@@ -451,7 +455,8 @@
    "V2BG06A",
    "V2BG06A_nis"
   ],
-  "undecodedProps": []
+  "undecodedProps": [],
+  "people": 26
  },
  "V2BG_07A": {
   "dir": "V2BG_07A",
@@ -507,7 +512,8 @@
   ],
   "undecodedProps": [
    "V2BG_09A_A"
-  ]
+  ],
+  "people": 23
  },
  "V2BG_09B": {
   "dir": "V2BG_09B",
@@ -523,7 +529,8 @@
   ],
   "undecodedProps": [
    "V2BG_09B_A"
-  ]
+  ],
+  "people": 19
  },
  "V2BG_10A": {
   "dir": "V2BG_10A",
@@ -563,7 +570,8 @@
   ],
   "undecodedProps": [
    "V2BG_10A_A"
-  ]
+  ],
+  "people": 30
  },
  "V2BG_10B": {
   "dir": "V2BG_10B",
@@ -615,7 +623,8 @@
   ],
   "undecodedProps": [
    "V2BG_10B_A"
-  ]
+  ],
+  "people": 24
  },
  "V2BG_11A": {
   "dir": "V2BG_11A",
@@ -629,7 +638,8 @@
   ],
   "undecodedProps": [
    "V2BG_11A_A"
-  ]
+  ],
+  "people": 4
  },
  "V2BG_12A": {
   "dir": "V2BG_12A",
@@ -655,7 +665,8 @@
    "V2BG12A",
    "V2BG12A_nis"
   ],
-  "undecodedProps": []
+  "undecodedProps": [],
+  "people": 34
  },
  "V2BG_13A": {
   "dir": "V2BG_13A",
@@ -751,7 +762,8 @@
    "V2BG13A2_nis",
    "V2BG13A3_nis"
   ],
-  "undecodedProps": []
+  "undecodedProps": [],
+  "people": 35
  },
  "V2BG_14A": {
   "dir": "V2BG_14A",
@@ -805,7 +817,8 @@
    "V2BG14A",
    "V2BG14A_nis"
   ],
-  "undecodedProps": []
+  "undecodedProps": [],
+  "people": 30
  },
  "V2BG_15A": {
   "dir": "V2BG_15A",
@@ -951,7 +964,8 @@
   "cars": [
    "cars/V2BG_17A_B.skin.gz",
    "cars/V2BG_17A_A.skin.gz"
-  ]
+  ],
+  "people": 30
  },
  "V2BG_19A": {
   "dir": "V2BG_19A",
@@ -1001,7 +1015,8 @@
   ],
   "undecodedProps": [
    "V2BG_19A_I"
-  ]
+  ],
+  "people": 30
  },
  "V2BG_20A": {
   "dir": "V2BG_20A",
@@ -1100,7 +1115,8 @@
   "undecodedProps": [
    "V2BG_20A_B",
    "V2BG_20A_C"
-  ]
+  ],
+  "people": 33
  },
  "V2BG_21A": {
   "dir": "V2BG_21A",
@@ -1150,7 +1166,8 @@
    "V2BG_21A_C",
    "V2BG_21A_F",
    "V2BG_21A_K"
-  ]
+  ],
+  "people": 30
  },
  "V2BG_22A": {
   "dir": "V2BG_22A",
@@ -1186,7 +1203,8 @@
   ],
   "undecodedProps": [
    "V2BG_22A_A"
-  ]
+  ],
+  "people": 14
  },
  "V2BG_22B": {
   "dir": "V2BG_22B",
@@ -1222,7 +1240,8 @@
   ],
   "undecodedProps": [
    "V2BG_22B_A"
-  ]
+  ],
+  "people": 15
  },
  "V2BG_23A": {
   "dir": "V2BG_23A",
@@ -1271,6 +1290,7 @@
   "undecodedProps": [
    "V2BG_23A_E",
    "V2BG_23A_F"
-  ]
+  ],
+  "people": 19
  }
 }

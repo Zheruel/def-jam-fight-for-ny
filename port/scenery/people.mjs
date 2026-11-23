@@ -14,9 +14,14 @@ export function parseBank(buffer) {
   if (view.getUint32(0) !== 0x444a5042) throw new Error("Not a crowd pose bank"); // "DJPB"
   const size = view.getUint32(4, true);
   const header = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 8, size)));
-  const data = new Float32Array(buffer.slice(8 + size));
-  if (data.length !== header.frames * header.names.length * POSE_FLOATS) throw new Error("Crowd pose bank is the wrong size");
-  return { ...header, data };
+  const packed = new Int16Array(buffer.slice(8 + size));
+  const last = header.tracks.at(-1);
+  if (packed.length !== (last.offset + last.frames) * POSE_FLOATS) throw new Error("Crowd pose bank is the wrong size");
+  // Quaternions are stored x 32767 and translations x 256 (see crowd_bank.py), seven values per bone.
+  const data = new Float32Array(packed.length);
+  const { rotation, translation } = header.quant;
+  for (let i = 0; i < packed.length; i++) data[i] = packed[i] / (i % ENTRY < 4 ? rotation : translation);
+  return { ...header, data, index: new Map(header.names.map((name, i) => [name, i])) };
 }
 
 /** Row-major 4x4 of one local pose entry (scale 1): the engine's matrix from the raw quaternion. */
@@ -35,12 +40,12 @@ function multiply(a, ao, b, bo, out, oo) {
   }
 }
 
-/** The pose of `spectator` at (fractional) bank frame `at`, looping, neighbours blended (nlerp on the short arc). */
-export function bankPose(bank, spectator, at, out = new Float32Array(POSE_FLOATS)) {
-  const frames = bank.frames, stride = bank.names.length * POSE_FLOATS;
-  const wrapped = ((at % frames) + frames) % frames;
+/** The pose of `track` at (fractional) game tick `tick`, looping, neighbours blended (nlerp on the short arc). */
+export function bankPose(bank, track, tick, out = new Float32Array(POSE_FLOATS)) {
+  const { frames, rate, offset } = bank.tracks[track];
+  const at = tick / rate, wrapped = ((at % frames) + frames) % frames;
   const a = Math.floor(wrapped), t = wrapped - a, b = (a + 1) % frames;
-  const from = a * stride + spectator * POSE_FLOATS, to = b * stride + spectator * POSE_FLOATS;
+  const from = (offset + a) * POSE_FLOATS, to = (offset + b) * POSE_FLOATS;
   for (let bone = 0; bone < BONES; bone++) {
     const i = bone * ENTRY;
     if (t === 0) { for (let k = 0; k < ENTRY; k++) out[i + k] = bank.data[from + i + k]; continue; }
@@ -76,16 +81,19 @@ export function skinPalette(pose, bones, out = new Float32Array(BONES * 16)) {
   return out;
 }
 
-/** The people manifest, three class meshes (DJF1), the clothed texture atlases and the pose bank of a venue's spectators. */
+/**
+ * A venue's people manifest (`<venue>/people.json`), the class meshes (DJF1), clothed atlases and shared pose bank it names
+ * (all under `../people/`). Each spectator gets `trackIndex` into the bank.
+ */
 export async function loadPeople(dir, { signal, parseSkinned } = {}) {
-  const base = new URL("people/", dir);
-  const manifest = JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("people.json", base), signal)));
-  const [classes, bank] = await Promise.all([
-    Promise.all(manifest.classes.map(async file => parseSkinned(await fetchPacked(new URL(file, base), signal)))),
-    fetchPacked(new URL(manifest.bank.file, base), signal).then(parseBank),
-  ]);
-  // Each distinct clothed atlas ("M1-02-3": slot, layer, palette), shared by the spectators who wear it.
+  const shared = new URL("../people/", dir);
+  const manifest = JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("people.json", dir), signal)));
   const keys = [...new Set(manifest.spectators.flatMap(s => Object.values(s.outfit)))];
-  const outfits = new Map(await Promise.all(keys.map(async key => [key, await fetchPacked(new URL(`outfits/${key}.png`, base), signal)])));
+  const [classes, bank, outfits] = await Promise.all([
+    Promise.all(manifest.classes.map(async id => parseSkinned(await fetchPacked(new URL(`classes/${id}.skin.gz`, shared), signal)))),
+    fetchPacked(new URL("poses.bin.gz", shared), signal).then(parseBank),
+    Promise.all(keys.map(async key => [key, await fetchPacked(new URL(`outfits/${key}.png`, shared), signal)])).then(list => new Map(list)),
+  ]);
+  for (const s of manifest.spectators) s.trackIndex = bank.index.get(s.track);
   return { manifest, classes, bank, outfits };
 }
