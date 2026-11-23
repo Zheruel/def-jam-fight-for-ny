@@ -22,8 +22,12 @@ const types = matchTypes(MODES, true);
 // Navigates the match type step by the intended type, not by a hard-coded number of key presses.
 const chooseType = async (page, type) => {
   assert.ok(types.includes(type), `${type} is advertised`);
-  for (let i = 0; i < types.indexOf(type); i++) await page.keyboard.press("ArrowRight");
+  for (let i = 0; i < ["1v1", "team", "ffa"].indexOf(type === "ffa3" ? "ffa" : type); i++) await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
+  if (type.startsWith("ffa")) {
+    if (type === "ffa3") await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("Enter");
+  }
 };
 try {
   browser = await chromium.launch({ headless: true, ...(process.platform === "darwin" && { channel: "chrome" }) });

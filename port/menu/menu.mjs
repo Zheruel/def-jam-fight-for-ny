@@ -2,7 +2,8 @@
 // battle page's own frame. Resolves with the finished selection ({ mode, handles, venue }); keyboard, gamepads and pointer
 // all drive it. The match-type step only appears when more than one type is offered (Free For All is local-only for now).
 import { createSelection, ROWS } from "./state.mjs";
-import { SIZE, drawFighters, drawVenue, drawTeams, teamThumbX, drawType, typeRect, thumbRect, seatAt, stickerAt, pinAt } from "./screens.mjs";
+import { SIZE, drawFighters, drawVenue, drawTeams, teamThumbX, drawType, thumbRect, seatAt, stickerAt, pinAt } from "./screens.mjs";
+import { matchTypeSelection } from "./match-types.mjs";
 import { onArrive } from "./art.mjs";
 import { MODES, venueSupports } from "../battle/modes.mjs";
 
@@ -18,7 +19,13 @@ const KEYS = [
 ];
 const PAD = { 2: "cpu", 12: "up", 13: "down", 14: "left", 15: "right", 0: "confirm", 1: "back", 3: "back", 4: "previous", 5: "next" };
 
-export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null }) {
+// Remote controller bits (the Standard Gamepad mapping netplay guests send) to the menu's actions.
+const REMOTE = [[0x4000, "confirm"], [0x2000, "back"], [0x1000, "back"]];
+
+// session (port/battle/controls.mjs roomSession): the online room, if any. A host opens it from the Choose Fighter screen;
+// each guest then holds the seat of its own slot: its keyboard or pad moves, confirms and releases that seat's fighter,
+// and the host's own keys and pads leave that seat alone. The host still chooses the match type, CPU seats and venue.
+export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null, session = null }) {
   const [roster, venues] = await Promise.all([json("art/roster.json"), json("art/venues.json")]);
   const face = new FontFace("BattleNames", await (await fetch(new URL("../hud/names.ttf", import.meta.url))).arrayBuffer());
   document.fonts.add(await face.load());
@@ -30,11 +37,26 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
   mount.append(canvas);
   canvas.focus();
 
-  let selection = null, pick = { types, index: 0 };
+  let selection = null;
+  const pick = matchTypeSelection(types);
+  session?.use({ canvas, seats: 0, cpu: 0 });
   if (types.length === 1) start(types[0]);
   function start(mode) {
     selection = createSelection({ roster, venues, seats: MODES[mode].fighters, mode, picks, venue, venueOk: v => venueSupports(v.file, mode) });
+    session?.use({ canvas, seats: selection.state.seats.length, cpu: 0 });
   }
+  // A seat a guest holds answers only to that guest.
+  const remote = seat => Boolean(session?.occupied(seat));
+  // The CPU takes the last seats; an online room refuses a count that would take a seat a guest holds.
+  const cpuChange = change => {
+    const before = selection.state.cpu, used = change();
+    if (session && selection.state.cpu !== before && !session.setCpu(selection.state.cpu)) selection.setCpu(before);
+    return used;
+  };
+  Object.defineProperty(window, "nativeMenu", { configurable: true, get: () => ({
+    screen: screen(), cpu: selection?.state.cpu ?? 0,
+    seats: selection?.state.seats.map((s, i) => ({ handle: roster[s.cursor].handle, ready: s.ready, remote: remote(i) })) ?? [],
+  }) });
   const screen = () => selection ? selection.state.screen : "type";
 
   let tick = 0, camera = null, frame = 0, stopped = false;
@@ -48,7 +70,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     nextPaint = now - nextPaint > frameMs ? now + frameMs : nextPaint + frameMs;
     tick++;
     ctx.setTransform(2, 0, 0, 2, 0, 0);
-    if (!selection) drawType(ctx, pick, { time: performance.now() });
+    if (!selection) drawType(ctx, pick.state);
     else {
       selection.state.seats.forEach((s, i) => { if (s.ready && !readyAt.has(i)) readyAt.set(i, tick); if (!s.ready) readyAt.delete(i); s.readyAt = readyAt.get(i); });
       if (screen() === "venue") {
@@ -59,7 +81,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
       } else if (screen() === "teams") drawTeams(ctx, selection);
       else drawFighters(ctx, selection, { time: performance.now(), tick });
     }
-    if (screen() !== "done" && screen() !== "teams") frame = requestAnimationFrame(draw);
+    if (selection && screen() !== "done" && screen() !== "teams") frame = requestAnimationFrame(draw);
   };
   const redraw = () => { if (!frame && !stopped) frame = requestAnimationFrame(draw); };
   onArrive(redraw);
@@ -69,11 +91,13 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     const send = (seat, action) => {
       let used = false;
       if (!selection) {
-        if (action === "left" || action === "right") { pick.index = (pick.index + (action === "left" ? -1 : 1) + types.length) % types.length; used = true; }
-        else if (action === "confirm") { start(types[pick.index]); used = true; }
+        const mode = pick.press(action);
+        if (mode) start(mode);
+        used = true;
       } else if (action === "back" && screen() === "fighters" && !selection.state.seats.some(s => s.ready) && types.length > 1) {
-        selection = null; used = true;   // back to the match type
-      } else used = selection.press(seat, action);
+        // back to the match type, unless a guest holds a seat the other types may not have
+        if (!selection.state.seats.some((_, i) => remote(i))) { selection = null; used = true; }
+      } else used = action === "cpu" ? cpuChange(() => selection.press(seat, action)) : selection.press(seat, action);
       if (used) { redraw(); if (screen() === "done") { stopped = true; cleanup(); resolve(selection.result()); } }
       return used;
     };
@@ -87,17 +111,18 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
         if (!action) continue;
         handled = true;
         if (selection && seat >= seatCount()) continue;
+        if (remote(seat)) continue;
         send(seat, action);
         if (screen() === "venue" || !selection) break;   // one cursor there: either player's keys work
       }
       if (key === "Enter" || key === " ") {
         handled = true;
-        const waiting = screen() === "fighters" ? selection.state.seats.findIndex(s => !s.ready) : 0;
-        send(Math.max(0, waiting), "confirm");
+        const waiting = screen() === "fighters" ? selection.state.seats.findIndex((s, i) => !s.ready && !remote(i)) : 0;
+        if (waiting >= 0) send(Math.max(0, waiting), "confirm");
       }
       if (key === "Escape" || key === "Backspace") {
         handled = true;
-        const last = selection ? selection.state.seats.map(s => s.ready).lastIndexOf(true) : 0;
+        const last = selection ? selection.state.seats.map((s, i) => s.ready && !remote(i)).lastIndexOf(true) : 0;
         send(Math.max(0, last), "back");
       }
       if (handled) event.preventDefault();
@@ -109,14 +134,14 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     const onPointer = event => {
       const [x, y] = point(event);
       if (!selection) {
-        types.forEach((_, i) => {
-          const [rx, ry, rw, rh] = typeRect(types.length, i);
-          if (x >= rx && x < rx + rw && y >= ry && y < ry + rh) { if (pick.index === i) send(0, "confirm"); else { pick.index = i; redraw(); } }
-        });
+        const mode = pick.point(x, y);
+        if (mode) start(mode);
+        redraw();
       } else if (screen() === "fighters") {
         const sticker = stickerAt(selection, x, y);
-        if (sticker >= 0) { selection.toggleCpuFrom(sticker); redraw(); return; }   // a sticker turns that seat (and the later ones) over to the CPU
+        if (sticker >= 0) { cpuChange(() => selection.toggleCpuFrom(sticker)); redraw(); return; }   // a sticker turns that seat (and the later ones) over to the CPU
         const seat = seatAt(selection, x), s = selection.state.seats[seat], { columns } = selection.state;
+        if (remote(seat)) return;
         if (s.ready) { send(seat, "back"); return; }
         const first = selection.scroll(seat) * columns;
         for (let slot = 0; slot < ROWS * columns; slot++) {
@@ -143,7 +168,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     let padLoop = 0;
     const padFrame = () => {
       [...(navigator.getGamepads?.() ?? [])].forEach((pad, seat) => {
-        if (!pad || seat >= Math.max(1, seatCount())) return;
+        if (!pad || seat >= Math.max(1, seatCount()) || remote(seat)) return;
         const now = new Set(Object.keys(PAD).filter(b => pad.buttons[b]?.pressed));
         const [ax = 0, ay = 0] = pad.axes;
         if (ax < -0.6) now.add("14"); if (ax > 0.6) now.add("15"); if (ay < -0.6) now.add("12"); if (ay > 0.6) now.add("13");
@@ -154,11 +179,25 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
       if (!stopped) padLoop = requestAnimationFrame(padFrame);
     };
     padLoop = requestAnimationFrame(padFrame);
+    // A guest's controller states arrive as (slot, pad); a new press of a direction or a button is that seat's action.
+    // Only the fighter screen answers: the host chooses the match type, the CPU seats and the venue.
+    const heldRemote = new Map();
+    const unsubscribe = session?.onPad((slot, pad) => {
+      const now = new Set();
+      if (pad) {
+        for (const [bit, action] of REMOTE) if (pad.buttons & bit) now.add(action);
+        if (pad.x < -0.6) now.add("left"); if (pad.x > 0.6) now.add("right"); if (pad.z > 0.6) now.add("up"); if (pad.z < -0.6) now.add("down");
+      }
+      const before = heldRemote.get(slot) ?? new Set();
+      heldRemote.set(slot, now);
+      if (!selection || screen() !== "fighters" || slot < 1 || !remote(slot)) return;
+      for (const action of now) if (!before.has(action)) send(slot, action);
+    });
     addEventListener("keydown", onKey);
     canvas.addEventListener("pointerdown", onPointer);
     function cleanup() {
       removeEventListener("keydown", onKey); canvas.removeEventListener("pointerdown", onPointer);
-      cancelAnimationFrame(padLoop); canvas.remove(); onArrive(() => {});
+      cancelAnimationFrame(padLoop); unsubscribe?.(); delete window.nativeMenu; canvas.remove(); onArrive(() => {});
     }
     redraw();
   });

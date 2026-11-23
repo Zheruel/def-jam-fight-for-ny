@@ -8,7 +8,7 @@ import { peerConfiguration } from './ice.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const nativeRoutes = new Set(portFiles.map(file => '/' + file));
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml' };
 
 function byteRange(header, size) {
   if (!header) return [0, size - 1];

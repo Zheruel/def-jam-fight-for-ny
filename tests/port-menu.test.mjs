@@ -1,3 +1,4 @@
+import { matchTypeSelection } from "../port/menu/match-types.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync, existsSync } from "node:fs";
@@ -136,4 +137,24 @@ test("the multiplayer selector keeps the displayed fighter when other seats occu
   const result = s.result();
   const query = parseBattleQuery(selectionQuery(result), { fighters: inventory.fighters, venues: inventory.venues, ffa: true });
   assert.deepEqual(query.handles, result.handles);
+});
+
+test("the retail wall opens the Free For All size prompt and locks unsupported events", () => {
+  const pick = matchTypeSelection(["1v1", "team", "ffa3", "ffa", "subway"]);
+  assert.equal(pick.press("confirm"), "1v1");
+  pick.press("right");
+  assert.equal(pick.press("confirm"), "team");
+  pick.press("right"); pick.press("confirm"); pick.press("back");
+  assert.equal(pick.state.mode, "ffa");
+  assert.equal(pick.state.size, null);
+  pick.press("confirm"); pick.press("left");
+  assert.equal(pick.press("confirm"), "ffa3");
+  pick.press("down");
+  assert.equal(pick.state.mode, "window");
+  assert.equal(pick.press("confirm"), undefined);
+  pick.press("right");
+  assert.equal(pick.press("confirm"), "subway");
+  pick.point(250, 150);
+  pick.point(250, 150);
+  assert.equal(pick.point(260, 225), "ffa");
 });

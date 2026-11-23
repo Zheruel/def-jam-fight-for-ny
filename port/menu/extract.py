@@ -140,6 +140,8 @@ def export(iso, output: Path):
         (output / "roster.json").write_text(json.dumps(roster, indent=1) + "\n")
         thumbs(output, roster)
         export_team(source, output)
+        from match_type_art import export as export_match_type
+        export_match_type(source, output / "match-type")
 
         # -- selector chrome (chooseF2) -------------------------------------------------------------------------
         f2 = source.pictures("screens/battle/chooseF2.big")
@@ -153,9 +155,7 @@ def export(iso, output: Path):
         for style, index in STYLES.items():
             f2pic(index, f"style-{style}")
 
-        types = source.pictures("screens/battle/support/chooseMatchTypeButtons.big")
-        for tag, name in (("9", "type-1v1"), ("23", "type-team"), ("27", "type-ffa"), ("15", "type-bracket")):
-            write(output / f"{name}.png", types[tag])
+
         f3 = source.pictures("screens/battle/chooseF3.big")
         for tag, name in (("343", "select3-bg-0"), ("342", "select3-bg-1"), ("330", "ready3"), ("373", "thumb-paper3")):
             write(output / f"{name}.png", f3[tag])

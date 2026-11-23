@@ -1,6 +1,7 @@
 // Drawing of the retail "Choose Fighter" and "Choose Venue" screens on a 640x480 canvas. Positions are the front-end
 // movies' own (SCREENS.VIV chooseF2 / chsVenue, see port/hud/screens/extract.py); art is lazy (art.mjs).
 import { have, fighterPictures } from "./art.mjs";
+import typeLayout from "./art/match-type/layout.json" with { type: "json" };
 import { ROWS } from "./state.mjs";
 
 export const SIZE = Object.freeze({ width: 640, height: 480 });
@@ -180,30 +181,34 @@ export function drawTeams(ctx, {state}) {
 }
 
 // -- match type screen --------------------------------------------------------------------------------------------------
-const TYPE_ART = { "1v1": ["type-1v1.png", "ONE ON ONE"], team: ["type-team.png", "TAG TEAM"], ffa3: ["type-ffa.png", "FREE FOR ALL 3"],
-  ffa: ["type-ffa.png", "FREE FOR ALL"] };
-export const typeRect = (count, slot) => { const width = Math.min(190, Math.floor((SIZE.width - 60) / count) - 30), gap = 30, x0 = (SIZE.width - count * width - (count - 1) * gap) / 2; return [x0 + slot * (width + gap), 130, width, 240]; };
-
-export function drawType(ctx, { types, index }, { time = 0 } = {}) {
-  ctx.clearRect(0, 0, SIZE.width, SIZE.height);
-  const grad = ctx.createRadialGradient(320, 250, 40, 320, 250, 420);
-  grad.addColorStop(0, "#4a5a54"); grad.addColorStop(1, "#1c2422");
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
-  title(ctx, "CHOOSE MATCH TYPE", [["\u2715", "SELECT"]]);
-  types.forEach((type, i) => {
-    const [x, y, w, h] = typeRect(types.length, i), [file, label] = TYPE_ART[type], card = have(file), chosen = i === index;
-    if (chosen) {
-      const bracket = have("type-bracket.png");
-      ctx.save(); ctx.globalAlpha = 0.7 + 0.3 * Math.sin(time / 140);
-      if (bracket) ctx.drawImage(bracket, 13, 12, 69, 112, x + w / 2 - 95 * w / 190, y + h / 2 - 17 - 131 * w / 190, w, 262 * w / 190);
-      ctx.restore();
-    }
-    ctx.save();
-    ctx.translate(x + w / 2, y + h / 2); ctx.rotate(chosen ? 0 : (i % 2 ? 0.03 : -0.03)); ctx.scale((chosen ? 1.06 : 1) * w / 190, (chosen ? 1.06 : 1) * w / 190);
-    if (card) ctx.drawImage(card, 0, 0, 60, 84, -75, -122, 150, 210);   // the 128x128 picture holds one 58x82 card
-    ctx.restore();
-    outlined(ctx, label, x + w / 2, y + h - 38, Math.round(20 * Math.max(0.6, w / 190)), { align: "center", fill: chosen ? "#f1e8c8" : "#a8a290", width: 3 });
-  });
+export function drawType(ctx, { mode, size, enabled }) {
+  const image = (name, ...dimensions) => {
+    const bitmap = have(`match-type/${name}`);
+    if (bitmap) ctx.drawImage(bitmap, ...dimensions);
+  };
+  ctx.fillStyle = "#181d19";
+  ctx.fillRect(0, 0, SIZE.width, SIZE.height);
+  image("wall.webp", 0, 0);
+  for (const [card, rect] of Object.entries(typeLayout.locks)) {
+    if (!enabled(card)) image("lock.png", ...rect);
+  }
+  const [x,y,w,h] = typeLayout.cards[mode];
+  image("highlight.png", Math.round(x+w/2-55), Math.round(y+h/2-64));
+  image(`${mode}.png`, ...typeLayout.details[mode]);
+  title(ctx, "CHOOSE MATCH TYPE", [["✕", "SELECT"], ["△", "BACK"]]);
+  if (size) {
+    image("size-paper.png", 66, 125);
+    image("size-highlight.png", size === "ffa3" ? 92 : 206, 202);
+    const text = (label, x, y, px, color) => {
+      ctx.font = `${px}px ${FONT}`;
+      ctx.fillStyle = color; ctx.textAlign = "center"; ctx.textBaseline = "top";
+      ctx.fillText(label, x, y);
+    };
+    text("NUMBER OF PLAYERS?", 206, 154, 23, "#fcf0d6");
+    text("3", 144, 199, 80, size === "ffa3" ? "#fcf0d6" : "#15110e");
+    text("4", 258, 199, 80, size === "ffa" ? "#fcf0d6" : "#15110e");
+    outlined(ctx, "✕ SELECT", 244, 301, 15, { width: 2 });
+  }
 }
 
 // -- venue screen ------------------------------------------------------------------------------------------------------
