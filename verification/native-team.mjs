@@ -179,6 +179,8 @@ assert.deepEqual(fight.diagnostics().actors.map(a => [a.position[0], a.position[
 console.log("Team time limit: draw, then restarted.");
 
 if (make) {
+  // Widen the observed pages: every page a differently played match can touch must be in the compact seed.
+  for (let seed = 1; seed <= 40; seed++) play(seed, seed % 3 === 0 ? [] : seed % 3 === 1 ? [2, 3] : [0, 1]);
   const pages = fight.observedPages, common = new DataView(unpack("kernel/foundation-start.gz"));
   for (let off = 0; off < common.byteLength; off += 4100) pages[common.getUint32(off, true)] = 1;
   writeFileSync(args[3], gzipSync(new Uint8Array(records(original, pages)), { level: 9 }));
