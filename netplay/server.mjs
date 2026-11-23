@@ -6,6 +6,13 @@ import { WebSocket, WebSocketServer } from 'ws';
 const ROOM_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ROOM_PATTERN = /^[A-HJ-NP-Z2-9]{8}$/;
 const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]']);
+const DEFAULT_PLAYERS = 2;
+const MAX_PLAYERS = 4;
+
+// A room seats the host (slot 0) and up to players - 1 guests. Hosts that never ask for more keep the two-player room.
+function playerCount(value) {
+  return Number.isInteger(value) && value >= DEFAULT_PLAYERS && value <= MAX_PLAYERS ? value : value === undefined ? DEFAULT_PLAYERS : 0;
+}
 
 function acceptsOrigin(request, allowedOrigins) {
   const origin = request.headers.origin;
@@ -65,6 +72,7 @@ export function attachNetplay(server, { path = '/netplay', allowedOrigins = [], 
   sockets.on('connection', (socket) => {
     let room;
     let role;
+    let self;
     let closed = false;
     socket.alive = true;
     socket.on('pong', () => { socket.alive = true; });
@@ -80,14 +88,13 @@ export function attachNetplay(server, { path = '/netplay', allowedOrigins = [], 
       socket.close(1008, 'Invalid room request');
     }
 
-    function removeGuest(message) {
-      const guest = room.guest;
-      if (!guest) return;
-      room.guest = null;
-      send(room.host, { type: 'peer-left', round: room.round });
+    function removeGuest(guest, message) {
+      if (!guest || room.guests.get(guest.slot) !== guest) return;
+      room.guests.delete(guest.slot);
+      send(room.host, { type: 'peer-left', round: guest.round, slot: guest.slot });
       if (message) {
-        send(guest, { type: 'error', message });
-        guest.close(1000, 'Match ended');
+        send(guest.socket, { type: 'error', message });
+        guest.socket.close(1000, 'Match ended');
       }
     }
 
@@ -101,15 +108,26 @@ export function attachNetplay(server, { path = '/netplay', allowedOrigins = [], 
       }
       if (!message || typeof message.type !== 'string') return reject('Invalid room request.');
 
+      if (!room && message.type === 'info') {
+        // What a guest may see before joining: the seats the host allows and how many are open.
+        const code = typeof message.code === 'string' ? message.code.trim().toUpperCase() : '';
+        const found = ROOM_PATTERN.test(code) && rooms.get(code);
+        if (!found) return reject('Room unavailable. Check the code and try again.');
+        send(socket, { type: 'info', code, players: found.players, open: found.players - 1 - found.guests.size });
+        return;
+      }
+
       if (!room && message.type === 'host') {
+        const players = playerCount(message.players);
+        if (!players) return reject('A room seats two to four players.');
         let code;
         do {
           code = Array.from(randomBytes(8), (byte) => ROOM_ALPHABET[byte & 31]).join('');
         } while (rooms.has(code));
-        room = { code, host: socket, guest: null, round: 0 };
+        room = { code, host: socket, guests: new Map(), round: 0, players };
         role = 'host';
         rooms.set(code, room);
-        send(socket, { type: 'room', code });
+        send(socket, { type: 'room', code, players });
         return;
       }
 
@@ -117,26 +135,44 @@ export function attachNetplay(server, { path = '/netplay', allowedOrigins = [], 
         const code = typeof message.code === 'string' ? message.code.trim().toUpperCase() : '';
         const availableRoom = ROOM_PATTERN.test(code) && rooms.get(code);
         if (!availableRoom) return reject('Room unavailable. Check the code and try again.');
-        if (availableRoom.guest) return reject('This room already has a guest.');
+        if (availableRoom.guests.size >= availableRoom.players - 1) {
+          return reject(availableRoom.players === DEFAULT_PLAYERS ? 'This room already has a guest.' : 'This room is full.');
+        }
         room = availableRoom;
         role = 'guest';
-        room.guest = socket;
+        // A returning guest may ask for the seat it had; otherwise the lowest free seat.
+        let slot = Number.isInteger(message.slot) && message.slot >= 1 && message.slot < room.players && !room.guests.has(message.slot)
+          ? message.slot : 1;
+        while (room.guests.has(slot)) slot++;
         room.round += 1;
-        send(socket, { type: 'room', code, round: room.round });
-        send(room.host, { type: 'peer-joined', round: room.round });
+        self = { socket, slot, round: room.round };
+        room.guests.set(slot, self);
+        send(socket, { type: 'room', code, round: room.round, slot, players: room.players });
+        send(room.host, { type: 'peer-joined', round: room.round, slot });
         return;
       }
 
       if (!room) return reject('Create or join a room first.');
-      if (!room.guest || (role === 'guest' && room.guest !== socket)) return;
-      if (message.round !== room.round) return;
+      if (role === 'host' && message.type === 'players') {
+        // The host decides how many seats are advertised; it cannot seat fewer than the guests already present.
+        const players = playerCount(message.players);
+        if (!players || players < room.guests.size + 1) return;
+        room.players = players;
+        send(socket, { type: 'players', players, open: players - 1 - room.guests.size });
+        return;
+      }
+      if (role === 'guest' && room.guests.get(self?.slot) !== self) return;
+      const target = role === 'host' ? [...room.guests.values()].find((guest) => guest.round === message.round) : self;
+      if (!target || message.round !== target.round) return;
       if (message.type === 'drop-peer') {
-        removeGuest('The peer connection ended. Rejoin the room to try again.');
+        removeGuest(target, 'The peer connection ended. Rejoin the room to try again.');
         return;
       }
       const payload = signalPayload(message, role);
       if (payload) {
-        send(role === 'host' ? room.guest : room.host, { type: message.type, round: room.round, ...payload });
+        const out = { type: message.type, round: target.round, ...payload };
+        if (role === 'host') send(target.socket, out);
+        else send(room.host, { ...out, slot: target.slot });
       }
     });
 
@@ -145,10 +181,12 @@ export function attachNetplay(server, { path = '/netplay', allowedOrigins = [], 
       if (!room) return;
       if (role === 'host') {
         rooms.delete(room.code);
-        send(room.guest, { type: 'room-closed' });
-        room.guest?.close(1000, 'Room closed');
-      } else if (room.guest === socket) {
-        removeGuest();
+        for (const guest of room.guests.values()) {
+          send(guest.socket, { type: 'room-closed' });
+          guest.socket.close(1000, 'Room closed');
+        }
+      } else {
+        removeGuest(self);
       }
     });
   });

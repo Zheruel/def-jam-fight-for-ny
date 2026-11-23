@@ -82,7 +82,7 @@ test('signaling scopes traffic to one invited guest and supports a fresh round',
   const guest = await connect(t, base);
   guest.send({ type: 'join', code: code.toLowerCase() });
   const { round } = await guest.receive();
-  assert.deepEqual(await host.receive(), { type: 'peer-joined', round });
+  assert.deepEqual(await host.receive(), { type: 'peer-joined', round, slot: 1 });
 
   const extra = await connect(t, base);
   extra.send({ type: 'join', code });
@@ -95,14 +95,14 @@ test('signaling scopes traffic to one invited guest and supports a fresh round',
   assert.deepEqual(await guest.receive(), offer);
   const answer = { type: 'answer', round, description: { type: 'answer', sdp: 'example' } };
   guest.send(answer);
-  assert.deepEqual(await host.receive(), answer);
+  assert.deepEqual(await host.receive(), { ...answer, slot: 1 });
 
   guest.close();
-  assert.deepEqual(await host.receive(), { type: 'peer-left', round });
+  assert.deepEqual(await host.receive(), { type: 'peer-left', round, slot: 1 });
   const replacement = await connect(t, base);
   replacement.send({ type: 'join', code });
-  assert.deepEqual(await replacement.receive(), { type: 'room', code, round: round + 1 });
-  assert.deepEqual(await host.receive(), { type: 'peer-joined', round: round + 1 });
+  assert.deepEqual(await replacement.receive(), { type: 'room', code, round: round + 1, slot: 1, players: 2 });
+  assert.deepEqual(await host.receive(), { type: 'peer-joined', round: round + 1, slot: 1 });
 
   host.close();
   assert.deepEqual(await replacement.receive(), { type: 'room-closed' });

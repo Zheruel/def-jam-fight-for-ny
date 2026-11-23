@@ -45,13 +45,16 @@ function decodeInput(buffer) {
 }
 
 function openRoom(role, {
-  code, media, video, signalingUrl, iceServers = DEFAULT_ICE_SERVERS,
+  code, media, video, signalingUrl, iceServers = DEFAULT_ICE_SERVERS, players, slot: wantedSlot,
   connectSignaling = (url) => new WebSocket(websocketUrl(url)), roomTimeout = 10_000,
-  onInput = () => {}, onState = () => {}, onPlaybackBlocked = () => {}, onClose = () => {},
+  onInput = () => {}, onState = () => {}, onPeer = () => {}, onSlots = () => {}, onPlayers = () => {},
+  onPlaybackBlocked = () => {}, onClose = () => {},
 }) {
   const socket = connectSignaling(signalingUrl);
-  let peer;
+  // The host holds one connection per seated guest, keyed by the room round that seated it; a guest holds one.
+  const peers = new Map();
   let state;
+  let seats = players ?? 2;
   let roomCode;
   let closed = false;
   let input = NEUTRAL;
@@ -73,16 +76,42 @@ function openRoom(role, {
     if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message));
   }
 
+  const live = (activePeer) => peers.get(activePeer.round) === activePeer;
+  const guestPeer = () => peers.values().next().value;
+
+  // Seat list for the host's frontend: slot 0 is the host, the rest are open or taken by a guest peer.
+  function slotList() {
+    const list = [{ slot: 0, state: 'host' }];
+    for (let slot = 1; slot < seats; slot += 1) {
+      const taken = [...peers.values()].find((entry) => entry.slot === slot);
+      list.push({ slot, state: taken?.state ?? 'open' });
+    }
+    return list;
+  }
+
+  function announcePeers() {
+    if (role !== 'host') return;
+    onSlots(slotList());
+    const all = [...peers.values()];
+    const next = !all.length ? 'waiting' : all.every((entry) => entry.state === 'connected') ? 'connected' : 'connecting';
+    updateState(next);
+  }
+
+  function setPeerState(activePeer, next, error) {
+    if (activePeer.state === next) return;
+    activePeer.state = next;
+    if (role === 'host') onPeer({ slot: activePeer.slot, state: next, error });
+  }
+
   function deliverInput(activePeer, next) {
     if (sameInput(activePeer.input, next)) return;
     activePeer.input = next;
-    onInput({ buttons: next.buttons, axes: next.axes.map((axis) => axis / 127) });
+    onInput({ buttons: next.buttons, axes: next.axes.map((axis) => axis / 127) }, activePeer.slot);
   }
 
-  function resetPeer() {
-    const previous = peer;
-    if (!previous) return;
-    peer = undefined;
+  function resetPeer(previous) {
+    if (!previous || !live(previous)) return;
+    peers.delete(previous.round);
     clearTimeout(previous.deadline);
     clearTimeout(previous.channelCloseDeadline);
     clearTimeout(previous.inputDeadline);
@@ -90,7 +119,10 @@ function openRoom(role, {
     previous.channel?.close();
     previous.connection.close();
     if (video && video.srcObject === previous.playback) video.srcObject = null;
-    if (role === 'host') deliverInput(previous, NEUTRAL);
+    if (role === 'host') {
+      deliverInput(previous, NEUTRAL);
+      setPeerState(previous, 'open');
+    }
   }
 
   function close(error) {
@@ -101,7 +133,7 @@ function openRoom(role, {
     window.removeEventListener('blur', releaseInput);
     document.removeEventListener('visibilitychange', releaseHiddenInput);
     if (socket.readyState < WebSocket.CLOSING) socket.close();
-    resetPeer();
+    for (const entry of [...peers.values()]) resetPeer(entry);
     onClose();
     if (!roomCode) rejectRoom(error || new Error('The room closed before it was ready.'));
     updateState(error ? 'error' : 'closed', error);
@@ -123,7 +155,7 @@ function openRoom(role, {
     const newInput = controllerState(next);
     if (sameInput(input, newInput)) return;
     input = newInput;
-    writeInput(peer);
+    writeInput(guestPeer());
   }
 
   function releaseInput() {
@@ -135,28 +167,31 @@ function openRoom(role, {
   }
 
   function failPeer(activePeer, error) {
-    if (peer !== activePeer) return;
+    if (!live(activePeer)) return;
     send({ type: 'drop-peer', round: activePeer.round });
     if (role === 'guest') close(error);
     else {
-      resetPeer();
-      updateState('waiting', error);
+      resetPeer(activePeer);
+      if (error) onPeer({ slot: activePeer.slot, state: 'open', error });
+      announcePeers();
     }
   }
 
   function refreshState(activePeer) {
-    if (peer !== activePeer) return;
+    if (!live(activePeer)) return;
     const connectionState = activePeer.connection.connectionState;
     if (connectionState === 'failed') {
       failPeer(activePeer, new Error('Could not establish a peer connection.'));
     } else if (connectionState === 'connected' && activePeer.channel?.readyState === 'open') {
       clearTimeout(activePeer.deadline);
       activePeer.deadline = null;
-      updateState('connected');
+      setPeerState(activePeer, 'connected');
+      if (role === 'host') announcePeers(); else updateState('connected');
     } else if (connectionState === 'disconnected') {
       if (role === 'host') deliverInput(activePeer, NEUTRAL);
       activePeer.deadline ??= startConnectionDeadline(activePeer);
-      updateState('connecting');
+      setPeerState(activePeer, 'connecting');
+      if (role === 'host') announcePeers(); else updateState('connecting');
     }
   }
 
@@ -174,7 +209,7 @@ function openRoom(role, {
     activePeer.channel = channel;
     channel.binaryType = 'arraybuffer';
     channel.addEventListener('open', () => {
-      if (peer !== activePeer) return;
+      if (!live(activePeer)) return;
       if (role === 'guest') {
         writeInput(activePeer);
         activePeer.inputInterval = setInterval(() => writeInput(activePeer), INPUT_INTERVAL);
@@ -182,7 +217,7 @@ function openRoom(role, {
       refreshState(activePeer);
     });
     channel.addEventListener('close', () => {
-      if (peer !== activePeer) return;
+      if (!live(activePeer)) return;
       if (role === 'host') deliverInput(activePeer, NEUTRAL);
       // The room-close signal can arrive after WebRTC reports the channel closure.
       activePeer.channelCloseDeadline = setTimeout(() => {
@@ -191,7 +226,7 @@ function openRoom(role, {
     });
     if (role !== 'host') return;
     channel.addEventListener('message', (event) => {
-      if (peer !== activePeer) return;
+      if (!live(activePeer)) return;
       const data = decodeInput(event.data);
       if (!data) return;
       if (activePeer.sequence !== null) {
@@ -205,24 +240,26 @@ function openRoom(role, {
     });
   }
 
-  function newPeer(round) {
-    resetPeer();
+  function newPeer(round, slot) {
+    if (role === 'guest') for (const entry of [...peers.values()]) resetPeer(entry);
     const connection = new RTCPeerConnection({ iceServers });
     const activePeer = {
-      round, connection, input: NEUTRAL, sequence: role === 'guest' ? 0 : null,
-      remoteIce: [], localIce: [], announced: false,
+      round, slot, connection, input: NEUTRAL, sequence: role === 'guest' ? 0 : null,
+      remoteIce: [], localIce: [], announced: false, state: 'connecting',
     };
-    peer = activePeer;
+    peers.set(round, activePeer);
     activePeer.deadline = startConnectionDeadline(activePeer);
     connection.addEventListener('connectionstatechange', () => refreshState(activePeer));
     connection.addEventListener('icecandidate', ({ candidate }) => {
-      if (!candidate || peer !== activePeer) return;
+      if (!candidate || !live(activePeer)) return;
       const message = { type: 'ice', round, candidate: candidate.toJSON() };
       if (activePeer.announced) send(message);
       else activePeer.localIce.push(message);
     });
     if (role === 'host') {
-      for (const track of media.getTracks()) connection.addTrack(track, media);
+      // Each seat gets its own media when the host supplies a function, otherwise everyone sees the one stream.
+      const stream = typeof media === 'function' ? media(slot) : media;
+      for (const track of stream.getTracks()) connection.addTrack(track, stream);
       bindChannel(activePeer, connection.createDataChannel(INPUT_CHANNEL, { ordered: false, maxRetransmits: 0 }));
     } else {
       const playback = new MediaStream();
@@ -231,27 +268,37 @@ function openRoom(role, {
       video.srcObject = playback;
       connection.addEventListener('datachannel', ({ channel }) => bindChannel(activePeer, channel));
       connection.addEventListener('track', ({ track }) => {
-        if (peer !== activePeer) return;
+        if (!live(activePeer)) return;
         playback.addTrack(track);
         if (track.kind === 'video') {
           video.play().catch((error) => {
-            if (error.name === 'NotAllowedError' && peer === activePeer) onPlaybackBlocked(video);
+            if (error.name === 'NotAllowedError' && live(activePeer)) onPlaybackBlocked(video);
           });
         }
       });
     }
-    updateState('connecting');
+    if (role === 'host') {
+      onPeer({ slot, state: 'connecting' });
+      announcePeers();
+    } else updateState('connecting');
     return activePeer;
   }
 
   async function announce(activePeer, description) {
-    if (peer !== activePeer) return;
+    if (!live(activePeer)) return;
     await activePeer.connection.setLocalDescription(description);
-    if (peer !== activePeer) return;
+    if (!live(activePeer)) return;
     const local = activePeer.connection.localDescription.toJSON();
     send({ type: local.type, round: activePeer.round, description: local });
     activePeer.announced = true;
     activePeer.localIce.splice(0).forEach(send);
+  }
+
+  function setSeats(next) {
+    if (seats === next) return;
+    seats = next;
+    onPlayers(seats);
+    announcePeers();
   }
 
   async function receive(message) {
@@ -263,14 +310,21 @@ function openRoom(role, {
         close();
         return;
       case 'room':
-        if (role === 'guest') newPeer(message.round);
-        else updateState('waiting');
         roomCode = message.code;
+        seats = message.players ?? seats;
+        if (role === 'guest') newPeer(message.round, message.slot ?? 1);
+        else announcePeers();
         clearTimeout(roomDeadline);
-        resolveRoom({ code: roomCode, close: closePage, setInput });
+        resolveRoom(role === 'host'
+          ? { code: roomCode, players: seats, close: closePage,
+            setPlayers: (count) => send({ type: 'players', players: count }), slots: slotList }
+          : { code: roomCode, slot: message.slot ?? 1, players: seats, close: closePage, setInput });
+        return;
+      case 'players':
+        setSeats(message.players);
         return;
       case 'peer-joined': {
-        const activePeer = newPeer(message.round);
+        const activePeer = newPeer(message.round, message.slot ?? 1);
         try {
           await announce(activePeer, await activePeer.connection.createOffer());
         } catch (error) {
@@ -278,16 +332,18 @@ function openRoom(role, {
         }
         return;
       }
-      case 'peer-left':
-        if (peer?.round === message.round) {
-          resetPeer();
-          updateState('waiting');
+      case 'peer-left': {
+        const gone = peers.get(message.round);
+        if (gone) {
+          resetPeer(gone);
+          announcePeers();
         }
         return;
+      }
     }
 
-    const activePeer = peer;
-    if (!activePeer || activePeer.round !== message.round) return;
+    const activePeer = peers.get(message.round);
+    if (!activePeer) return;
     const { connection, remoteIce } = activePeer;
     try {
       if (message.type === 'ice') {
@@ -296,7 +352,7 @@ function openRoom(role, {
       } else if (message.type === 'offer' || message.type === 'answer') {
         await connection.setRemoteDescription(message.description);
         for (const candidate of remoteIce.splice(0)) await connection.addIceCandidate(candidate);
-        if (message.type === 'offer' && peer === activePeer) {
+        if (message.type === 'offer' && live(activePeer)) {
           await announce(activePeer, await connection.createAnswer());
         }
       }
@@ -306,7 +362,7 @@ function openRoom(role, {
   }
 
   const roomDeadline = setTimeout(() => close(new Error('Signaling server did not respond.')), roomTimeout);
-  socket.addEventListener('open', () => send({ type: role === 'host' ? 'host' : 'join', code }));
+  socket.addEventListener('open', () => send(role === 'host' ? { type: 'host', ...(players ? { players } : {}) } : { type: 'join', code, ...(wantedSlot ? { slot: wantedSlot } : {}) }));
   socket.addEventListener('message', ({ data }) => {
     handleMessage = handleMessage.then(async () => {
       if (!closed) await receive(JSON.parse(data));
@@ -322,14 +378,29 @@ function openRoom(role, {
   return ready;
 }
 
-export async function hostMatch({ canvas, audioStream, frameRate = 60, ...options }) {
-  const videoTracks = canvas.captureStream(frameRate).getVideoTracks();
-  if (!videoTracks.length) throw new Error('The emulator canvas has no video track.');
-  const stopCapture = () => videoTracks.forEach((track) => track.stop());
+// Capture each distinct canvas once; every seat that is given the same canvas shares its track.
+export async function hostMatch({ canvas, audioStream, frameRate = 60, seatMedia, ...options }) {
+  const captures = new Map();
+  const capture = (source) => {
+    if (!captures.has(source)) {
+      const tracks = source.captureStream(frameRate).getVideoTracks();
+      if (!tracks.length) throw new Error('The emulator canvas has no video track.');
+      captures.set(source, tracks);
+    }
+    return captures.get(source);
+  };
+  const stopCapture = () => captures.forEach((tracks) => tracks.forEach((track) => track.stop()));
   try {
-    const media = new MediaStream([...videoTracks, ...(audioStream?.getAudioTracks() || [])]);
-    const { code, close } = await openRoom('host', { ...options, media, onClose: stopCapture });
-    return { code, close };
+    capture(canvas);
+    // seatMedia(slot) may return { canvas, audioStream } to give that guest its own video and audio.
+    const media = (slot) => {
+      const own = seatMedia?.(slot) ?? {};
+      const picture = capture(own.canvas ?? canvas);
+      const sound = own.audioStream ?? audioStream;
+      return new MediaStream([...picture, ...(sound?.getAudioTracks() || [])]);
+    };
+    const room = await openRoom('host', { ...options, media, onClose: stopCapture });
+    return room;
   } catch (error) {
     stopCapture();
     throw error;
@@ -339,6 +410,23 @@ export async function hostMatch({ canvas, audioStream, frameRate = 60, ...option
 export async function joinMatch({ code, video, ...options }) {
   const normalizedCode = typeof code === 'string' ? code.trim().toUpperCase() : '';
   if (!ROOM_PATTERN.test(normalizedCode)) throw new Error('Enter the eight-character room code.');
-  const { setInput, close } = await openRoom('guest', { ...options, code: normalizedCode, video });
-  return { setInput, close };
+  return openRoom('guest', { ...options, code: normalizedCode, video });
+}
+
+// The seats a room advertises (the host decides; two by default) and how many are open, before joining.
+export function roomInfo({ code, signalingUrl, connectSignaling = (url) => new WebSocket(websocketUrl(url)), timeout = 10_000 }) {
+  const normalizedCode = typeof code === 'string' ? code.trim().toUpperCase() : '';
+  if (!ROOM_PATTERN.test(normalizedCode)) return Promise.reject(new Error('Enter the eight-character room code.'));
+  return new Promise((resolve, reject) => {
+    const socket = connectSignaling(signalingUrl);
+    const finish = (error, value) => { clearTimeout(timer); socket.close(); error ? reject(error) : resolve(value); };
+    const timer = setTimeout(() => finish(new Error('Signaling server did not respond.')), timeout);
+    socket.addEventListener('open', () => socket.send(JSON.stringify({ type: 'info', code: normalizedCode })));
+    socket.addEventListener('message', ({ data }) => {
+      const message = JSON.parse(data);
+      if (message.type === 'info') finish(null, { code: message.code, players: message.players, open: message.open });
+      else if (message.type === 'error') finish(new Error(message.message));
+    });
+    socket.addEventListener('error', () => finish(new Error('Could not connect to the signaling server.')));
+  });
 }

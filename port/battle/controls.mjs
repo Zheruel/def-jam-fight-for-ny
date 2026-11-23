@@ -9,13 +9,13 @@ const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p
 // Standard Gamepad order to PS2 pad bits, as read by the retail Battle update.
 const gamepadBits=[0x4000,0x2000,0x8000,0x1000,0x0400,0x0800,0x0100,0x0200,1,8,2,4,0x10,0x40,0x80,0x20];
 export function battleControls(redraw,audio) {
-  let remote, room, guest = false, poll=0, lastPacket="";
+  let remote = {}, room, guest = false, poll=0, lastPacket="";
   const pads = [null,null];
   let state = "local";
   const button = id => document.getElementById(id);
   function input(slot) {
     if (pads[slot]) return pads[slot];
-    if (slot === 1 && remote) return remote;
+    if (slot >= 1 && remote[slot]) return remote[slot];
     const config=keyPads[slot];
     const controller=Array.from(navigator.getGamepads?.()??[]).filter(p=>p?.connected)[guest ? 0 : slot];
     let buttons=0;
@@ -67,7 +67,7 @@ export function battleControls(redraw,audio) {
       document.querySelector("canvas").hidden = true;
     } else {
       room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),audioStream:audio?.stream(),onState,
-        onInput(p){remote={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};}});
+        onInput(p,slot){remote[slot]={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};}});
       button("code").value = room.code;
       const invite=new URL(location.href);
       invite.searchParams.set("room",room.code);
@@ -89,7 +89,7 @@ export function battleControls(redraw,audio) {
     };
   }
   button("leave").onclick = () => {
-    cancelAnimationFrame(poll); room?.close(); guest=false; remote=undefined; room=undefined; state="local";
+    cancelAnimationFrame(poll); room?.close(); guest=false; remote={}; room=undefined; state="local";
     button("host").disabled=button("join").disabled=false;
     button("leave").hidden=true; button("remote").hidden=true; document.querySelector("canvas").hidden=false;
     button("network").textContent=""; button("code").value=""; button("invite").hidden=true;

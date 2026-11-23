@@ -1,6 +1,6 @@
 # Online versus
 
-One player runs the emulator and creates an eight-character room code. The invited guest receives the emulator’s video and audio over WebRTC and sends controller state back to player 2. Both players share the host's running match. The guest only needs the browser page.
+One player runs the emulator and creates an eight-character room code. The invited guest (or up to three guests, when the host allows them) receives the emulator’s video and audio over WebRTC and sends controller state back to player 2. Both players share the host's running match. The guest only needs the browser page.
 
 ## Start signaling
 
@@ -66,6 +66,30 @@ const guest = await joinMatch({
 | 8–11 | Select, Start, L3, R3 |
 | 12–15 | D-pad Up, Down, Left, Right |
 
+## Up to four players
+
+A room seats two players by default: the host (slot 0) and one guest (slot 1). The host opens more seats with `players` (2–4) or later with `room.setPlayers(n)`; guests take slots 1 to `players - 1`. Capacity is only advertised and enforced as set: a full room answers `This room already has a guest.` (two seats) or `This room is full.`. `setPlayers` cannot go below the guests already seated plus one.
+
+```js
+const host = await hostMatch({
+  canvas, audioStream, players: 4,
+  // Optional: give each guest its own picture and sound. Omit to share the host's.
+  seatMedia: (slot) => ({ canvas: viewCanvas[slot], audioStream: mix[slot] }),
+  onInput: (input, slot) => setPlayerInput(slot, input), // one input per seat; neutral on leave
+  onPeer: ({ slot, state, error }) => {},                // per seat: connecting, connected, open
+  onSlots: (seats) => {},                                // [{ slot: 0, state: 'host' }, { slot: 1, state: 'connected' }, ...]
+  onPlayers: (players) => {},
+});
+host.slots();          // the seat list now
+host.setPlayers(3);    // change capacity
+
+const info = await roomInfo({ code, signalingUrl });      // { code, players, open } before joining
+const guest = await joinMatch({ code, video, slot: 2 }); // slot is optional: ask for a seat, honored when free
+guest.slot; guest.players;
+```
+
+`onState` for a host is `waiting` (no guests), `connecting`, or `connected` (every seated guest). A guest that drops or leaves frees its seat and its input is released; the others are untouched, and it can rejoin the same seat with `slot`. `roomInfo` is also exported by `peerjs.mjs`, which supports the same seats. The old `onInput(input)` callers keep working.
+
 ## Smoke tests
 
 ```sh
@@ -75,4 +99,4 @@ npx playwright install chromium
 npm test
 ```
 
-The tests cover private-room signaling, rejecting an extra guest, decoded video and audio, host input, neutral input on disconnect or guest blur, rejoining and room closure. The media tests use an animated canvas and oscillator in two Chromium browser contexts. The static-host test uses the standalone PeerServer package on loopback. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to use an existing Chromium binary.
+The tests cover private-room signaling, rejecting an extra guest, decoded video and audio, host input, neutral input on disconnect or guest blur, rejoining and room closure. The media tests use an animated canvas and oscillator in two Chromium browser contexts. The static-host test uses the standalone PeerServer package on loopback. `test/multiplayer.test.mjs` runs a host and three guests in five isolated headless browser contexts over both signaling options: capacity and `roomInfo`, a distinct picture and tone per seat, per-seat input, guest reconnect into the same seat, and room close. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to use an existing Chromium binary.
