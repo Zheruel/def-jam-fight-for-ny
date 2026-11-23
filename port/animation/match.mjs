@@ -33,18 +33,21 @@ export async function createMatchAnimation(source,shared,banks) {
   // movement over the tick plus the change of the motion's root offset so the blend stays put in the world (matches 124 of 131
   // recorded blend ticks). finish() performs that step; call it once after every simulation tick.
   function finish(state,slot) {
-    const from=state.settled ?? state.position;
-    state.settled=[...state.position];
+    // `actorPosition` is the actor's own position (actor+0x44); 0x132b00's state.position runs ahead of it.
+    const from=state.settled ?? state.actorPosition;
+    state.settled=[...state.actorPosition];
     const pending=state.pending;
     state.pending=null;
     if(!pending) {
       state.final=Float32Array.from(sampler.pose(slot));
       return;
     }
-    const dx=state.position[0]-from[0], dz=state.position[2]-from[2], a=state.yaw*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
+    const dx=state.actorPosition[0]-from[0], dz=state.actorPosition[2]-from[2], a=state.yaw*Math.PI/180, c=Math.cos(a), s=Math.sin(a);
     const character=sampler.memory.getUint32(0x471230+slot*4,true);
     const target=new Float32Array(sampler.ram.buffer,sampler.ram.byteOffset+sampler.memory.getUint32(character+0x180,true),94*12);
     const shown=state.final ?? Float32Array.from(sampler.pose(slot)), {weight}=pending, keep=1-weight;
+    // The engine edits the array that holds the previous pose, so this tick's aim joins the lerp (and carries into later blend ticks).
+    for(const [id,euler] of pending.aim) applyBoneEuler(shown,id,euler);
     shown[8]-=keep*(dx*c-dz*s+pending.root[0]);
     shown[10]-=keep*(dx*s+dz*c+pending.root[1]);
     for(let k=0;k<94;k++) {
@@ -52,7 +55,6 @@ export async function createMatchAnimation(source,shared,banks) {
       const sign=shown[o+4]*target[o+4]+shown[o+5]*target[o+5]+shown[o+6]*target[o+6]+shown[o+7]*target[o+7]<0 ? -1 : 1;
       for(let j=4;j<11;j++) shown[o+j]=shown[o+j]*keep+(j<8 ? sign : 1)*target[o+j]*weight;
     }
-    for(const [id,euler] of pending.aim) applyBoneEuler(shown,id,euler);
     state.final=shown;
     state.skin=composePose(state,shown).skin;
   }

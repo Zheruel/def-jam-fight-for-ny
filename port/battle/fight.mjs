@@ -111,7 +111,8 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       pads[i] = 0x4bbfb0 + word(0x4bbd48+i*4)*32;
       states[i].aim.clear();
       states[i].damage = 0;
-      states[i].settled = [...states[i].position];
+      states[i].actorPosition = readVector(a+0x44);
+      states[i].settled = [...states[i].actorPosition];
       states[i].pending = null;
       states[i].final = null;
     });
@@ -128,7 +129,10 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       memory.setFloat32(p+12,z,true);
     });
     kernel.tick();
-    states.forEach((state,slot) => animation?.finish(state,slot));
+    states.forEach((state,slot) => {
+      state.actorPosition = readVector(ACTOR[slot]+0x44);
+      animation?.finish(state,slot);
+    });
     ticks++;
   }
   function diagnostics() {

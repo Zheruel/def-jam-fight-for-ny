@@ -48,15 +48,19 @@ const offset = arg("--offset") ?? 0;
 const results = [[], []];
 for (const [tick, row] of frames.entries()) {
   match.tick(row.map(([pad]) => ({ buttons: pad & 0xfff0, x: pad & 0x10000 ? 1 : 0, z: 0 })).map((v, slot) => slot ? { ...v, x: -v.x } : v));
-  const sample = recorded[tick + offset];
-  if (!sample) continue;
   match.states.forEach((state, slot) => {
-    const a = sample.actors[slot];
-    if (!a || !state.final) return;
-    const raw = Buffer.from(a.pose, "base64");
-    const ref = new Float32Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + 94 * 48));
-    const r = compare(state, slot, ref, a.position, a.facing);
-    results[slot].push({ tick, action: a.action, blend: a.blendCounters[0], ...r });
+    if (!state.final) return;
+    // The trace is sampled per VBlank, so it repeats or skips ticks; take the best of a small window around the aligned sample.
+    let best = null;
+    for (let w = -1; w <= 2; w++) {
+      const a = recorded[tick + offset + w]?.actors[slot];
+      if (!a) continue;
+      const raw = Buffer.from(a.pose, "base64");
+      const ref = new Float32Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + 94 * 48));
+      const r = compare(state, slot, ref, a.position, a.facing);
+      if (!best || r.named < best.named) best = { tick, action: a.action, blend: a.blendCounters[0], ...r };
+    }
+    if (best) results[slot].push(best);
   });
 }
 for (const slot of [0, 1]) {
