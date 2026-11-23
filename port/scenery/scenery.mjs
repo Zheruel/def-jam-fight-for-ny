@@ -37,11 +37,22 @@ export function parseCrowd(buffer) {
            texture: new Uint8Array(slice(mesh.layout.texture)) };
 }
 
+/** Venues with decoded scenery: { [venue]: { dir, props, propStates, crowdInstances, undecodedProps } }. */
+export async function loadSceneryIndex({ signal, base = new URL("./", import.meta.url) } = {}) {
+  return JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("index.json", base), signal)));
+}
+
 export async function loadScenery(venue, { signal, base = new URL("./", import.meta.url) } = {}) {
   const dir = new URL(venue === "V2BG_02A" ? "foundation/" : `${venue}/`, base);
   const manifest = JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("scenery.json", dir), signal)));
   const props = manifest.propsFile ? parseProps(await fetchPacked(new URL(manifest.propsFile, dir), signal)) : null;
-  const crowd = manifest.instancedCrowd ? parseCrowd(await fetchPacked(new URL(manifest.instancedCrowd.file, dir), signal)) : null;
+  let crowd = null;
+  const placed = manifest.instancedCrowd;
+  if (placed) {
+    // The Foundation ships its own file; every other venue shares one retail model and carries its layout here.
+    crowd = parseCrowd(await fetchPacked(new URL(placed.file ?? placed.modelFile, dir), signal));
+    if (placed.placements) crowd.mesh.instances = placed.placements;
+  }
   return { manifest, props, crowd };
 }
 
@@ -90,7 +101,7 @@ void main() {
   float c = cos(instance.w), s = sin(instance.w);
   p = vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z) + instance.xyz;
   // The 256x256 atlas holds four outfits; the model's UVs cover the lower-right one (variant 4).
-  float v = style.x - 1.0;
+  float v = mod(style.x - 1.0, 4.0);   // variant 5 (rare, other venues) is not decoded: wrap onto the atlas
   texcoord = uv - vec2(mod(v, 2.0) < 0.5 ? 0.5 : 0.0, v < 1.5 ? 0.5 : 0.0); tint = vec3(1.0);
   gl_Position = viewProjection * vec4(p, 1.0);
 }`;

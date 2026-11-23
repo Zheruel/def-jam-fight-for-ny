@@ -1,0 +1,630 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_01A",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_01A.xml": "71a49f22da9dddd657516a200c472f949ad395998e19299bf911017e10b4cc0a",
+   "V2BG_01A_O.xml": "3417843f78009ac8464e0441ed2bace3b26813616f93e4bf0b4f408768566e0d",
+   "V2BG_01A.ssh": "7113243f67b51c6f721b87c542cb4935175f0a4600baece4499606fee3180d68",
+   "V2BG_01A_E.o": "36e331828b54adb29bb0ec5699777d08c2053b3dab18a9439ae1275944acdc24",
+   "V2BG_01A_F.o": "8eb804fa001431653dea7564043840613c3a6cfa52352776ea63a5ce98ed9612",
+   "V2BG_01A_G.o": "2010d37a16473fdcd723c828924a9cdedd1b1930788ff5652ff63a731896716e",
+   "V2BG_01A_H.o": "849ec0283296833be5f9c890ffebb923c4f3aef8c1ff76e13c3499779ff6488c",
+   "V2BG_01A_I.o": "a512e8b9396a637657caa0e3e86796607a0fd45d084713442fd5bb9d6a319e3c",
+   "V2BG_01A_J.o": "5baedebecb6d3386065acc6c9083af8b2c0cf278fb1f66494262f007edcf7653",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [
+  {
+   "name": "V2BG_01A_E",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -3000.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01A_F",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     2000.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01A_G",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     -2500.0,
+     0.0,
+     -470.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01A_H",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     2500.0,
+     0.0,
+     -470.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01A_I",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -45.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01A_J",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -670.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ ],
+ "undecodedProps": [
+  {
+   "name": "V2BG_01A_A",
+   "reason": "V2BG_01A_A: unexpected position payload"
+  }
+ ],
+ "unmatchedPlacements": [
+  "V2BG_01A_B",
+  "V2BG_01A_C",
+  "V2BG_01A_D"
+ ],
+ "venueMorphs": [],
+ "environmentAttacks": [
+  {
+   "name": "01A_1A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01A_A",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01A_1B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01A_A",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01A_1C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01A_A",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_window1",
+     "-66",
+     "16",
+     "2",
+     "-95",
+     "100",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_window2",
+     "-66",
+     "16",
+     "2",
+     "-95",
+     "100",
+     "-180"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "02_015C",
+     "call",
+     "V2WA_26A_21_01A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "01A_1D",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01A_4",
+   "weapons": [
+    [
+     "-1",
+     "1C_008B",
+     "call",
+     "V2WA_08A_21_01A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  }
+ ],
+ "nearCrowd": [
+  {
+   "name": "crowd_act1_C0_13",
+   "translate": [
+    22.21,
+    0.0,
+    -56.27
+   ],
+   "rotate": [
+    0.0,
+    -19.12,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_14",
+   "translate": [
+    32.61,
+    0.0,
+    -52.66
+   ],
+   "rotate": [
+    0.0,
+    -22.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_15",
+   "translate": [
+    42.96,
+    0.0,
+    -44.95
+   ],
+   "rotate": [
+    0.0,
+    -40.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_16",
+   "translate": [
+    50.66,
+    0.0,
+    -37.09
+   ],
+   "rotate": [
+    0.0,
+    -45.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_18",
+   "translate": [
+    56.2,
+    0.0,
+    22.48
+   ],
+   "rotate": [
+    0.0,
+    229.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_17",
+   "translate": [
+    48.12,
+    0.0,
+    29.95
+   ],
+   "rotate": [
+    0.0,
+    225.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_16",
+   "translate": [
+    37.37,
+    0.0,
+    38.84
+   ],
+   "rotate": [
+    0.0,
+    219.38,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_15",
+   "translate": [
+    29.0,
+    0.0,
+    45.99
+   ],
+   "rotate": [
+    0.0,
+    216.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_14",
+   "translate": [
+    -5.18,
+    0.0,
+    62.53
+   ],
+   "rotate": [
+    0.0,
+    176.06,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_13",
+   "translate": [
+    -15.99,
+    0.0,
+    60.49
+   ],
+   "rotate": [
+    0.0,
+    172.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_115",
+   "translate": [
+    -38.13,
+    0.0,
+    50.09
+   ],
+   "rotate": [
+    0.0,
+    145.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_116",
+   "translate": [
+    -46.7,
+    0.0,
+    43.2
+   ],
+   "rotate": [
+    0.0,
+    140.63,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_117",
+   "translate": [
+    -55.19,
+    0.0,
+    32.5
+   ],
+   "rotate": [
+    0.0,
+    119.81,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_118",
+   "translate": [
+    -59.99,
+    0.0,
+    22.6
+   ],
+   "rotate": [
+    0.0,
+    115.31,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst3",
+   "translate": [
+    21.4,
+    0.0,
+    -81.04
+   ],
+   "rotate": [
+    0.0,
+    -4.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst2",
+   "translate": [
+    40.17,
+    0.0,
+    -76.05
+   ],
+   "rotate": [
+    0.0,
+    -60.19,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst3",
+   "translate": [
+    44.44,
+    0.0,
+    -67.94
+   ],
+   "rotate": [
+    0.0,
+    -60.19,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst1",
+   "translate": [
+    6.17,
+    0.0,
+    83.54
+   ],
+   "rotate": [
+    0.0,
+    182.63,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst8",
+   "translate": [
+    -26.29,
+    0.0,
+    85.54
+   ],
+   "rotate": [
+    0.0,
+    183.94,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst5",
+   "translate": [
+    -49.03,
+    0.0,
+    50.49
+   ],
+   "rotate": [
+    0.0,
+    118.69,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst7",
+   "translate": [
+    -57.57,
+    0.0,
+    58.08
+   ],
+   "rotate": [
+    0.0,
+    137.25,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst6",
+   "translate": [
+    -67.57,
+    0.0,
+    50.48
+   ],
+   "rotate": [
+    0.0,
+    135.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst2",
+   "translate": [
+    -67.42,
+    0.0,
+    36.44
+   ],
+   "rotate": [
+    0.0,
+    124.88,
+    0.0
+   ]
+  }
+ ],
+ "weapons": [
+  {
+   "name": "weapon_02_015C",
+   "translate": [
+    -67.1,
+    4.61,
+    -26.2
+   ],
+   "rotate": [
+    179.0,
+    -6.75,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_1C_008B",
+   "translate": [
+    61.5,
+    20.25,
+    0.0
+   ],
+   "rotate": [
+    -6.0,
+    -10.5,
+    1.0
+   ]
+  }
+ ],
+ "hiddenWeapons": [],
+ "crowdGroup": {
+  "normal": 6,
+  "reduced": 6
+ },
+ "crowdModelRatio": {
+  "sex": [
+   90.0,
+   10.0
+  ],
+  "class": [
+   0.0,
+   100.0
+  ],
+  "seasonal": [
+   80.0,
+   20.0
+  ],
+  "racial": [
+   80.0,
+   20.0
+  ],
+  "brightness": [
+   30.0,
+   50.0,
+   20.0
+  ],
+  "temperature": [
+   30.0,
+   70.0
+  ],
+  "vividness": [
+   40.0,
+   60.0
+  ]
+ },
+ "defaultParticles": [],
+ "propsFile": "props.scene.gz",
+ "instancedCrowd": null
+}

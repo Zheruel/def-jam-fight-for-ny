@@ -1,0 +1,856 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_04A",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_04A.xml": "98f9d41796488f00043757469e3028d14c7fdd65355d735e2e1ae202085d3d16",
+   "V2BG_04A_O.xml": "3d74529ff7a12026d05c998601e78d139705fe3226cd3c6a5adb88540d186aa5",
+   "V2BG_04A.ssh": "a37c9d8c0850d952ec2b8c349e3b9bcc9dcc6543a47334ba8151b0bbb7dd3555",
+   "V2BG_04A_A.o": "0747fba4a7c6dffeb174330f5e867767b7647e510c99064a6d3416e50555277b",
+   "V2BG_04A_B.o": "52218de8ba5d76ebb3858519f8b20fbb3d97f705f2f1459516660a7293c1e709",
+   "V2BG_04A_E.o": "efccdac41249231830eb2263af7c763acaeeb4baa7cc46697a8909fb02028009",
+   "V2BG_04A_F.o": "ca29259f8a99bf50de9ff9f42e9711833fea6c0d996fc0bb5bad4aef9e9abfbd",
+   "V2BG_04A_G.o": "1f363462118c339fd0218992046e33be4dcee325a213426bb51a36b67308c8eb",
+   "V2BG_04A_M.o": "f91248936861df9616870b940b5071331567b1e36d855bfefa3dd36eda7f3eb7",
+   "V2BG_04A_N.o": "e14c805ee93f21156be42ca90f651a93db98c2647bfee0a4c54a27d1e27af8c9",
+   "V2BG_04A_O.o": "6a61541eba03e823a47c980da43669cccf87501df22b2d1d0b8ebce090d6adea",
+   "V2BG_04A_P.o": "5845cee1774754fc36a9ebd73d11d5ed0c7f004baf4f52675e475b6dc5ad6e13",
+   "V2BG_04A_T.o": "56f3e1b026084904d78ad158070ed25a4a9f18399366398ca03408683f9340f4",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [
+  {
+   "name": "V2BG_04A_A",
+   "alpha": false,
+   "states": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "morphs": [
+    "V2BG_04A_A1",
+    "V2BG_04A_A2"
+   ],
+   "placement": null
+  },
+  {
+   "name": "V2BG_04A_B",
+   "alpha": false,
+   "states": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "morphs": [
+    "V2BG_04A_B1",
+    "V2BG_04A_B2"
+   ],
+   "placement": null
+  },
+  {
+   "name": "V2BG_04A_E",
+   "alpha": false,
+   "states": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "morphs": [
+    "V2BG_04A_E1",
+    "V2BG_04A_E2"
+   ],
+   "placement": {
+    "translate": [
+     62.0,
+     11.0,
+     1.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_04A_F",
+   "alpha": false,
+   "states": [
+    "base",
+    "break1"
+   ],
+   "morphs": [
+    "V2BG_04A_F1",
+    "V2BG_04A_F2"
+   ],
+   "placement": null
+  },
+  {
+   "name": "V2BG_04A_G",
+   "alpha": false,
+   "states": [
+    "base",
+    "break1"
+   ],
+   "morphs": [
+    "V2BG_04A_G1",
+    "V2BG_04A_G2"
+   ],
+   "placement": null
+  },
+  {
+   "name": "V2BG_04A_M",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_04A_M1",
+    "V2BG_04A_M2"
+   ],
+   "placement": {
+    "translate": [
+     -30.0,
+     0.0,
+     -40.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_04A_N",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_04A_N1",
+    "V2BG_04A_N2"
+   ],
+   "placement": {
+    "translate": [
+     34.0,
+     0.0,
+     -40.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_04A_O",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_04A_O1",
+    "V2BG_04A_O2"
+   ],
+   "placement": {
+    "translate": [
+     -30.0,
+     0.0,
+     58.5
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_04A_P",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_04A_P1",
+    "V2BG_04A_P2"
+   ],
+   "placement": {
+    "translate": [
+     34.0,
+     0.0,
+     58.5
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_04A_T",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_04A_T1",
+    "V2BG_04A_T2"
+   ],
+   "placement": {
+    "translate": [
+     0.0,
+     48.0,
+     -26.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ ],
+ "undecodedProps": [
+  {
+   "name": "V2BG_04A_H",
+   "reason": "V2BG_04A_H: unexpected position payload"
+  },
+  {
+   "name": "V2BG_04A_I",
+   "reason": "V2BG_04A_I: unexpected position payload"
+  },
+  {
+   "name": "V2BG_04A_J",
+   "reason": "V2BG_04A_J: unexpected position payload"
+  },
+  {
+   "name": "V2BG_04A_K",
+   "reason": "V2BG_04A_K: unexpected position payload"
+  },
+  {
+   "name": "V2BG_04A_L",
+   "reason": "V2BG_04A_L: unexpected position payload"
+  }
+ ],
+ "unmatchedPlacements": [],
+ "venueMorphs": [
+  "V2BG_04A1",
+  "V2BG_04A2"
+ ],
+ "environmentAttacks": [
+  {
+   "name": "04A_1A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_A",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_dust",
+     "-70.8",
+     "13.9",
+     "-9.25",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_1B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_A",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_dust",
+     "-70.8",
+     "13.9",
+     "-9.25",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_1C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_A",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_dust",
+     "-70.8",
+     "13.9",
+     "-9.25",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "04A_2",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_3",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_4A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_B",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_newss",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_newsl",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ],
+    [
+     "155",
+     "fx_bottles",
+     "-37",
+     "0",
+     "-32",
+     "0",
+     "0",
+     "0"
+    ],
+    [
+     "155",
+     "fx_bottlel",
+     "-37",
+     "0",
+     "-32",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "05_029A",
+     "delete",
+     "V2WA_029_11_02A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_4B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_B",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_newss",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_newsl",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_4C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_B",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_newss",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_newsl",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_4D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_B",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_newss",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_newsl",
+     "-30.04",
+     "10.95",
+     "-31.01",
+     "25",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "04A_5",
+   "weapons": [
+    [
+     "-1",
+     "05_029A",
+     "delete"
+    ]
+   ]
+  },
+  {
+   "name": "04A_7A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_E",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_can1",
+     "59",
+     "15",
+     "0",
+     "-90",
+     "90",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_can2",
+     "59",
+     "15",
+     "0",
+     "-90",
+     "90",
+     "0"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "7A_007A",
+     "call",
+     "V2WA_07A_21_04A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_7B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_E",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_can1",
+     "59",
+     "15",
+     "0",
+     "-90",
+     "90",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_can2",
+     "59",
+     "15",
+     "0",
+     "-90",
+     "90",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_7C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_E",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_can1",
+     "59",
+     "15",
+     "0",
+     "-90",
+     "90",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_can2",
+     "59",
+     "15",
+     "0",
+     "-90",
+     "90",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "04A_8",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_G",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_signR1",
+     "67",
+     "16",
+     "22",
+     "-90",
+     "90",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_signR2",
+     "67",
+     "16",
+     "22",
+     "-90",
+     "90",
+     "0"
+    ]
+   ],
+   "light": [
+    [
+     "-1",
+     "1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "04A_9",
+   "weapons": [
+    [
+     "29",
+     "09_014C",
+     "delete"
+    ]
+   ]
+  },
+  {
+   "name": "04A_10",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_11",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "04A_12",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_04A_F",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_signL1",
+     "-74",
+     "16",
+     "47",
+     "-90",
+     "-90",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_signL2",
+     "-74",
+     "16",
+     "47",
+     "-90",
+     "-90",
+     "0"
+    ]
+   ],
+   "light": [
+    [
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  }
+ ],
+ "nearCrowd": [],
+ "weapons": [
+  {
+   "name": "weapon_7A_007A",
+   "translate": [
+    59.62,
+    23.19,
+    0.93
+   ],
+   "rotate": [
+    0.0,
+    30.0,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_09_014C",
+   "translate": [
+    65.69,
+    15.04,
+    39.2
+   ],
+   "rotate": [
+    0.0,
+    86.0,
+    -90.0
+   ]
+  },
+  {
+   "name": "weapon_05_029A",
+   "translate": [
+    -30.05,
+    17.57,
+    -32.55
+   ],
+   "rotate": [
+    90.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "hiddenWeapons": [],
+ "crowdGroup": null,
+ "crowdModelRatio": null,
+ "defaultParticles": [],
+ "propsFile": "props.scene.gz",
+ "instancedCrowd": null
+}

@@ -18,10 +18,11 @@
    "V2BG_02A_F.o": "5664f5062b37eb341fb62d7ac4c651b0dd737f91a3ee5bab97a44f36e352bd90",
    "V2BG_02A_H.o": "574fac45a04c2a3162867d302a0714850d019b62b93923181945d2f7bacaf2b4",
    "V2BG_02A_I.o": "4a1bdb6385a19af78101ef4c3ef1e8069c401990c0364c6bc354e5e180228158",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13",
+   "icl_02A.o": "e9f2d86b4931409fe9ab53d05353663964e56c9f4f2e2855d53b196b486839ed",
    "icrowd01.o": "5f14531c8e9ba0d63959175801c4196b666486a0ccb0e835a96b3e3b2a5d8b81",
    "icrowd01.ssh": "58b9e94b0f7ed9def08af308e2f3a5721e63cfc8b605254f5b36ef1f64d788c6",
-   "icrowd01.xml": "8b26d6fc6e44062901b1e03fb478ffc09df0dbf192a70326d0c0931e3e71f1b8",
-   "icl_02A.o": "e9f2d86b4931409fe9ab53d05353663964e56c9f4f2e2855d53b196b486839ed"
+   "icrowd01.xml": "8b26d6fc6e44062901b1e03fb478ffc09df0dbf192a70326d0c0931e3e71f1b8"
   }
  },
  "props": [
@@ -204,6 +205,8 @@
    }
   }
  ],
+ "undecodedProps": [],
+ "unmatchedPlacements": [],
  "venueMorphs": [
   "V2BG_02A1",
   "V2BG_02A2",
@@ -1633,8 +1636,8 @@
   ]
  },
  "defaultParticles": [],
+ "propsFile": "props.scene.gz",
  "instancedCrowd": {
-  "file": "crowd.bin.gz",
   "model": "icrowd01",
   "layout": "icl_02A",
   "frames": 383,
@@ -1655,7 +1658,7 @@
     382
    ]
   },
-  "instances": 60
- },
- "propsFile": "props.scene.gz"
+  "instances": 60,
+  "file": "crowd.bin.gz"
+ }
 }

@@ -1,0 +1,683 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_07A",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_07A.xml": "3af92b20a45244d5c093b058fc69047600b26e487b1bb18d834250b0c33b4509",
+   "V2BG_07A_O.xml": "432dfa4f4c48e7de28c96283526710ee0edffecd183ab8261d69ed3d7ef809ab",
+   "V2BG_07A.ssh": "23f4b1afa9c816bb610849c86a64d1c33fade83f7580571c7fd149092ea9282b",
+   "V2BG_07A_A.o": "59290d98969ad53d46f50c05b6276ca03d2ca39f4d73ea54acbb0aae141e92da",
+   "V2BG_07A_B.o": "659775e5f9843dbd844fbd7760c4561bb0bd6370e4cf7208de2c52dc9d6a4b61",
+   "V2BG_07A_C.o": "b200868646cc4682ef5bed9a0a58a5d26ab768f04a259465a7bc5356f054175a",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [
+  {
+   "name": "V2BG_07A_A",
+   "alpha": true,
+   "states": [
+    "base",
+    "break1",
+    "break2",
+    "break3",
+    "break4",
+    "break5",
+    "break6"
+   ],
+   "morphs": [
+    "V2BG_07A_A1",
+    "V2BG_07A_A2"
+   ],
+   "placement": {
+    "translate": [
+     -30.0,
+     0.0,
+     -30.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_07A_B",
+   "alpha": true,
+   "states": [
+    "base",
+    "break1",
+    "break2",
+    "break3",
+    "break4",
+    "break5",
+    "break6"
+   ],
+   "morphs": [
+    "V2BG_07A_B1",
+    "V2BG_07A_B2"
+   ],
+   "placement": {
+    "translate": [
+     30.0,
+     0.0,
+     -30.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_07A_C",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_07A_C1",
+    "V2BG_07A_C2"
+   ],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     120.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ ],
+ "undecodedProps": [
+  {
+   "name": "V2BG_07A_E",
+   "reason": "V2BG_07A_E: unexpected position payload"
+  }
+ ],
+ "unmatchedPlacements": [],
+ "venueMorphs": [
+  "V2BG_07A1",
+  "V2BG_07A2"
+ ],
+ "environmentAttacks": [
+  {
+   "name": "07A_1A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_D",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_1B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_D",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_1C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_D",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "-34",
+     "15",
+     "39.75",
+     "0",
+     "0",
+     "50"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "-34",
+     "15",
+     "39.75",
+     "0",
+     "0",
+     "50"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "07A_1D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_D",
+     "break4"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_1E",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_D",
+     "break5"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_1F",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_D",
+     "break6"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "-34",
+     "15",
+     "39.75",
+     "0",
+     "0",
+     "50"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "-34",
+     "15",
+     "39.75",
+     "0",
+     "0",
+     "50"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_2A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_A",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_2B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_A",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_2C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_A",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "-34",
+     "15",
+     "-39.75",
+     "0",
+     "0",
+     "50"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "-34",
+     "15",
+     "-39.75",
+     "0",
+     "0",
+     "50"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "07A_2D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_A",
+     "break4"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_2E",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_A",
+     "break5"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_2F",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_A",
+     "break6"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "-34",
+     "15",
+     "-39.75",
+     "0",
+     "0",
+     "50"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "-34",
+     "15",
+     "-39.75",
+     "0",
+     "0",
+     "50"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "07A_3A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_B",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_3B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_B",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_3C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_B",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "34",
+     "15",
+     "-39.75",
+     "-180",
+     "0",
+     "130"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "34",
+     "15",
+     "-39.75",
+     "-180",
+     "0",
+     "130"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "07A_3D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_B",
+     "break4"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_3E",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_B",
+     "break5"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_3F",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_B",
+     "break6"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "34",
+     "15",
+     "-39.75",
+     "-180",
+     "0",
+     "130"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "34",
+     "15",
+     "-39.75",
+     "-180",
+     "0",
+     "130"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "07A_4A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_C",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_4B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_C",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_4C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_C",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "34",
+     "15",
+     "39.75",
+     "-180",
+     "0",
+     "130"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "34",
+     "15",
+     "39.75",
+     "-180",
+     "0",
+     "130"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "07A_4D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_C",
+     "break4"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_4E",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_C",
+     "break5"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "07A_4F",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_07A_C",
+     "break6"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_pillerl",
+     "34",
+     "15",
+     "39.75",
+     "-180",
+     "0",
+     "130"
+    ],
+    [
+     "-1",
+     "fx_pillers",
+     "34",
+     "15",
+     "39.75",
+     "-180",
+     "0",
+     "130"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  }
+ ],
+ "nearCrowd": [],
+ "weapons": [],
+ "hiddenWeapons": [],
+ "crowdGroup": null,
+ "crowdModelRatio": null,
+ "defaultParticles": [],
+ "propsFile": "props.scene.gz",
+ "instancedCrowd": null
+}

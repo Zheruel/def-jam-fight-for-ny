@@ -1,0 +1,1278 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_20A",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_20A.xml": "2a2cc4d1102e433b443b2c79683c9001e7c890f66c51b5b72f45aadb4b502a2e",
+   "V2BG_20A_O.xml": "63caa09e3c57eeee40bf6dd2948f77813439c22529fa60d2ccdf80c94f368cbc",
+   "V2BG_20A.ssh": "80c25a70c4317f6fbb5e2ca743ed0cb5b94b7cc88bbaf249bac438117bb872f9",
+   "V2BG_20A_A.o": "6992db117077cfd63f0c2e0a2f80e59b9e8de77e49576e6776bf7a0944940fb6",
+   "V2BG_20A_D.o": "9de392c26ff1438911d646237efa6a7fe6fa13ceb418fcdc6911adef7800db22",
+   "V2BG_20A_E.o": "6dda70eeb48c30f44239d12fbd79cb2f3cd647134629867276f884ae9a5a3d9c",
+   "V2BG_20A_F.o": "869dfdb1c7df30588092869dc354b17da888e9c09034ed386b438220333d27de",
+   "V2BG_20A_G.o": "0c9d97617c6e1bf3f2a3083452d8165e752c5ad5a18941c3d9c071f95f7383c9",
+   "V2BG_20A_H.o": "63b5a6f03f4587b3e22e60ae4daa2e7311d7bf3abcd504d2070cba337b55817f",
+   "V2BG_20A_I.o": "a13ab0988b9c11628ef3e592bc027f5a82bc3df8fb230580c2cdb2835c2cfe98",
+   "V2BG_20A_J.o": "02c3509cb2f632e7f54e17892f5d7a1fdfd214ef4d78c8ea4419e04dbac7e6c7",
+   "V2BG_20A_K.o": "4e749a29dd2377ca3e0d70dd967ba674b44f8ac4096b4e1fcc7917ee079cf24e",
+   "V2BG_20A_L.o": "36a37af4e7f864df52cda02a37117a6d9b44dc9af2dff94912e8243f316cff9d",
+   "V2BG_20A_M.o": "2edf5785e05556eca212a5a6daa0c232e97d935f4144f1b057e6cba1c47a45c8",
+   "V2BG_20A_N.o": "25680e8ac26e950707f485313716d4c98a77825a0041895b8057804ea6bba193",
+   "V2BG_20A_O.o": "0bc4ad5454ccbdac8a4d12ea243c3b1451267e7e03dc41336bfd36a7aa3174f4",
+   "V2BG_20A_P.o": "7c612a1d335d08b4fe3792cd5b24fdd5865c6097acac37b29b421e808c3b1b14",
+   "V2BG_20A_Q.o": "8321573f37bddfcb5a6c03534dd234e283badee1185ec8618c9ee6d0e7688e27",
+   "V2BG_20A_S.o": "4b1c2725d0fe6d5feb69a8163a0ecda161f86fd8e7d190e6524ce259cd57d3a4",
+   "V2BG_20A_T.o": "a309febd36d56b3f7f522560962a858f8d33a3841d9e4fbf912e0d181925e0dc",
+   "V2BG_20A_U.o": "465f6db0ba9be30a8ad944caaa2a9147875a5527fbbad4611967d521199e988a",
+   "V2BG_20A_V.o": "e686dbe00f70bef529f06650ecf9f26b46af732444a95c84f33a134c766fdabf",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [
+  {
+   "name": "V2BG_20A_A",
+   "alpha": true,
+   "states": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "morphs": [
+    "V2BG_20A_A1",
+    "V2BG_20A_A2",
+    "V2BG_20A_A3"
+   ],
+   "placement": {
+    "translate": [
+     -70.0,
+     10.0,
+     6.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_D",
+   "alpha": true,
+   "states": [
+    "base",
+    "break1"
+   ],
+   "morphs": [
+    "V2BG_20A_D1",
+    "V2BG_20A_D2",
+    "V2BG_20A_D3"
+   ],
+   "placement": {
+    "translate": [
+     -41.0,
+     22.0,
+     -27.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_E",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_E1",
+    "V2BG_20A_E2",
+    "V2BG_20A_E3"
+   ],
+   "placement": {
+    "translate": [
+     -41.0,
+     35.0,
+     -30.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_F",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_F1",
+    "V2BG_20A_F2",
+    "V2BG_20A_F3"
+   ],
+   "placement": {
+    "translate": [
+     41.0,
+     35.0,
+     -30.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_G",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_G1",
+    "V2BG_20A_G2",
+    "V2BG_20A_G3"
+   ],
+   "placement": {
+    "translate": [
+     41.0,
+     22.0,
+     -27.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_H",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_H1",
+    "V2BG_20A_H2",
+    "V2BG_20A_H3"
+   ],
+   "placement": {
+    "translate": [
+     57.0,
+     5.0,
+     11.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_I",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_I1",
+    "V2BG_20A_I2",
+    "V2BG_20A_I3"
+   ],
+   "placement": {
+    "translate": [
+     57.0,
+     40.0,
+     12.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_J",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_J1",
+    "V2BG_20A_J2",
+    "V2BG_20A_J3"
+   ],
+   "placement": {
+    "translate": [
+     -42.0,
+     8.0,
+     57.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_K",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_K1",
+    "V2BG_20A_K2",
+    "V2BG_20A_K3"
+   ],
+   "placement": {
+    "translate": [
+     -5.0,
+     8.0,
+     60.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_L",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_L1",
+    "V2BG_20A_L2",
+    "V2BG_20A_L3"
+   ],
+   "placement": {
+    "translate": [
+     35.0,
+     8.0,
+     55.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_M",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_M1",
+    "V2BG_20A_M2",
+    "V2BG_20A_M3"
+   ],
+   "placement": {
+    "translate": [
+     -32.0,
+     40.0,
+     -31.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_N",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_N1",
+    "V2BG_20A_N2",
+    "V2BG_20A_N3"
+   ],
+   "placement": {
+    "translate": [
+     32.0,
+     40.0,
+     -31.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_O",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     40.0,
+     21.0,
+     -27.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_P",
+   "alpha": true,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     42.0,
+     21.0,
+     -27.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_Q",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     60.0,
+     0.0,
+     0.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_S",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -70.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_T",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": null
+  },
+  {
+   "name": "V2BG_20A_U",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [
+    "V2BG_20A_U1",
+    "V2BG_20A_U2",
+    "V2BG_20A_U3"
+   ],
+   "placement": {
+    "translate": [
+     80.0,
+     0.0,
+     90.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_20A_V",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": null
+  }
+ ],
+ "undecodedProps": [
+  {
+   "name": "V2BG_20A_B",
+   "reason": "V2BG_20A_B: invalid vertex packet header"
+  },
+  {
+   "name": "V2BG_20A_C",
+   "reason": "V2BG_20A_C: invalid vertex packet header"
+  }
+ ],
+ "unmatchedPlacements": [],
+ "venueMorphs": [
+  "V2BG_20A1",
+  "V2BG_20A2",
+  "V2BG_20A3"
+ ],
+ "environmentAttacks": [
+  {
+   "name": "20A_1A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_20A_A",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_Jukes",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "20A_1B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_20A_A",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_Jukes",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Jukered",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "20A_1C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_20A_A",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_Jukes",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Jukel",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Juket1",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Jukered",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Jukeflare2",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Juke_smoke1",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ],
+    [
+     "-1",
+     "fx_Juke_smoke2",
+     "-65.37",
+     "14.4",
+     "5.7",
+     "0",
+     "0",
+     "-65"
+    ]
+   ],
+   "deleteParticles": [
+    [
+     "-1",
+     "fx_light14"
+    ]
+   ],
+   "light": [
+    [
+     "-1",
+     "1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0\t\t0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "20A_3",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_20A_D",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_neonl",
+     "-42",
+     "21",
+     "-26",
+     "50",
+     "0",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_neont",
+     "-42",
+     "21",
+     "-26",
+     "50",
+     "0",
+     "0"
+    ]
+   ],
+   "deleteParticles": [
+    [
+     "-1",
+     "fx_light13"
+    ]
+   ],
+   "light": [
+    [
+     "-1",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0",
+     "0\t\t0",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "20A_5A",
+   "geometry": [
+    [
+     "29",
+     "V2BG_20A_O",
+     "null"
+    ]
+   ],
+   "weapons": [
+    [
+     "29",
+     "5A_001B",
+     "delete"
+    ]
+   ]
+  },
+  {
+   "name": "20A_5B",
+   "geometry": [
+    [
+     "29",
+     "V2BG_20A_P",
+     "null"
+    ]
+   ],
+   "weapons": [
+    [
+     "29",
+     "5B_001B",
+     "delete"
+    ]
+   ]
+  },
+  {
+   "name": "20A_6",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  }
+ ],
+ "nearCrowd": [
+  {
+   "name": "crowd_act1_C1_111",
+   "translate": [
+    -67.19,
+    0.0,
+    -7.06
+   ],
+   "rotate": [
+    0.0,
+    90.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_112",
+   "translate": [
+    -66.33,
+    0.0,
+    -18.03
+   ],
+   "rotate": [
+    0.0,
+    86.06,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_113",
+   "translate": [
+    -30.16,
+    0.0,
+    -29.25
+   ],
+   "rotate": [
+    0.0,
+    1.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_114",
+   "translate": [
+    -19.17,
+    0.0,
+    -28.82
+   ],
+   "rotate": [
+    0.0,
+    2.81,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_115",
+   "translate": [
+    -4.53,
+    0.0,
+    -29.1
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_116",
+   "translate": [
+    6.47,
+    0.0,
+    -29.1
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_117",
+   "translate": [
+    20.05,
+    0.0,
+    -29.16
+   ],
+   "rotate": [
+    0.0,
+    -0.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_118",
+   "translate": [
+    31.05,
+    0.0,
+    -29.05
+   ],
+   "rotate": [
+    0.0,
+    -2.25,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_119",
+   "translate": [
+    50.61,
+    0.0,
+    -21.51
+   ],
+   "rotate": [
+    0.0,
+    -83.81,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_120",
+   "translate": [
+    51.15,
+    0.0,
+    -10.53
+   ],
+   "rotate": [
+    0.0,
+    -85.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_121",
+   "translate": [
+    44.51,
+    0.0,
+    30.4
+   ],
+   "rotate": [
+    0.0,
+    209.81,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_122",
+   "translate": [
+    34.76,
+    0.0,
+    35.49
+   ],
+   "rotate": [
+    0.0,
+    208.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_120",
+   "translate": [
+    22.82,
+    0.0,
+    39.95
+   ],
+   "rotate": [
+    0.0,
+    193.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_119",
+   "translate": [
+    11.97,
+    0.0,
+    41.78
+   ],
+   "rotate": [
+    0.0,
+    186.75,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_118",
+   "translate": [
+    -0.18,
+    0.0,
+    42.32
+   ],
+   "rotate": [
+    0.0,
+    181.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_117",
+   "translate": [
+    -11.18,
+    0.0,
+    42.32
+   ],
+   "rotate": [
+    0.0,
+    180.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_116",
+   "translate": [
+    -23.18,
+    0.0,
+    42.02
+   ],
+   "rotate": [
+    0.0,
+    180.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_115",
+   "translate": [
+    -34.18,
+    0.0,
+    41.91
+   ],
+   "rotate": [
+    0.0,
+    179.44,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_114",
+   "translate": [
+    -46.33,
+    0.0,
+    41.34
+   ],
+   "rotate": [
+    0.0,
+    172.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_113",
+   "translate": [
+    -57.0,
+    0.0,
+    38.66
+   ],
+   "rotate": [
+    0.0,
+    159.75,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_112",
+   "translate": [
+    -65.52,
+    0.0,
+    28.56
+   ],
+   "rotate": [
+    0.0,
+    104.63,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C1_111",
+   "translate": [
+    -67.46,
+    0.0,
+    17.73
+   ],
+   "rotate": [
+    0.0,
+    96.75,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst7",
+   "translate": [
+    -66.67,
+    0.0,
+    -31.81
+   ],
+   "rotate": [
+    0.0,
+    37.12,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst9",
+   "translate": [
+    -58.04,
+    0.0,
+    -35.55
+   ],
+   "rotate": [
+    0.0,
+    18.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst10",
+   "translate": [
+    -49.49,
+    0.0,
+    -36.9
+   ],
+   "rotate": [
+    0.0,
+    12.37,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst12",
+   "translate": [
+    60.09,
+    0.0,
+    -31.07
+   ],
+   "rotate": [
+    0.0,
+    -41.62,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst6",
+   "translate": [
+    69.96,
+    0.0,
+    -29.08
+   ],
+   "rotate": [
+    0.0,
+    -43.87,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst8",
+   "translate": [
+    73.6,
+    0.0,
+    -20.17
+   ],
+   "rotate": [
+    0.0,
+    -90.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst9",
+   "translate": [
+    73.27,
+    0.0,
+    -11.52
+   ],
+   "rotate": [
+    0.0,
+    -90.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst13",
+   "translate": [
+    72.61,
+    0.0,
+    25.1
+   ],
+   "rotate": [
+    0.0,
+    -88.87,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_sit1_Inst4",
+   "translate": [
+    30.02,
+    0.33,
+    52.91
+   ],
+   "rotate": [
+    0.0,
+    195.75,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_sit1_Inst3",
+   "translate": [
+    16.08,
+    0.42,
+    58.07
+   ],
+   "rotate": [
+    0.0,
+    189.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst10",
+   "translate": [
+    3.36,
+    0.0,
+    55.12
+   ],
+   "rotate": [
+    0.0,
+    191.25,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst8",
+   "translate": [
+    -24.25,
+    0.0,
+    56.4
+   ],
+   "rotate": [
+    0.0,
+    184.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst11",
+   "translate": [
+    -32.61,
+    0.0,
+    55.6
+   ],
+   "rotate": [
+    0.0,
+    177.75,
+    0.0
+   ]
+  }
+ ],
+ "weapons": [
+  {
+   "name": "weapon_5B_001B",
+   "translate": [
+    42.0,
+    21.4,
+    -27.0
+   ],
+   "rotate": [
+    -90.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_5A_001B",
+   "translate": [
+    39.8,
+    21.4,
+    -27.0
+   ],
+   "rotate": [
+    -90.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "hiddenWeapons": [],
+ "crowdGroup": {
+  "normal": 4,
+  "reduced": 4
+ },
+ "crowdModelRatio": {
+  "sex": [
+   80.0,
+   20.0
+  ],
+  "class": [
+   10.0,
+   90.0
+  ],
+  "seasonal": [
+   50.0,
+   50.0
+  ],
+  "racial": [
+   50.0,
+   50.0
+  ],
+  "brightness": [
+   10.0,
+   60.0,
+   30.0
+  ],
+  "temperature": [
+   70.0,
+   30.0
+  ],
+  "vividness": [
+   20.0,
+   80.0
+  ]
+ },
+ "defaultParticles": [],
+ "propsFile": "props.scene.gz",
+ "instancedCrowd": null
+}

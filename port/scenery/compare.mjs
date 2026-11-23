@@ -15,6 +15,7 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const arg = (name, fallback) => { const i = process.argv.indexOf("--" + name); return i < 0 ? fallback : process.argv[i + 1]; };
 const run = path.resolve(root, arg("run", "private/verification/ps2-match/run-BjNMn0"));
 const blank = Number(arg("blank", 4863));
+const venue = arg("venue", "V2BG_02A");   // other venues: render only, no retail frame to compare
 const out = path.resolve(root, arg("out", "private/verification/scenery"));
 const types = { ".html": "text/html", ".mjs": "text/javascript", ".json": "application/json", ".gz": "application/octet-stream" };
 
@@ -46,6 +47,7 @@ const server = createServer(async (req, res) => {
 const page = `<!doctype html><body style="margin:0"><canvas id=c width=848 height=636></canvas><script type=module>
 import { loadScene, uploadScene } from "/port/viewer/scene.mjs";
 import { loadScenery, createSceneryRenderer } from "/port/scenery/scenery.mjs";
+window.venue = new URLSearchParams(location.search).get("venue");
 const gl = c.getContext("webgl2", { alpha: false, preserveDrawingBuffer: true });
 const vs = \`#version 300 es
 in vec3 position; in vec2 uv; in vec4 rgba; uniform mat4 viewProjection; out vec2 t; out vec3 tint;
@@ -57,8 +59,8 @@ const p = gl.createProgram();
 for (const [k, s] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) { const h = gl.createShader(k); gl.shaderSource(h, s); gl.compileShader(h); if(!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(h)); gl.attachShader(p, h); }
 gl.linkProgram(p);
 window.draw = async (matrix, options) => {
-  const base = uploadScene(gl, p, await loadScene("V2BG_02A", new AbortController().signal));
-  const scenery = await createSceneryRenderer(gl, await loadScenery("V2BG_02A"));
+  const base = uploadScene(gl, p, await loadScene(window.venue, new AbortController().signal));
+  const scenery = await createSceneryRenderer(gl, await loadScenery(window.venue));
   gl.viewport(...(options.viewport ?? [0, 0, c.width, c.height]));
   gl.enable(gl.DEPTH_TEST);
   gl.clearColor(0.10, 0.115, 0.12, 1);
@@ -111,36 +113,43 @@ try {
   const errors = [];
   tab.on("pageerror", e => errors.push(e.message));
   tab.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-  await tab.goto(`http://127.0.0.1:${server.address().port}/`);
+  await tab.goto(`http://127.0.0.1:${server.address().port}/?venue=${venue}`);
   await tab.waitForFunction(() => window.ready || false, null, { timeout: 15000 }).catch(() => { throw new Error(errors.join("\n") || "page did not load"); });
   await mkdir(out, { recursive: true });
-  const variants = {
-    "base-only": { base: true, scenery: { props: Object.fromEntries(["A","B","C","D","E","F","H","I"].map(k => ["V2BG_02A_" + k, false])), crowd: false } },
-    "props": { base: true, scenery: { crowd: false } },
-    "props-crowd": { base: true, scenery: { tick: 0 } },
-    "props-crowd-excited": { base: true, scenery: { tick: 30, excited: true } },
-  };
-  for (const [name, options] of Object.entries(variants)) {
-    const url = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { ...options, viewport }]);
-    await writeFile(path.join(out, `foundation-${name}.png`), Buffer.from(url.split(",")[1], "base64"));
+  if (venue !== "V2BG_02A") {
+    const shot = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { base: true, viewport, scenery: { tick: 30, excited: true } }]);
+    await writeFile(path.join(out, `${venue}-scenery.png`), Buffer.from(shot.split(",")[1], "base64"));
+    if (errors.length) throw new Error(errors.join("\n"));
+    console.log(JSON.stringify({ out, venue }));
+  } else {
+    const variants = {
+      "base-only": { base: true, scenery: { props: Object.fromEntries(["A","B","C","D","E","F","H","I"].map(k => ["V2BG_02A_" + k, false])), crowd: false } },
+      "props": { base: true, scenery: { crowd: false } },
+      "props-crowd": { base: true, scenery: { tick: 0 } },
+      "props-crowd-excited": { base: true, scenery: { tick: 30, excited: true } },
+    };
+    for (const [name, options] of Object.entries(variants)) {
+      const url = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { ...options, viewport }]);
+      await writeFile(path.join(out, `foundation-${name}.png`), Buffer.from(url.split(",")[1], "base64"));
+    }
+    const frame = arg("frame", "21-fight-ready-host.png");
+    // Static, unoccluded landmarks in the retail frame: both speaker stacks and the work light.
+    const regions = JSON.parse(arg("regions", JSON.stringify({ speakerLeft: [240, 225, 302, 345],
+      speakerRight: [546, 225, 606, 345], light: [462, 300, 506, 345] })));
+    const scores = {};
+    for (const [name, box] of Object.entries(regions)) {
+      const url = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { base: true, viewport, scenery: { crowd: false } }]);
+      scores[name] = await tab.evaluate(([u, f, b]) => compare(u, f, b, 20), [url, `/retail/${frame}`, box]);
+    }
+    await writeFile(path.join(out, "foundation-score.json"), JSON.stringify({ frame, blank, regions, scores }, null, 1));
+    console.log(JSON.stringify(scores));
+    const shot = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { base: true, viewport, scenery: { tick: 30, excited: true } }]);
+    const both = await tab.evaluate(([a, b]) => sideBySide(a, b), [`/retail/${frame}`, shot]);
+    await writeFile(path.join(out, "foundation-retail-vs-native.png"), Buffer.from(both.split(",")[1], "base64"));
+    if (errors.length) throw new Error(errors.join("\n"));
+    await writeFile(path.join(out, "foundation-camera.json"), JSON.stringify({ blank, matrix, fighters }, null, 1));
+    console.log(JSON.stringify({ out, blank, fighters }));
   }
-  const frame = arg("frame", "21-fight-ready-host.png");
-  // Static, unoccluded landmarks in the retail frame: both speaker stacks and the work light.
-  const regions = JSON.parse(arg("regions", JSON.stringify({ speakerLeft: [240, 225, 302, 345],
-    speakerRight: [546, 225, 606, 345], light: [462, 300, 506, 345] })));
-  const scores = {};
-  for (const [name, box] of Object.entries(regions)) {
-    const url = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { base: true, viewport, scenery: { crowd: false } }]);
-    scores[name] = await tab.evaluate(([u, f, b]) => compare(u, f, b, 20), [url, `/retail/${frame}`, box]);
-  }
-  await writeFile(path.join(out, "foundation-score.json"), JSON.stringify({ frame, blank, regions, scores }, null, 1));
-  console.log(JSON.stringify(scores));
-  const shot = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { base: true, viewport, scenery: { tick: 30, excited: true } }]);
-  const both = await tab.evaluate(([a, b]) => sideBySide(a, b), [`/retail/${frame}`, shot]);
-  await writeFile(path.join(out, "foundation-retail-vs-native.png"), Buffer.from(both.split(",")[1], "base64"));
-  if (errors.length) throw new Error(errors.join("\n"));
-  await writeFile(path.join(out, "foundation-camera.json"), JSON.stringify({ blank, matrix, fighters }, null, 1));
-  console.log(JSON.stringify({ out, blank, fighters }));
 } finally {
   await browser.close();
   server.close();

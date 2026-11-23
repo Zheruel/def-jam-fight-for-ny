@@ -1,0 +1,275 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_01B",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_01B.xml": "98ef345f1f5f6751f16da4e68c00cf2a3996fe55abec8c1c68c4efb23673ecb8",
+   "V2BG_01B_O.xml": "f72fecdb65f27c614f85407a126852236d260132f79b79b520f126f720d43cd1",
+   "V2BG_01B.ssh": "d56a34562974184903425fdda39d5f199ceaa12f79ae0cb67a07905f0af27fca",
+   "V2BG_01B_I.o": "56ba26885051fa2e2f9230160aa88bc26c31db28e6a380ebf0b061bb973e7b81",
+   "V2BG_01B_J.o": "45cf4ab3daff3ebec4498f5bdb3d9e42c26980ae6ae026939d35de96ddd5fde6",
+   "V2BG_01B_K.o": "83af4d481d931415a4fc84903b993badb2a712e5ac86df73ea93e70dd71a2566",
+   "V2BG_01B_L.o": "8276c48d5db183b0d7618657bd03ae739c4c286a20d7e4dd9ad830918ad2d6a4",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [
+  {
+   "name": "V2BG_01B_I",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -3000.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01B_J",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     2000.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01B_K",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     -2500.0,
+     0.0,
+     -470.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_01B_L",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     2500.0,
+     0.0,
+     -470.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ ],
+ "undecodedProps": [
+  {
+   "name": "V2BG_01B_A",
+   "reason": "V2BG_01B_A: unexpected position payload"
+  },
+  {
+   "name": "V2BG_01B_D",
+   "reason": "V2BG_01B_D: unexpected position payload"
+  },
+  {
+   "name": "V2BG_01B_E",
+   "reason": "V2BG_01B_E: unexpected position payload"
+  }
+ ],
+ "unmatchedPlacements": [],
+ "venueMorphs": [],
+ "environmentAttacks": [
+  {
+   "name": "01B_1A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01B_A",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01B_1B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01B_A",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01B_1C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01B_A",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_window1",
+     "-66",
+     "16",
+     "2",
+     "-95",
+     "100",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_window2",
+     "-66",
+     "16",
+     "2",
+     "-95",
+     "100",
+     "-180"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "02_015C",
+     "call",
+     "V2WA_26A_21_01B"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "01B_1D",
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01B_6",
+   "weapons": [
+    [
+     "-1",
+     "1C_008B",
+     "call",
+     "V2WA_08A_21_01B"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "01B_9",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_01B_E",
+     "null"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  }
+ ],
+ "nearCrowd": [],
+ "weapons": [
+  {
+   "name": "weapon_02_015C",
+   "translate": [
+    -67.1,
+    4.61,
+    -26.2
+   ],
+   "rotate": [
+    179.0,
+    -6.75,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_1C_008B",
+   "translate": [
+    61.5,
+    20.25,
+    0.0
+   ],
+   "rotate": [
+    -6.0,
+    -10.5,
+    1.0
+   ]
+  }
+ ],
+ "hiddenWeapons": [],
+ "crowdGroup": null,
+ "crowdModelRatio": null,
+ "defaultParticles": [],
+ "propsFile": "props.scene.gz",
+ "instancedCrowd": null
+}

@@ -4,6 +4,10 @@ import { gunzipSync } from "node:zlib";
 import test from "node:test";
 import { crowdFrame, instancePhase, parseCrowd, parseProps, placementMatrix } from "./scenery.mjs";
 
+const readBuffer = url => {
+  const bytes = gunzipSync(readFileSync(url));
+  return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+};
 const read = name => {
   const bytes = gunzipSync(readFileSync(new URL(`./foundation/${name}`, import.meta.url)));
   return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
@@ -62,4 +66,37 @@ test("placement matrix is column-major with translation last", () => {
   const m = placementMatrix({ translate: [1, 2, 3], rotate: [0, 90, 0] });
   assert.deepEqual([...m.slice(12, 15)], [1, 2, 3]);
   assert.ok(Math.abs(m[0]) < 1e-6 && Math.abs(m[2] + 1) < 1e-6 && Math.abs(m[8] - 1) < 1e-6);
+});
+
+test("every Battle venue has an index entry, valid props and a crowd layout where the retail data has one", () => {
+  const dir = new URL("./", import.meta.url);
+  const index = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
+  const inventory = JSON.parse(readFileSync(new URL("../../ps2/content/inventory.json", dir), "utf8"));
+  assert.deepEqual(Object.keys(index).sort(), inventory.venues.map(v => v.file).sort());
+  const shared = parseCrowd(readBuffer(new URL("crowd/icrowd01.crowd.gz", dir)));
+  let crowdVenues = 0;
+  for (const [venue, entry] of Object.entries(index)) {
+    const where = new URL(`${entry.dir}/`, dir);
+    const manifest = JSON.parse(readFileSync(new URL("scenery.json", where), "utf8"));
+    assert.equal(manifest.venue, venue);
+    assert.deepEqual(manifest.props.map(p => p.name), entry.props, venue);
+    if (manifest.propsFile) {
+      const { mesh, textures } = parseProps(readBuffer(new URL(manifest.propsFile, where)));
+      assert.deepEqual(mesh.objects.map(o => o.name), entry.props, venue);
+      for (const o of mesh.objects) for (const st of o.states) for (const b of st.batches)
+        assert.ok(textures.has(b.shape) && b.first + b.count <= mesh.indices, `${venue} ${o.name}`);
+    } else assert.equal(entry.props.length, 0, venue);
+    const crowd = manifest.instancedCrowd;
+    assert.equal(crowd ? crowd.instances : 0, entry.crowdInstances, venue);
+    if (crowd && venue !== "V2BG_02A") {
+      crowdVenues++;
+      assert.equal(crowd.placements.length, crowd.instances);
+      for (const i of crowd.placements) {
+        assert.ok(i.variant >= 1 && i.variant <= 5 && Number.isFinite(i.yawDegrees), `${venue} ${i.name}`);
+        assert.equal(i.translate.length, 3);
+      }
+    }
+  }
+  assert.equal(shared.mesh.frames, 383);
+  assert.equal(crowdVenues, 10);
 });

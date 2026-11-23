@@ -33,6 +33,8 @@ DEFAULT_ISO = REPO / "private" / "ps2" / "reference.iso"
 OUTPUT = HERE / "foundation"
 STAGE = "/ASSETS/V2BG.VIV"
 CROWD = "/ASSETS/ICROWD.VIV"
+ENTITY = "/ASSETS/ENTITY.XML"
+ENTITY_BYTES = 91612
 VENUE = "V2BG_02A"
 CROWD_MODEL = "icrowd01"
 CROWD_LAYOUT = "icl_02A"
@@ -101,6 +103,8 @@ def environment_attacks(stage_xml: str) -> list[dict]:
     for body in blocks(section(stage_xml, "stageenvironment"), "environmentattack"):
         # Drop commented-out lines (an unterminated "<?" starts each comment).
         body = "\n".join(line for line in body.split("\n") if not line.lstrip().startswith("<?"))
+        if not values(body, "name"):
+            continue
         attack = {"name": values(body, "name")[0]}
         for tag, key in (("geometry", "geometry"), ("particle", "particles"),
                          ("movparticle", "movingParticles"), ("delparticle", "deleteParticles"),
@@ -412,48 +416,105 @@ def crowd_loops(crowd: dict, xml: str) -> dict:
 
 # ---------------------------------------------------------------- build
 
-def build(iso: Path) -> dict[str, bytes]:
+def optional(fn, *args, default):
+    try:
+        return fn(*args)
+    except (ValueError, IndexError):   # the tag is absent from this venue's XML
+        return default
+
+
+def single_state(name: str, blob: bytes) -> list[dict]:
+    """Objects without named geometry states are one static model."""
+    vertices, indices, meta = venues.geometry(name, blob)
+    return [{"vertices": vertices, "indices": indices, "meta": meta, "boundsRecord": None}]
+
+
+def venue_props(disc: Disc, venue: str, objects_xml: str) -> tuple[list[dict], dict, list[dict], dict]:
+    """Decode every stage object of one venue except the venue's own base mesh."""
+    objects, decoded, skipped, sources = [], {}, [], {}
+    for obj in stage_objects(objects_xml):
+        if obj["name"] == venue:
+            continue
+        try:
+            blob = member(disc, STAGE, obj["name"] + ".o")
+        except (KeyError, ValueError):
+            skipped.append({"name": obj["name"], "reason": "no model file"})
+            continue
+        try:
+            states = prop_states(obj["name"], blob) if obj["geometry"] else single_state(obj["name"], blob)
+            if len(states) != max(1, len(obj["geometry"])):
+                raise ValueError(f"{len(states)} blocks for {len(obj['geometry'])} named states")
+        except ValueError as error:
+            skipped.append({"name": obj["name"], "reason": str(error).split(", materials")[0]})
+            continue
+        obj = {**obj, "geometry": obj["geometry"] or ["base"]}
+        objects.append(obj)
+        decoded[obj["name"]] = states
+        sources[obj["name"] + ".o"] = sha256(blob)
+    return objects, decoded, skipped, sources
+
+
+def crowd_locators(entity_text: str) -> dict[str, str]:
+    """venue -> instanced-crowd layout name, from ASSETS/ENTITY.XML."""
+    found = {}
+    for body in re.findall(r"<entity>(.*?)</entity>", entity_text, re.S):
+        name = values(body, "name")[0]
+        locator = values(body, "instancecrowdlocator")
+        if name.startswith("V2BG_") and locator:
+            found[name] = locator[0]
+    return found
+
+
+def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
+    """Files for one venue: props.scene.gz, scenery.json and, when the venue has one, its crowd."""
+    global VENUE
+    VENUE = venue
     disc = Disc(str(iso))
+    crowd_blob = packed_crowd = crowd_header = layout_name = None
     try:
         get = lambda archive, name: member(disc, archive, name)
-        stage_xml_blob = get(STAGE, f"{VENUE}.xml")
-        objects_xml_blob = get(STAGE, f"{VENUE}_O.xml")
-        ssh_blob = get(STAGE, f"{VENUE}.ssh")
+        entity_blob = disc.read(ENTITY, 0, ENTITY_BYTES)
+        stage_xml_blob = get(STAGE, f"{venue}.xml")
+        objects_xml_blob = get(STAGE, f"{venue}_O.xml")
+        ssh_blob = get(STAGE, f"{venue}.ssh")
         stage_xml, objects_xml = stage_text(stage_xml_blob), stage_text(objects_xml_blob)
-        objects = [o for o in stage_objects(objects_xml) if o["geometry"]]
-        sources = {f"{VENUE}.xml": sha256(stage_xml_blob), f"{VENUE}_O.xml": sha256(objects_xml_blob),
-                   f"{VENUE}.ssh": sha256(ssh_blob)}
-        decoded = {}
-        for obj in objects:
-            blob = get(STAGE, obj["name"] + ".o")
-            sources[obj["name"] + ".o"] = sha256(blob)
-            decoded[obj["name"]] = prop_states(obj["name"], blob)
-            if len(decoded[obj["name"]]) != len(obj["geometry"]):
-                raise ValueError(f"{obj['name']}: {len(decoded[obj['name']])} blocks for "
-                                 f"{len(obj['geometry'])} named states")
-        props, props_header = pack_props(objects, decoded, textures(ssh_blob))
-
-        crowd_blob = get(CROWD, CROWD_MODEL + ".o")
-        crowd_ssh = get(CROWD, CROWD_MODEL + ".ssh")
-        crowd_xml = get(CROWD, CROWD_MODEL + ".xml")
-        layout_blob = get(CROWD, CROWD_LAYOUT + ".o")
-        crowd = decode_crowd(crowd_blob)
-        crowd_images = textures(crowd_ssh)
-        if list(crowd_images) != ["Low_"]:
-            raise ValueError("unexpected crowd textures")
-        packed_crowd, crowd_header = pack_crowd(crowd, crowd_layout(layout_blob),
-                                                crowd_images["Low_"],
-                                                crowd_loops(crowd, crowd_xml.decode("ascii")))
-        for name, blob in ((CROWD_MODEL + ".o", crowd_blob), (CROWD_MODEL + ".ssh", crowd_ssh),
-                           (CROWD_MODEL + ".xml", crowd_xml), (CROWD_LAYOUT + ".o", layout_blob)):
-            sources[name] = sha256(blob)
+        sources = {f"{venue}.xml": sha256(stage_xml_blob), f"{venue}_O.xml": sha256(objects_xml_blob),
+                   f"{venue}.ssh": sha256(ssh_blob)}
+        objects, decoded, skipped, object_sources = venue_props(disc, venue, objects_xml)
+        sources.update(object_sources)
+        props = props_header = None
+        if objects:
+            props, props_header = pack_props(objects, decoded, textures(ssh_blob))
+        layout_name = crowd_locators(entity_blob.decode("latin-1")).get(venue)
+        sources["ENTITY.XML"] = sha256(entity_blob)
+        crowd = layout = None
+        if layout_name:
+            layout_blob = get(CROWD, layout_name + ".o")
+            layout = crowd_layout(layout_blob)
+            sources[layout_name + ".o"] = sha256(layout_blob)
+            crowd_blob = get(CROWD, CROWD_MODEL + ".o")
+            crowd_ssh = get(CROWD, CROWD_MODEL + ".ssh")
+            crowd_xml = get(CROWD, CROWD_MODEL + ".xml")
+            crowd = decode_crowd(crowd_blob)
+            images = textures(crowd_ssh)
+            if list(images) != ["Low_"]:
+                raise ValueError("unexpected crowd textures")
+            loops = crowd_loops(crowd, crowd_xml.decode("ascii"))
+            for name, blob in ((CROWD_MODEL + ".o", crowd_blob), (CROWD_MODEL + ".ssh", crowd_ssh),
+                               (CROWD_MODEL + ".xml", crowd_xml)):
+                sources[name] = sha256(blob)
+            packed_crowd, crowd_header = pack_crowd(crowd, layout if venue == "V2BG_02A" else [],
+                                                    images["Low_"], loops)
     finally:
         disc.close()
 
-    alpha = {p["name"].replace("alpha_", "V2BG_"): p for p in placements(objects_xml, "alphaposition", "alpha")}
+    alpha = {p["name"].replace("alpha_", "V2BG_"): p
+             for p in optional(placements, objects_xml, "alphaposition", "alpha", default=[])}
+    known = {o["name"] for o in objects} | {s["name"] for s in skipped}
+    own = next((o for o in stage_objects(objects_xml) if o["name"] == venue), None)
     scenery = {
         "format": "def-jam-ps2-scenery/1",
-        "venue": VENUE,
+        "venue": venue,
         "sources": {"archives": {"stage": STAGE[1:], "crowd": CROWD[1:]}, "sha256": sources},
         "props": [{"name": o["name"], "alpha": o["alpha"], "states": o["geometry"],
                    "morphs": o["morphs"],
@@ -461,44 +522,88 @@ def build(iso: Path) -> dict[str, bytes]:
                    "placement": ({k: alpha[o["name"]][k] for k in ("translate", "rotate")}
                                  if o["name"] in alpha else None)}
                   for o in objects],
-        "venueMorphs": next(o["morphs"] for o in stage_objects(objects_xml) if o["name"] == VENUE),
-        "environmentAttacks": environment_attacks(stage_xml),
-        "nearCrowd": placements(objects_xml, "crowdposition", "crowd"),
-        "weapons": placements(objects_xml, "weaponposition", "weapon"),
-        "hiddenWeapons": values(section(stage_xml, "hiddenweapon"), "name"),
-        "crowdGroup": {k: int(values(stage_xml, f"crowdgroup{k}num")[0]) for k in ("normal", "reduced")},
-        "crowdModelRatio": {tag: vector(values(section(stage_xml, "crowdsmodelratio"), tag)[0])
-                            for tag in ("sex", "class", "seasonal", "racial", "brightness",
-                                        "temperature", "vividness")},
-        "defaultParticles": [[p.strip() for p in v.split(",")]
-                             for v in values(section(stage_xml, "defaultparticles"), "particle")],
-        "instancedCrowd": {"file": "crowd.bin.gz", "model": CROWD_MODEL, "layout": CROWD_LAYOUT,
-                           "frames": crowd_header["frames"], "loops": crowd_header["loops"],
-                           "instances": len(crowd_header["instances"])},
-        "propsFile": "props.scene.gz",
+        "undecodedProps": skipped,
+        # alphaposition entries whose object has no stage-object entry (kept, not applied)
+        "unmatchedPlacements": sorted(set(alpha) - known),
+        "venueMorphs": own["morphs"] if own else [],
+        "environmentAttacks": optional(environment_attacks, stage_xml, default=[]),
+        "nearCrowd": optional(placements, objects_xml, "crowdposition", "crowd", default=[]),
+        "weapons": optional(placements, objects_xml, "weaponposition", "weapon", default=[]),
+        "hiddenWeapons": optional(lambda: values(section(stage_xml, "hiddenweapon"), "name"), default=[]),
+        "crowdGroup": optional(lambda: {k: int(values(stage_xml, f"crowdgroup{k}num")[0])
+                                        for k in ("normal", "reduced")}, default=None),
+        "crowdModelRatio": optional(lambda: {tag: vector(values(section(stage_xml, "crowdsmodelratio"), tag)[0])
+                                             for tag in ("sex", "class", "seasonal", "racial", "brightness",
+                                                         "temperature", "vividness")}, default=None),
+        "defaultParticles": optional(lambda: [[p.strip() for p in v.split(",")]
+                                              for v in values(section(stage_xml, "defaultparticles"), "particle")],
+                                     default=[]),
+        "propsFile": "props.scene.gz" if props else None,
+        "instancedCrowd": None,
     }
-    if set(alpha) - {o["name"] for o in objects}:
-        raise ValueError("alphaposition names an unknown object")
-    return {"props.scene.gz": props, "crowd.bin.gz": packed_crowd,
-            "scenery.json": (json.dumps(scenery, indent=1, ensure_ascii=False) + "\n").encode()}
+    files = {"scenery.json": None}
+    if props:
+        files["props.scene.gz"] = props
+    if crowd_header:
+        scenery["instancedCrowd"] = {"model": CROWD_MODEL, "layout": layout_name,
+                                     "frames": crowd_header["frames"], "loops": crowd_header["loops"],
+                                     "instances": len(layout)}
+        if venue == "V2BG_02A":
+            scenery["instancedCrowd"]["file"] = "crowd.bin.gz"
+            files["crowd.bin.gz"] = packed_crowd
+        else:
+            # The retail model is the same in every venue; only the layout differs.
+            scenery["instancedCrowd"]["modelFile"] = "../crowd/icrowd01.crowd.gz"
+            scenery["instancedCrowd"]["placements"] = layout
+            files["../crowd/icrowd01.crowd.gz"] = packed_crowd
+    files["scenery.json"] = (json.dumps(scenery, indent=1, ensure_ascii=False) + "\n").encode()
+    return files
+
+
+def venue_list() -> list[str]:
+    inventory = json.loads((REPO / "ps2" / "content" / "inventory.json").read_text())
+    return sorted(v["file"] for v in inventory["venues"])
+
+
+def directory(venue: str) -> str:
+    return "foundation" if venue == "V2BG_02A" else venue
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("iso", type=Path, nargs="?", default=DEFAULT_ISO)
+    ap.add_argument("--venue", default="all", help="V2BG_xx or all")
     ap.add_argument("--check", action="store_true", help="compare with the committed files")
     args = ap.parse_args(argv)
-    files = build(args.iso)
-    OUTPUT.mkdir(exist_ok=True)
+    chosen = venue_list() if args.venue == "all" else [args.venue]
     bad = []
-    for name, blob in files.items():
-        path = OUTPUT / name
+    index = {}
+    for venue in chosen:
+        built = build(args.iso, venue)
+        manifest = json.loads(built["scenery.json"])
+        crowd = manifest["instancedCrowd"]
+        index[venue] = {"dir": directory(venue), "props": [p["name"] for p in manifest["props"]],
+                        "propStates": {p["name"]: p["states"] for p in manifest["props"]},
+                        "crowdInstances": crowd["instances"] if crowd else 0,
+                        "nearCrowdPositions": len(manifest["nearCrowd"]),
+                        "undecodedProps": [p["name"] for p in manifest["undecodedProps"]]}
+        for name, blob in built.items():
+            path = OUTPUT.parent / directory(venue) / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if args.check:
+                current = path.read_bytes() if path.exists() else b""
+                same = (gzip.decompress(current) == gzip.decompress(blob)) if name.endswith(".gz") and current \
+                    else current == blob
+                if not same:
+                    bad.append(str(path.relative_to(OUTPUT.parent)))
+            else:
+                path.write_bytes(blob)
+    if args.venue == "all":
+        blob = (json.dumps(index, indent=1) + "\n").encode()
+        path = OUTPUT.parent / "index.json"
         if args.check:
-            current = path.read_bytes() if path.exists() else b""
-            same = (gzip.decompress(current) == gzip.decompress(blob)) if name.endswith(".gz") and current \
-                else current == blob
-            if not same:
-                bad.append(name)
+            if not path.exists() or path.read_bytes() != blob:
+                bad.append("index.json")
         else:
             path.write_bytes(blob)
     if bad:

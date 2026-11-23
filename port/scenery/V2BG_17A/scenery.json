@@ -1,0 +1,3642 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_17A",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_17A.xml": "3b4c3c6ca8e2526b42f309bb0dc2791161b25ad1e1dd3f4aace3634fe8cfad36",
+   "V2BG_17A_O.xml": "65678b026a8d30292733eadd4878b9b9957b1496d4f389f9ed185cfcc15b1daa",
+   "V2BG_17A.ssh": "7688234a2b0b93962053f5503ee08211bb3df3f65e85160c6cc30c537ece6733",
+   "V2BG_17A_D.o": "42058408b55206ccb614ae69c5995357a43581a6a7cbe153af1763acda44eaa0",
+   "V2BG_17A_E.o": "131c395234a33cc77c4d1da9c1dcc2b15362f56481b07af9bb96837d37884cf6",
+   "V2BG_17A_F.o": "82e5a11b439e62b749f979e509fa7a4d982dbcad88b05d12e3043988ac938e50",
+   "V2BG_17A_G.o": "2def0eba7e2e513da4fdaa30052a3c98ef0c684c49b3ba6fb77332f12c29312a",
+   "V2BG_17A_H.o": "592e3d35182f28062c1d6e1c89642f85f05432be56e0d0556a8c92e72febca59",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [
+  {
+   "name": "V2BG_17A_D",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     -122.0,
+     0.0,
+     -255.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_17A_E",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     -66.0,
+     0.0,
+     -198.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_17A_F",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -255.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_17A_G",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     0.0,
+     0.0,
+     -110.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  },
+  {
+   "name": "V2BG_17A_H",
+   "alpha": false,
+   "states": [
+    "base"
+   ],
+   "morphs": [],
+   "placement": {
+    "translate": [
+     100.0,
+     0.0,
+     -177.0
+    ],
+    "rotate": [
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  }
+ ],
+ "undecodedProps": [
+  {
+   "name": "V2BG_17A_A",
+   "reason": "V2BG_17A_A: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_A",
+   "reason": "V2BG_17A_A_A: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_B",
+   "reason": "V2BG_17A_A_B: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_C",
+   "reason": "V2BG_17A_A_C: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_D",
+   "reason": "V2BG_17A_A_D: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_E",
+   "reason": "V2BG_17A_A_E: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_F",
+   "reason": "V2BG_17A_A_F: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_G",
+   "reason": "V2BG_17A_A_G: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_H",
+   "reason": "V2BG_17A_A_H: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_I",
+   "reason": "V2BG_17A_A_I: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_J",
+   "reason": "V2BG_17A_A_J: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_K",
+   "reason": "V2BG_17A_A_K: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_L",
+   "reason": "V2BG_17A_A_L: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_M",
+   "reason": "V2BG_17A_A_M: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_N",
+   "reason": "V2BG_17A_A_N: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_O",
+   "reason": "V2BG_17A_A_O: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_P",
+   "reason": "V2BG_17A_A_P: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_Q",
+   "reason": "V2BG_17A_A_Q: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_R",
+   "reason": "V2BG_17A_A_R: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_S",
+   "reason": "V2BG_17A_A_S: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_T",
+   "reason": "V2BG_17A_A_T: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_U",
+   "reason": "V2BG_17A_A_U: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_A_V",
+   "reason": "V2BG_17A_A_V: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B",
+   "reason": "V2BG_17A_B: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_A",
+   "reason": "V2BG_17A_B_A: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_B",
+   "reason": "V2BG_17A_B_B: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_C",
+   "reason": "V2BG_17A_B_C: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_D",
+   "reason": "V2BG_17A_B_D: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_E",
+   "reason": "V2BG_17A_B_E: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_F",
+   "reason": "V2BG_17A_B_F: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_G",
+   "reason": "V2BG_17A_B_G: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_H",
+   "reason": "V2BG_17A_B_H: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_I",
+   "reason": "V2BG_17A_B_I: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_J",
+   "reason": "V2BG_17A_B_J: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_K",
+   "reason": "V2BG_17A_B_K: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_L",
+   "reason": "V2BG_17A_B_L: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_M",
+   "reason": "V2BG_17A_B_M: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_N",
+   "reason": "V2BG_17A_B_N: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_O",
+   "reason": "V2BG_17A_B_O: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_P",
+   "reason": "V2BG_17A_B_P: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_Q",
+   "reason": "V2BG_17A_B_Q: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_R",
+   "reason": "V2BG_17A_B_R: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_S",
+   "reason": "V2BG_17A_B_S: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_T",
+   "reason": "V2BG_17A_B_T: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_U",
+   "reason": "V2BG_17A_B_U: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_V",
+   "reason": "V2BG_17A_B_V: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_W",
+   "reason": "V2BG_17A_B_W: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_B_X",
+   "reason": "V2BG_17A_B_X: unexpected position payload"
+  },
+  {
+   "name": "V2BG_17A_C",
+   "reason": "V2BG_17A_C: unexpected position payload"
+  },
+  {
+   "name": "V2SD_17A_A",
+   "reason": "Missing model symbol __Model:::V2SD_17A_A_branch"
+  },
+  {
+   "name": "V2SD_17A_B",
+   "reason": "Missing model symbol __Model:::V2SD_17A_B_branch"
+  }
+ ],
+ "unmatchedPlacements": [],
+ "venueMorphs": [],
+ "environmentAttacks": [
+  {
+   "name": "17A_1A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_J",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_U",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_V",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_W",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_1B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_J",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_U",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_V",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_W",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_1C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_J",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_U",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_V",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_W",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_2A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_J",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_U",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_V",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_W",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_2B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_J",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_U",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_V",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_W",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_2C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_J",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_U",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_V",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_W",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_3A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_P",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_I",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B2sideglass1",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B2sideglass2",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_3B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_I",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_P",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B2sideglass1",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B2sideglass2",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_3C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_P",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_I",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B2sideglass1",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B2sideglass2",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_4A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_P",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_I",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B2sideglass1",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B2sideglass2",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_4B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_I",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_P",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B2sideglass1",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B2sideglass2",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_4C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_P",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_I",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B2sideglass1",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B2sideglass2",
+     "-54",
+     "18",
+     "-34",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_5A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_M",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_H",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_5B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_M",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_H",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_5C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "5C_015A",
+     "call",
+     "V2WA_15A_21_17A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_5D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break4"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_M",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_H",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_6A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_M",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_H",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_6B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_M",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_H",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_6C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_O",
+     "break4"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_M",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_H",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B1sideglass1",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ],
+    [
+     "-1",
+     "fx_B1sideglass2",
+     "-45",
+     "18",
+     "-29",
+     "-110",
+     "210",
+     "-180"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "5C_015A",
+     "call",
+     "V2WA_15A_21_17A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_7A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_N",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_7B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_N",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_X",
+     "null"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "7B_026A",
+     "call",
+     "V2WA_26A_21_17A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_7C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_N",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_Bfrontglass1",
+     "-33",
+     "18",
+     "-34",
+     "235",
+     "-240",
+     "180"
+    ],
+    [
+     "-1",
+     "fx_Bfrontglass2",
+     "-33",
+     "18",
+     "-34",
+     "235",
+     "-240",
+     "180"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_8A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_G",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_R",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_S",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_T",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_8B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_G",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_R",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_S",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_T",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_8C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_G",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_R",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_S",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_T",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_9A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_G",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_R",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_S",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_T",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_9B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_G",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_R",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_S",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_T",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_9C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_G",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_R",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_S",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_T",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_10A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_A",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_10B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_A",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_10C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_A",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_11A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_L",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_BLlightl1",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BLlightl2",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BLlightl3",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_11B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_L",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_BLlightl1",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BLlightl2",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BLlightl3",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_11C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_L",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_BLlightl1",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BLlightl2",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BLlightl3",
+     "-22",
+     "11",
+     "-17",
+     "70",
+     "35",
+     "0"
+    ]
+   ],
+   "deleteParticles": [
+    [
+     "-1",
+     "fx_BLheadlight1"
+    ],
+    [
+     "-1",
+     "fx_BLheadlight2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_12A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_K",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_BRlightl1",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BRlightl2",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BRlightl3",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_12B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_K",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_BRlightl1",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BRlightl2",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BRlightl3",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_12C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_K",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_BRlightl1",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BRlightl2",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_BRlightl3",
+     "-13",
+     "11",
+     "-33",
+     "70",
+     "65",
+     "0"
+    ]
+   ],
+   "deleteParticles": [
+    [
+     "-1",
+     "fx_BRheadlight1"
+    ],
+    [
+     "-1",
+     "fx_BRheadlight2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_13A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_B",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_C",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_D",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_E",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_F",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_13B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_B",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_C",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_D",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_E",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_F",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_13C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_B",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_C",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_D",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_E",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_B_F",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_14A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_C",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_14B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_C",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_14C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_C",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_15A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_D",
+     "break1"
+    ]
+   ],
+   "deleteParticles": [
+    [
+     "-1",
+     "fx_ARheadlight"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_15B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_D",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_15C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_D",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_16A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_B",
+     "break1"
+    ]
+   ],
+   "deleteParticles": [
+    [
+     "-1",
+     "fx_ALheadlight"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_16B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_B",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_16C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_B",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_17A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_A",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_17B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_A",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_17C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_A",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_18A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_L",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_18B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_L",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_V",
+     "null"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "18B_026A",
+     "call",
+     "V2WA_26A_22_17A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_18C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_L",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_Afrontglass1",
+     "32",
+     "20",
+     "-35",
+     "65",
+     "300",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_Afrontglass2",
+     "32",
+     "20",
+     "-35",
+     "65",
+     "300",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_19A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_E",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_I",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_P",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_Q",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_R",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_19B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_E",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_I",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_P",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_Q",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_R",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_19C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_E",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_I",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_P",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_Q",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_R",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_20A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_E",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_I",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_P",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_Q",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_R",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_20B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_E",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_I",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_P",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_Q",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_R",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_20C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_E",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_I",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_P",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_Q",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_R",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_21A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_K",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_F",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_21B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_K",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_F",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_21C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_K",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_F",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_A1sideglass1",
+     "45",
+     "20",
+     "-28",
+     "90",
+     "30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_A1sideglass2",
+     "45",
+     "20",
+     "-28",
+     "90",
+     "30",
+     "0"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "23C_015A",
+     "call",
+     "V2WA_15B_22_17A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_21D",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break4"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_22A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_K",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_F",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_22B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_K",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_F",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_22C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_M",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_K",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_F",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_A1sideglass1",
+     "45",
+     "20",
+     "-28",
+     "90",
+     "30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_A1sideglass2",
+     "45",
+     "20",
+     "-28",
+     "90",
+     "30",
+     "0"
+    ]
+   ],
+   "weapons": [
+    [
+     "-1",
+     "23C_015A",
+     "call",
+     "V2WA_15B_22_17A"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_23A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_N",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_G",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_23B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_N",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_G",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_23C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_N",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_G",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_A2sideglass1",
+     "55",
+     "20",
+     "-34",
+     "90",
+     "30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_A2sideglass2",
+     "55",
+     "20",
+     "-34",
+     "90",
+     "30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_24A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_N",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_G",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_24B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_N",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_G",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_24C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_N",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_G",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_A2sideglass1",
+     "55",
+     "20",
+     "-34",
+     "90",
+     "30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_A2sideglass2",
+     "55",
+     "20",
+     "-34",
+     "90",
+     "30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_25A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_H",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_J",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_S",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_T",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_U",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_25B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_H",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_J",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_S",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_T",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_U",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_25C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_H",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_J",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_S",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_T",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_U",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_26A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_H",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_J",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_S",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_T",
+     "break1"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_U",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_26B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_H",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_J",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_S",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_T",
+     "break2"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_U",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_26C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_H",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_J",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_S",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_T",
+     "break3"
+    ],
+    [
+     "-1",
+     "V2BG_17A_A_U",
+     "break3"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_27A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_Q",
+     "break1"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B3sideglass1",
+     "-66",
+     "18",
+     "-41",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B3sideglass2",
+     "-66",
+     "18",
+     "-41",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_27B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_Q",
+     "break2"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B3sideglass1",
+     "-66",
+     "18",
+     "-41",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B3sideglass2",
+     "-66",
+     "18",
+     "-41",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_27C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_B_Q",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_B3sideglass1",
+     "-66",
+     "18",
+     "-41",
+     "70",
+     "-30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_B3sideglass2",
+     "-66",
+     "18",
+     "-41",
+     "70",
+     "-30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  },
+  {
+   "name": "17A_28A",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_O",
+     "break1"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_28B",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_O",
+     "break2"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "hit"
+    ]
+   ]
+  },
+  {
+   "name": "17A_28C",
+   "geometry": [
+    [
+     "-1",
+     "V2BG_17A_A_O",
+     "break3"
+    ]
+   ],
+   "particles": [
+    [
+     "-1",
+     "fx_A3sideglass1",
+     "66",
+     "20",
+     "-40",
+     "90",
+     "30",
+     "0"
+    ],
+    [
+     "-1",
+     "fx_A3sideglass2",
+     "66",
+     "20",
+     "-40",
+     "90",
+     "30",
+     "0"
+    ]
+   ],
+   "sounds": [
+    [
+     "-1",
+     "break"
+    ]
+   ]
+  }
+ ],
+ "nearCrowd": [
+  {
+   "name": "crowd_act1_C1_12",
+   "translate": [
+    -5.68,
+    0.0,
+    -41.13
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_11",
+   "translate": [
+    5.32,
+    0.0,
+    -41.13
+   ],
+   "rotate": [
+    0.0,
+    0.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_19",
+   "translate": [
+    81.93,
+    0.0,
+    -40.13
+   ],
+   "rotate": [
+    0.0,
+    -59.06,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C0_110",
+   "translate": [
+    87.11,
+    0.0,
+    -30.43
+   ],
+   "rotate": [
+    0.0,
+    -64.69,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_13",
+   "translate": [
+    89.73,
+    0.0,
+    -17.51
+   ],
+   "rotate": [
+    0.0,
+    -89.44,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_14",
+   "translate": [
+    89.51,
+    0.0,
+    -6.51
+   ],
+   "rotate": [
+    0.0,
+    268.88,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_15",
+   "translate": [
+    86.7,
+    0.0,
+    5.97
+   ],
+   "rotate": [
+    0.0,
+    244.13,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_16",
+   "translate": [
+    81.14,
+    0.0,
+    15.46
+   ],
+   "rotate": [
+    0.0,
+    232.31,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_112",
+   "translate": [
+    71.9,
+    0.0,
+    24.09
+   ],
+   "rotate": [
+    0.0,
+    210.38,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_111",
+   "translate": [
+    61.74,
+    0.0,
+    28.3
+   ],
+   "rotate": [
+    0.0,
+    201.94,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_17",
+   "translate": [
+    50.12,
+    0.0,
+    31.61
+   ],
+   "rotate": [
+    0.0,
+    192.94,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_18",
+   "translate": [
+    39.37,
+    0.0,
+    33.97
+   ],
+   "rotate": [
+    0.0,
+    191.25,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_19",
+   "translate": [
+    27.41,
+    0.0,
+    35.61
+   ],
+   "rotate": [
+    0.0,
+    184.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_110",
+   "translate": [
+    16.43,
+    0.0,
+    36.37
+   ],
+   "rotate": [
+    0.0,
+    180.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_113",
+   "translate": [
+    4.26,
+    0.0,
+    36.71
+   ],
+   "rotate": [
+    0.0,
+    180.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_114",
+   "translate": [
+    -6.74,
+    0.0,
+    36.82
+   ],
+   "rotate": [
+    0.0,
+    180.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_121",
+   "translate": [
+    -19.34,
+    0.0,
+    36.78
+   ],
+   "rotate": [
+    0.0,
+    178.88,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_122",
+   "translate": [
+    -30.34,
+    0.0,
+    36.45
+   ],
+   "rotate": [
+    0.0,
+    178.31,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_11",
+   "translate": [
+    -42.42,
+    0.0,
+    36.49
+   ],
+   "rotate": [
+    0.0,
+    176.63,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_123",
+   "translate": [
+    -53.4,
+    0.0,
+    35.85
+   ],
+   "rotate": [
+    0.0,
+    180.56,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_119",
+   "translate": [
+    -66.69,
+    0.0,
+    34.6
+   ],
+   "rotate": [
+    0.0,
+    164.81,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_120",
+   "translate": [
+    -76.86,
+    0.0,
+    30.4
+   ],
+   "rotate": [
+    0.0,
+    157.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_115",
+   "translate": [
+    -86.4,
+    0.0,
+    22.34
+   ],
+   "rotate": [
+    0.0,
+    121.5,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C0_116",
+   "translate": [
+    -90.41,
+    0.0,
+    12.1
+   ],
+   "rotate": [
+    0.0,
+    109.69,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_14",
+   "translate": [
+    -93.84,
+    0.0,
+    0.44
+   ],
+   "rotate": [
+    0.0,
+    105.75,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act1_C1_13",
+   "translate": [
+    -94.81,
+    0.0,
+    -10.52
+   ],
+   "rotate": [
+    0.0,
+    89.44,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C1_117",
+   "translate": [
+    -93.4,
+    0.0,
+    -22.44
+   ],
+   "rotate": [
+    0.0,
+    83.25,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_act2_C1_118",
+   "translate": [
+    -91.57,
+    0.0,
+    -33.28
+   ],
+   "rotate": [
+    0.0,
+    80.44,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst3",
+   "translate": [
+    0.57,
+    0.0,
+    -55.59
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst2",
+   "translate": [
+    9.74,
+    0.0,
+    -62.46
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "weapons": [
+  {
+   "name": "weapon_18B_026A",
+   "translate": [
+    30.0,
+    10.0,
+    -30.0
+   ],
+   "rotate": [
+    0.0,
+    210.5,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_7B_026A",
+   "translate": [
+    -25.0,
+    10.0,
+    -30.0
+   ],
+   "rotate": [
+    0.0,
+    -40.0,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_23C_015A",
+   "translate": [
+    60.0,
+    4.0,
+    -46.0
+   ],
+   "rotate": [
+    0.0,
+    120.0,
+    0.0
+   ]
+  },
+  {
+   "name": "weapon_5C_015A",
+   "translate": [
+    -60.0,
+    3.0,
+    -48.0
+   ],
+   "rotate": [
+    0.0,
+    240.0,
+    0.0
+   ]
+  }
+ ],
+ "hiddenWeapons": [],
+ "crowdGroup": {
+  "normal": 10,
+  "reduced": 10
+ },
+ "crowdModelRatio": {
+  "sex": [
+   80.0,
+   20.0
+  ],
+  "class": [
+   10.0,
+   90.0
+  ],
+  "seasonal": [
+   90.0,
+   10.0
+  ],
+  "racial": [
+   90.0,
+   10.0
+  ],
+  "brightness": [
+   0.0,
+   50.0,
+   50.0
+  ],
+  "temperature": [
+   50.0,
+   50.0
+  ],
+  "vividness": [
+   20.0,
+   80.0
+  ]
+ },
+ "defaultParticles": [],
+ "propsFile": "props.scene.gz",
+ "instancedCrowd": null
+}

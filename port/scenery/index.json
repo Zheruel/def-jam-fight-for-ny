@@ -1,0 +1,1183 @@
+{
+ "V2BG_01A": {
+  "dir": "V2BG_01A",
+  "props": [
+   "V2BG_01A_E",
+   "V2BG_01A_F",
+   "V2BG_01A_G",
+   "V2BG_01A_H",
+   "V2BG_01A_I",
+   "V2BG_01A_J"
+  ],
+  "propStates": {
+   "V2BG_01A_E": [
+    "base"
+   ],
+   "V2BG_01A_F": [
+    "base"
+   ],
+   "V2BG_01A_G": [
+    "base"
+   ],
+   "V2BG_01A_H": [
+    "base"
+   ],
+   "V2BG_01A_I": [
+    "base"
+   ],
+   "V2BG_01A_J": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 23,
+  "undecodedProps": [
+   "V2BG_01A_A"
+  ]
+ },
+ "V2BG_01B": {
+  "dir": "V2BG_01B",
+  "props": [
+   "V2BG_01B_I",
+   "V2BG_01B_J",
+   "V2BG_01B_K",
+   "V2BG_01B_L"
+  ],
+  "propStates": {
+   "V2BG_01B_I": [
+    "base"
+   ],
+   "V2BG_01B_J": [
+    "base"
+   ],
+   "V2BG_01B_K": [
+    "base"
+   ],
+   "V2BG_01B_L": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 0,
+  "undecodedProps": [
+   "V2BG_01B_A",
+   "V2BG_01B_D",
+   "V2BG_01B_E"
+  ]
+ },
+ "V2BG_02A": {
+  "dir": "foundation",
+  "props": [
+   "V2BG_02A_A",
+   "V2BG_02A_B",
+   "V2BG_02A_C",
+   "V2BG_02A_D",
+   "V2BG_02A_E",
+   "V2BG_02A_F",
+   "V2BG_02A_H",
+   "V2BG_02A_I"
+  ],
+  "propStates": {
+   "V2BG_02A_A": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_02A_B": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_02A_C": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_02A_D": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_02A_E": [
+    "base",
+    "break1"
+   ],
+   "V2BG_02A_F": [
+    "base",
+    "break1"
+   ],
+   "V2BG_02A_H": [
+    "base",
+    "break"
+   ],
+   "V2BG_02A_I": [
+    "base",
+    "break"
+   ]
+  },
+  "crowdInstances": 60,
+  "nearCrowdPositions": 30,
+  "undecodedProps": []
+ },
+ "V2BG_03A": {
+  "dir": "V2BG_03A",
+  "props": [
+   "V2BG_03A_L",
+   "V2BG_03A_M",
+   "V2BG_03A_N"
+  ],
+  "propStates": {
+   "V2BG_03A_L": [
+    "base"
+   ],
+   "V2BG_03A_M": [
+    "base"
+   ],
+   "V2BG_03A_N": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_03A_A"
+  ]
+ },
+ "V2BG_04A": {
+  "dir": "V2BG_04A",
+  "props": [
+   "V2BG_04A_A",
+   "V2BG_04A_B",
+   "V2BG_04A_E",
+   "V2BG_04A_F",
+   "V2BG_04A_G",
+   "V2BG_04A_M",
+   "V2BG_04A_N",
+   "V2BG_04A_O",
+   "V2BG_04A_P",
+   "V2BG_04A_T"
+  ],
+  "propStates": {
+   "V2BG_04A_A": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_04A_B": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_04A_E": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_04A_F": [
+    "base",
+    "break1"
+   ],
+   "V2BG_04A_G": [
+    "base",
+    "break1"
+   ],
+   "V2BG_04A_M": [
+    "base"
+   ],
+   "V2BG_04A_N": [
+    "base"
+   ],
+   "V2BG_04A_O": [
+    "base"
+   ],
+   "V2BG_04A_P": [
+    "base"
+   ],
+   "V2BG_04A_T": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 0,
+  "undecodedProps": [
+   "V2BG_04A_H",
+   "V2BG_04A_I",
+   "V2BG_04A_J",
+   "V2BG_04A_K",
+   "V2BG_04A_L"
+  ]
+ },
+ "V2BG_05A": {
+  "dir": "V2BG_05A",
+  "props": [
+   "V2BG_05A_A",
+   "V2BG_05A_B",
+   "V2BG_05A_C",
+   "V2BG_05A_D",
+   "V2BG_05A_E",
+   "V2BG_05A_F",
+   "V2BG_05A_G",
+   "V2BG_05A_H",
+   "V2BG_05A_I",
+   "V2BG_05A_J",
+   "V2BG_05A_K",
+   "V2BG_05A_L",
+   "V2BG_05A_M",
+   "V2BG_05A_N",
+   "V2BG_05A_O",
+   "V2BG_05A_P",
+   "V2BG_05A_Q",
+   "V2BG_05A_S",
+   "V2BG_05A_T",
+   "V2BG_05A_U",
+   "V2BG_05A_V",
+   "V2BG_05A_W",
+   "V2BG_05A_X",
+   "V2BG_05A_Z"
+  ],
+  "propStates": {
+   "V2BG_05A_A": [
+    "base"
+   ],
+   "V2BG_05A_B": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_C": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_D": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_E": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_F": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_G": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_H": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_I": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_J": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_K": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_L": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_M": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_N": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_O": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_P": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_Q": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_05A_S": [
+    "base"
+   ],
+   "V2BG_05A_T": [
+    "base"
+   ],
+   "V2BG_05A_U": [
+    "base"
+   ],
+   "V2BG_05A_V": [
+    "base"
+   ],
+   "V2BG_05A_W": [
+    "base"
+   ],
+   "V2BG_05A_X": [
+    "base"
+   ],
+   "V2BG_05A_Z": [
+    "base"
+   ]
+  },
+  "crowdInstances": 100,
+  "nearCrowdPositions": 15,
+  "undecodedProps": []
+ },
+ "V2BG_06A": {
+  "dir": "V2BG_06A",
+  "props": [
+   "V2BG_06A_C",
+   "V2BG_06A_D",
+   "V2BG_06A_E",
+   "V2BG_06A_J",
+   "V2BG_06A_L",
+   "V2BG_06A_M",
+   "V2BG_06A_O"
+  ],
+  "propStates": {
+   "V2BG_06A_C": [
+    "base"
+   ],
+   "V2BG_06A_D": [
+    "base"
+   ],
+   "V2BG_06A_E": [
+    "base"
+   ],
+   "V2BG_06A_J": [
+    "base"
+   ],
+   "V2BG_06A_L": [
+    "base"
+   ],
+   "V2BG_06A_M": [
+    "base"
+   ],
+   "V2BG_06A_O": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 29,
+  "undecodedProps": []
+ },
+ "V2BG_07A": {
+  "dir": "V2BG_07A",
+  "props": [
+   "V2BG_07A_A",
+   "V2BG_07A_B",
+   "V2BG_07A_C"
+  ],
+  "propStates": {
+   "V2BG_07A_A": [
+    "base",
+    "break1",
+    "break2",
+    "break3",
+    "break4",
+    "break5",
+    "break6"
+   ],
+   "V2BG_07A_B": [
+    "base",
+    "break1",
+    "break2",
+    "break3",
+    "break4",
+    "break5",
+    "break6"
+   ],
+   "V2BG_07A_C": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 0,
+  "undecodedProps": [
+   "V2BG_07A_E"
+  ]
+ },
+ "V2BG_09A": {
+  "dir": "V2BG_09A",
+  "props": [],
+  "propStates": {},
+  "crowdInstances": 100,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_09A_A"
+  ]
+ },
+ "V2BG_09B": {
+  "dir": "V2BG_09B",
+  "props": [],
+  "propStates": {},
+  "crowdInstances": 100,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_09B_A"
+  ]
+ },
+ "V2BG_10A": {
+  "dir": "V2BG_10A",
+  "props": [
+   "V2BG_10A_B",
+   "V2BG_10A_C",
+   "V2BG_10A_D",
+   "V2BG_10A_H",
+   "V2BG_10A_I",
+   "V2BG_10A_J"
+  ],
+  "propStates": {
+   "V2BG_10A_B": [
+    "base"
+   ],
+   "V2BG_10A_C": [
+    "base"
+   ],
+   "V2BG_10A_D": [
+    "base"
+   ],
+   "V2BG_10A_H": [
+    "base"
+   ],
+   "V2BG_10A_I": [
+    "base"
+   ],
+   "V2BG_10A_J": [
+    "base"
+   ]
+  },
+  "crowdInstances": 120,
+  "nearCrowdPositions": 36,
+  "undecodedProps": [
+   "V2BG_10A_A"
+  ]
+ },
+ "V2BG_10B": {
+  "dir": "V2BG_10B",
+  "props": [
+   "V2BG_10B_B",
+   "V2BG_10B_C",
+   "V2BG_10B_D",
+   "V2BG_10B_H",
+   "V2BG_10B_I",
+   "V2BG_10B_J",
+   "V2BG_10B_K",
+   "V2BG_10B_L",
+   "V2BG_10B_M"
+  ],
+  "propStates": {
+   "V2BG_10B_B": [
+    "base"
+   ],
+   "V2BG_10B_C": [
+    "base"
+   ],
+   "V2BG_10B_D": [
+    "base"
+   ],
+   "V2BG_10B_H": [
+    "base"
+   ],
+   "V2BG_10B_I": [
+    "base"
+   ],
+   "V2BG_10B_J": [
+    "base"
+   ],
+   "V2BG_10B_K": [
+    "base"
+   ],
+   "V2BG_10B_L": [
+    "base"
+   ],
+   "V2BG_10B_M": [
+    "base"
+   ]
+  },
+  "crowdInstances": 120,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_10B_A"
+  ]
+ },
+ "V2BG_11A": {
+  "dir": "V2BG_11A",
+  "props": [],
+  "propStates": {},
+  "crowdInstances": 0,
+  "nearCrowdPositions": 6,
+  "undecodedProps": [
+   "V2BG_11A_A"
+  ]
+ },
+ "V2BG_12A": {
+  "dir": "V2BG_12A",
+  "props": [
+   "V2BG_12A_A",
+   "V2BG_12A_C",
+   "V2BG_12A_E"
+  ],
+  "propStates": {
+   "V2BG_12A_A": [
+    "base"
+   ],
+   "V2BG_12A_C": [
+    "base"
+   ],
+   "V2BG_12A_E": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 34,
+  "undecodedProps": []
+ },
+ "V2BG_13A": {
+  "dir": "V2BG_13A",
+  "props": [
+   "V2BG_13A_A",
+   "V2BG_13A_B",
+   "V2BG_13A_C",
+   "V2BG_13A_D",
+   "V2BG_13A_E",
+   "V2BG_13A_F",
+   "V2BG_13A_G",
+   "V2BG_13A_H",
+   "V2BG_13A_I",
+   "V2BG_13A_J",
+   "V2BG_13A_K",
+   "V2BG_13A_L",
+   "V2BG_13A_M",
+   "V2BG_13A_N",
+   "V2BG_13A_O",
+   "V2BG_13A_V"
+  ],
+  "propStates": {
+   "V2BG_13A_A": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_B": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_C": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_D": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_E": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_F": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_G": [
+    "base"
+   ],
+   "V2BG_13A_H": [
+    "base"
+   ],
+   "V2BG_13A_I": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_J": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_K": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_L": [
+    "base"
+   ],
+   "V2BG_13A_M": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_N": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_O": [
+    "base",
+    "break1"
+   ],
+   "V2BG_13A_V": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 35,
+  "undecodedProps": []
+ },
+ "V2BG_14A": {
+  "dir": "V2BG_14A",
+  "props": [
+   "V2BG_14A_A",
+   "V2BG_14A_B",
+   "V2BG_14A_D",
+   "V2BG_14A_E",
+   "V2BG_14A_F",
+   "V2BG_14A_G",
+   "V2BG_14A_H",
+   "V2BG_14A_I",
+   "V2BG_14A_J",
+   "V2BG_14A_K"
+  ],
+  "propStates": {
+   "V2BG_14A_A": [
+    "base"
+   ],
+   "V2BG_14A_B": [
+    "base"
+   ],
+   "V2BG_14A_D": [
+    "base"
+   ],
+   "V2BG_14A_E": [
+    "base"
+   ],
+   "V2BG_14A_F": [
+    "base"
+   ],
+   "V2BG_14A_G": [
+    "base"
+   ],
+   "V2BG_14A_H": [
+    "base"
+   ],
+   "V2BG_14A_I": [
+    "base"
+   ],
+   "V2BG_14A_J": [
+    "base"
+   ],
+   "V2BG_14A_K": [
+    "base"
+   ]
+  },
+  "crowdInstances": 120,
+  "nearCrowdPositions": 30,
+  "undecodedProps": []
+ },
+ "V2BG_15A": {
+  "dir": "V2BG_15A",
+  "props": [
+   "V2BG_15A_A",
+   "V2BG_15A_B",
+   "V2BG_15A_C",
+   "V2BG_15A_D",
+   "V2BG_15A_E",
+   "V2BG_15A_F",
+   "V2BG_15A_G",
+   "V2BG_15A_H",
+   "V2BG_15A_K",
+   "V2BG_15A_L",
+   "V2BG_15A_M",
+   "V2BG_15A_N",
+   "V2BG_15A_O",
+   "V2BG_15A_P",
+   "V2BG_15A_Q",
+   "V2BG_15A_S",
+   "V2BG_15A_T",
+   "V2BG_15A_U"
+  ],
+  "propStates": {
+   "V2BG_15A_A": [
+    "base",
+    "break1"
+   ],
+   "V2BG_15A_B": [
+    "base",
+    "break1"
+   ],
+   "V2BG_15A_C": [
+    "base",
+    "break1"
+   ],
+   "V2BG_15A_D": [
+    "base",
+    "break1"
+   ],
+   "V2BG_15A_E": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_15A_F": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_15A_G": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_15A_H": [
+    "base"
+   ],
+   "V2BG_15A_K": [
+    "base"
+   ],
+   "V2BG_15A_L": [
+    "base"
+   ],
+   "V2BG_15A_M": [
+    "base"
+   ],
+   "V2BG_15A_N": [
+    "base"
+   ],
+   "V2BG_15A_O": [
+    "base"
+   ],
+   "V2BG_15A_P": [
+    "base"
+   ],
+   "V2BG_15A_Q": [
+    "base"
+   ],
+   "V2BG_15A_S": [
+    "base"
+   ],
+   "V2BG_15A_T": [
+    "base"
+   ],
+   "V2BG_15A_U": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 0,
+  "undecodedProps": [
+   "V2BG_15A_I",
+   "V2BG_15A_J"
+  ]
+ },
+ "V2BG_17A": {
+  "dir": "V2BG_17A",
+  "props": [
+   "V2BG_17A_D",
+   "V2BG_17A_E",
+   "V2BG_17A_F",
+   "V2BG_17A_G",
+   "V2BG_17A_H"
+  ],
+  "propStates": {
+   "V2BG_17A_D": [
+    "base"
+   ],
+   "V2BG_17A_E": [
+    "base"
+   ],
+   "V2BG_17A_F": [
+    "base"
+   ],
+   "V2BG_17A_G": [
+    "base"
+   ],
+   "V2BG_17A_H": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_17A_A",
+   "V2BG_17A_A_A",
+   "V2BG_17A_A_B",
+   "V2BG_17A_A_C",
+   "V2BG_17A_A_D",
+   "V2BG_17A_A_E",
+   "V2BG_17A_A_F",
+   "V2BG_17A_A_G",
+   "V2BG_17A_A_H",
+   "V2BG_17A_A_I",
+   "V2BG_17A_A_J",
+   "V2BG_17A_A_K",
+   "V2BG_17A_A_L",
+   "V2BG_17A_A_M",
+   "V2BG_17A_A_N",
+   "V2BG_17A_A_O",
+   "V2BG_17A_A_P",
+   "V2BG_17A_A_Q",
+   "V2BG_17A_A_R",
+   "V2BG_17A_A_S",
+   "V2BG_17A_A_T",
+   "V2BG_17A_A_U",
+   "V2BG_17A_A_V",
+   "V2BG_17A_B",
+   "V2BG_17A_B_A",
+   "V2BG_17A_B_B",
+   "V2BG_17A_B_C",
+   "V2BG_17A_B_D",
+   "V2BG_17A_B_E",
+   "V2BG_17A_B_F",
+   "V2BG_17A_B_G",
+   "V2BG_17A_B_H",
+   "V2BG_17A_B_I",
+   "V2BG_17A_B_J",
+   "V2BG_17A_B_K",
+   "V2BG_17A_B_L",
+   "V2BG_17A_B_M",
+   "V2BG_17A_B_N",
+   "V2BG_17A_B_O",
+   "V2BG_17A_B_P",
+   "V2BG_17A_B_Q",
+   "V2BG_17A_B_R",
+   "V2BG_17A_B_S",
+   "V2BG_17A_B_T",
+   "V2BG_17A_B_U",
+   "V2BG_17A_B_V",
+   "V2BG_17A_B_W",
+   "V2BG_17A_B_X",
+   "V2BG_17A_C",
+   "V2SD_17A_A",
+   "V2SD_17A_B"
+  ]
+ },
+ "V2BG_19A": {
+  "dir": "V2BG_19A",
+  "props": [
+   "V2BG_19A_A",
+   "V2BG_19A_B",
+   "V2BG_19A_C",
+   "V2BG_19A_D",
+   "V2BG_19A_E",
+   "V2BG_19A_F",
+   "V2BG_19A_G",
+   "V2BG_19A_J"
+  ],
+  "propStates": {
+   "V2BG_19A_A": [
+    "base"
+   ],
+   "V2BG_19A_B": [
+    "base"
+   ],
+   "V2BG_19A_C": [
+    "base"
+   ],
+   "V2BG_19A_D": [
+    "base"
+   ],
+   "V2BG_19A_E": [
+    "base"
+   ],
+   "V2BG_19A_F": [
+    "base"
+   ],
+   "V2BG_19A_G": [
+    "base"
+   ],
+   "V2BG_19A_J": [
+    "base"
+   ]
+  },
+  "crowdInstances": 60,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_19A_I"
+  ]
+ },
+ "V2BG_20A": {
+  "dir": "V2BG_20A",
+  "props": [
+   "V2BG_20A_A",
+   "V2BG_20A_D",
+   "V2BG_20A_E",
+   "V2BG_20A_F",
+   "V2BG_20A_G",
+   "V2BG_20A_H",
+   "V2BG_20A_I",
+   "V2BG_20A_J",
+   "V2BG_20A_K",
+   "V2BG_20A_L",
+   "V2BG_20A_M",
+   "V2BG_20A_N",
+   "V2BG_20A_O",
+   "V2BG_20A_P",
+   "V2BG_20A_Q",
+   "V2BG_20A_S",
+   "V2BG_20A_T",
+   "V2BG_20A_U",
+   "V2BG_20A_V"
+  ],
+  "propStates": {
+   "V2BG_20A_A": [
+    "base",
+    "break1",
+    "break2",
+    "break3"
+   ],
+   "V2BG_20A_D": [
+    "base",
+    "break1"
+   ],
+   "V2BG_20A_E": [
+    "base"
+   ],
+   "V2BG_20A_F": [
+    "base"
+   ],
+   "V2BG_20A_G": [
+    "base"
+   ],
+   "V2BG_20A_H": [
+    "base"
+   ],
+   "V2BG_20A_I": [
+    "base"
+   ],
+   "V2BG_20A_J": [
+    "base"
+   ],
+   "V2BG_20A_K": [
+    "base"
+   ],
+   "V2BG_20A_L": [
+    "base"
+   ],
+   "V2BG_20A_M": [
+    "base"
+   ],
+   "V2BG_20A_N": [
+    "base"
+   ],
+   "V2BG_20A_O": [
+    "base"
+   ],
+   "V2BG_20A_P": [
+    "base"
+   ],
+   "V2BG_20A_Q": [
+    "base"
+   ],
+   "V2BG_20A_S": [
+    "base"
+   ],
+   "V2BG_20A_T": [
+    "base"
+   ],
+   "V2BG_20A_U": [
+    "base"
+   ],
+   "V2BG_20A_V": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 35,
+  "undecodedProps": [
+   "V2BG_20A_B",
+   "V2BG_20A_C"
+  ]
+ },
+ "V2BG_21A": {
+  "dir": "V2BG_21A",
+  "props": [
+   "V2BG_21A_D",
+   "V2BG_21A_E",
+   "V2BG_21A_G",
+   "V2BG_21A_H",
+   "V2BG_21A_L",
+   "V2BG_21A_M"
+  ],
+  "propStates": {
+   "V2BG_21A_D": [
+    "base"
+   ],
+   "V2BG_21A_E": [
+    "base"
+   ],
+   "V2BG_21A_G": [
+    "base",
+    "break1"
+   ],
+   "V2BG_21A_H": [
+    "base",
+    "break1"
+   ],
+   "V2BG_21A_L": [
+    "base"
+   ],
+   "V2BG_21A_M": [
+    "base"
+   ]
+  },
+  "crowdInstances": 0,
+  "nearCrowdPositions": 30,
+  "undecodedProps": [
+   "V2BG_21A_C",
+   "V2BG_21A_F",
+   "V2BG_21A_K"
+  ]
+ },
+ "V2BG_22A": {
+  "dir": "V2BG_22A",
+  "props": [
+   "V2BG_22A_B",
+   "V2BG_22A_C",
+   "V2BG_22A_D",
+   "V2BG_22A_E",
+   "V2BG_22A_F"
+  ],
+  "propStates": {
+   "V2BG_22A_B": [
+    "base"
+   ],
+   "V2BG_22A_C": [
+    "base"
+   ],
+   "V2BG_22A_D": [
+    "base"
+   ],
+   "V2BG_22A_E": [
+    "base"
+   ],
+   "V2BG_22A_F": [
+    "base"
+   ]
+  },
+  "crowdInstances": 100,
+  "nearCrowdPositions": 28,
+  "undecodedProps": [
+   "V2BG_22A_A"
+  ]
+ },
+ "V2BG_22B": {
+  "dir": "V2BG_22B",
+  "props": [
+   "V2BG_22B_B",
+   "V2BG_22B_C",
+   "V2BG_22B_D",
+   "V2BG_22B_E",
+   "V2BG_22B_F"
+  ],
+  "propStates": {
+   "V2BG_22B_B": [
+    "base"
+   ],
+   "V2BG_22B_C": [
+    "base"
+   ],
+   "V2BG_22B_D": [
+    "base"
+   ],
+   "V2BG_22B_E": [
+    "base"
+   ],
+   "V2BG_22B_F": [
+    "base"
+   ]
+  },
+  "crowdInstances": 100,
+  "nearCrowdPositions": 28,
+  "undecodedProps": [
+   "V2BG_22B_A"
+  ]
+ },
+ "V2BG_23A": {
+  "dir": "V2BG_23A",
+  "props": [
+   "V2BG_23A_A",
+   "V2BG_23A_B",
+   "V2BG_23A_C",
+   "V2BG_23A_D",
+   "V2BG_23A_K",
+   "V2BG_23A_L",
+   "V2BG_23A_M",
+   "V2BG_23A_N"
+  ],
+  "propStates": {
+   "V2BG_23A_A": [
+    "base"
+   ],
+   "V2BG_23A_B": [
+    "base"
+   ],
+   "V2BG_23A_C": [
+    "base"
+   ],
+   "V2BG_23A_D": [
+    "base"
+   ],
+   "V2BG_23A_K": [
+    "base"
+   ],
+   "V2BG_23A_L": [
+    "base"
+   ],
+   "V2BG_23A_M": [
+    "base"
+   ],
+   "V2BG_23A_N": [
+    "base"
+   ]
+  },
+  "crowdInstances": 100,
+  "nearCrowdPositions": 29,
+  "undecodedProps": [
+   "V2BG_23A_E",
+   "V2BG_23A_F"
+  ]
+ }
+}

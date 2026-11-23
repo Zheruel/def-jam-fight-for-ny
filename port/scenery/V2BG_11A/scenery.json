@@ -1,0 +1,146 @@
+{
+ "format": "def-jam-ps2-scenery/1",
+ "venue": "V2BG_11A",
+ "sources": {
+  "archives": {
+   "stage": "ASSETS/V2BG.VIV",
+   "crowd": "ASSETS/ICROWD.VIV"
+  },
+  "sha256": {
+   "V2BG_11A.xml": "bc89e50791da88622a8c9102f689349bc2a72f78484306097fe0458c9ab96c72",
+   "V2BG_11A_O.xml": "ed6606352cc78506b00e674be487e5ff5e893167ea8a668780e9f13a04fd01fe",
+   "V2BG_11A.ssh": "9201b7506674ad5d199d8f4ff2f6210eebe10b3db1e54221150000ed2cd06356",
+   "ENTITY.XML": "5e90612c66a0fa9fb35eb6f28c6fdcc0e1018625239f2a10bc486fa26de1ad13"
+  }
+ },
+ "props": [],
+ "undecodedProps": [
+  {
+   "name": "V2BG_11A_A",
+   "reason": "V2BG_11A_A: unexpected position payload"
+  }
+ ],
+ "unmatchedPlacements": [],
+ "venueMorphs": [],
+ "environmentAttacks": [],
+ "nearCrowd": [
+  {
+   "name": "crowd_gym1_Inst1",
+   "translate": [
+    48.96,
+    0.0,
+    -77.49
+   ],
+   "rotate": [
+    0.0,
+    218.25,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_sit1_Inst1",
+   "translate": [
+    20.27,
+    -2.84,
+    -66.79
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst1",
+   "translate": [
+    -4.9,
+    0.0,
+    -107.27
+   ],
+   "rotate": [
+    0.0,
+    20.65,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand4_Inst1",
+   "translate": [
+    -26.02,
+    0.0,
+    -103.63
+   ],
+   "rotate": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst2",
+   "translate": [
+    -67.34,
+    0.0,
+    -48.4
+   ],
+   "rotate": [
+    0.0,
+    44.69,
+    0.0
+   ]
+  },
+  {
+   "name": "crowd_stand1_Inst3",
+   "translate": [
+    -69.63,
+    0.0,
+    -38.26
+   ],
+   "rotate": [
+    0.0,
+    69.99,
+    0.0
+   ]
+  }
+ ],
+ "weapons": [],
+ "hiddenWeapons": [],
+ "crowdGroup": {
+  "normal": 6,
+  "reduced": 6
+ },
+ "crowdModelRatio": {
+  "sex": [
+   100.0,
+   0.0
+  ],
+  "class": [
+   0.0,
+   100.0
+  ],
+  "seasonal": [
+   100.0,
+   0.0
+  ],
+  "racial": [
+   70.0,
+   30.0
+  ],
+  "brightness": [
+   20.0,
+   40.0,
+   40.0
+  ],
+  "temperature": [
+   20.0,
+   80.0
+  ],
+  "vividness": [
+   20.0,
+   80.0
+  ]
+ },
+ "defaultParticles": [],
+ "propsFile": null,
+ "instancedCrowd": null
+}

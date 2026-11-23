@@ -17,6 +17,7 @@ class SceneryTests(unittest.TestCase):
         self.assertEqual(len(scenery["props"]), 8)
         self.assertEqual(len(scenery["nearCrowd"]), 30)
         self.assertEqual(scenery["instancedCrowd"]["instances"], 60)
+        self.assertEqual(scenery["undecodedProps"], [])
         for name, digest in scenery["sources"]["sha256"].items():
             self.assertEqual(len(digest), 64, name)
 
