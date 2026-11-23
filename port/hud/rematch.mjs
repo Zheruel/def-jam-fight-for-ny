@@ -26,24 +26,22 @@ export function drawRematch(ctx, screen, selected) {
   ctx.restore();
 }
 
-// `offered()` says the result hold is over; `answer()` starts the rematch.
-export function rematchChoice(offered, answer = () => {}) {
-  let selected = 0, declined = false;
-  const choice = {
+export function rematchChoice(offered, restart, leave) {
+  let selected = 0;
+  return {
     get selected() { return selected; },
-    // NO closes the card; the plain "ENTER REMATCH" line of the banner then stays available.
-    get shown() { return offered() && !declined; },
-    reset() { selected = 0; declined = false; },
+    get shown() { return offered(); },
+    reset() { selected = 0; },
     key(event) {
       if (!offered()) return false;
-      if (!declined && ["ArrowLeft", "ArrowRight", "a", "d", "A", "D"].includes(event.key)) { selected = 1 - selected; return true; }
-      if (event.key === "Enter") {
-        if (declined || selected === 0) answer();
-        else declined = true;
+      if (["ArrowLeft", "ArrowRight", "a", "d", "A", "D"].includes(event.key)) {
+        selected = 1 - selected;
         return true;
       }
-      return false;
+      if (event.key !== "Enter") return false;
+      if (selected === 0) restart();
+      else leave();
+      return true;
     },
   };
-  return choice;
 }

@@ -69,27 +69,30 @@ try {
   const before = await view("1-fight");
 
   // Blaze brawls until the retail referee calls the match.
-  await host.evaluate(async () => {
-    const buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
-    let random=17, held=[0,0], changed=-99;
-    const next=()=>{random=(Math.imul(random,1664525)+1013904223)>>>0;return random;};
-    window.finish = (async () => {
-      try { for (;;) {
-        await new Promise(requestAnimationFrame);
-        const {actors,ticks,outcome}=nativeBattle.diagnostics();
-        if (outcome.result) return outcome;
-        globalThis.__spend(1);   // keep Doc under the 10% knockout line as he regenerates (ticks can skip while hosting)
-        const dx=actors[1].position[0]-actors[0].position[0], dz=actors[1].position[2]-actors[0].position[2], dist=Math.hypot(dx,dz);
-        if (ticks-changed>=18) { changed=ticks; held=[buttons[next()%buttons.length],buttons[next()%buttons.length]]; }   // ticks can skip frames, so no modulo test
-        nativeBattle.setInput(0,{buttons:dist>10?0x2000:ticks-changed<4?held[0]:0,x:dist>7?dx/dist:0,z:dist>7?-dz/dist:0});
-        nativeBattle.setInput(1,{buttons:0,x:0,z:0});
-      } } catch (error) { window.finishError = String(error?.stack ?? error); }
-    })();
-  });
-  await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.result,undefined,{timeout:120000,polling:500}).catch(async error => {
-    const d = await host.evaluate(()=>{const x=nativeBattle.diagnostics();return {ticks:x.ticks,frames:x.renderedFrames,paused:x.paused,network:x.network,health:x.actors.map(a=>a.health),pos:x.actors.map(a=>a.position.map(v=>Math.round(v))),act:x.actors.map(a=>a.action),state:x.actors.map(a=>a.state),clock:x.outcome.clock,phase:x.outcome.phase,status:document.querySelector("#status").textContent,driver:window.finishError};});
-    throw new Error("No result: "+JSON.stringify(d),{cause:error});
-  });
+  async function playToResult() {
+    await host.evaluate(async () => {
+      const buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
+      let random=17, held=[0,0], changed=-99;
+      const next=()=>{random=(Math.imul(random,1664525)+1013904223)>>>0;return random;};
+      window.finish = (async () => {
+        try { for (;;) {
+          await new Promise(requestAnimationFrame);
+          const {actors,ticks,outcome}=nativeBattle.diagnostics();
+          if (outcome.result) return outcome;
+          globalThis.__spend(1);   // keep Doc under the 10% knockout line as he regenerates (ticks can skip while hosting)
+          const dx=actors[1].position[0]-actors[0].position[0], dz=actors[1].position[2]-actors[0].position[2], dist=Math.hypot(dx,dz);
+          if (ticks-changed>=18) { changed=ticks; held=[buttons[next()%buttons.length],buttons[next()%buttons.length]]; }   // ticks can skip frames, so no modulo test
+          nativeBattle.setInput(0,{buttons:dist>10?0x2000:ticks-changed<4?held[0]:0,x:dist>7?dx/dist:0,z:dist>7?-dz/dist:0});
+          nativeBattle.setInput(1,{buttons:0,x:0,z:0});
+        } } catch (error) { window.finishError = String(error?.stack ?? error); }
+      })();
+    });
+    await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.result,undefined,{timeout:120000,polling:500}).catch(async error => {
+      const d = await host.evaluate(()=>{const x=nativeBattle.diagnostics();return {ticks:x.ticks,frames:x.renderedFrames,paused:x.paused,network:x.network,health:x.actors.map(a=>a.health),pos:x.actors.map(a=>a.position.map(v=>Math.round(v))),act:x.actors.map(a=>a.action),state:x.actors.map(a=>a.state),clock:x.outcome.clock,phase:x.outcome.phase,status:document.querySelector("#status").textContent,driver:window.finishError};});
+      throw new Error("No result: "+JSON.stringify(d),{cause:error});
+    });
+  }
+  await playToResult();
   const outcome = await host.evaluate(()=>nativeBattle.diagnostics().outcome);
   // The page's 30 second limit can call the match before Blaze lands the knockdown; both are retail finishes with a banner.
   assert.ok(["ko","time"].includes(outcome.method),JSON.stringify(outcome));
@@ -101,14 +104,7 @@ try {
   assert.ok(after.card>before.card+3000,`retail REMATCH? card on the host (${before.card} -> ${after.card})`);
   assert.ok(after.guestCard>before.guestCard+3000,`retail REMATCH? card on the guest (${before.guestCard} -> ${after.guestCard})`);
 
-  // NO closes the card (the match stays over); YES, the default choice, starts the rematch.
   await host.locator("canvas").click();
-  await host.keyboard.press("ArrowRight");
-  await host.keyboard.press("Enter");
-  await host.waitForTimeout(400);
-  const declined = await view("3-declined");
-  assert.ok(await host.evaluate(()=>nativeBattle.diagnostics().outcome.over),"NO keeps the result up");
-  assert.ok(declined.card<before.card+1500,`card closed after NO (${declined.card})`);
   await host.keyboard.press("Enter");
   await host.waitForFunction(()=>{const d=nativeBattle.diagnostics();return !d.outcome.over && d.ticks<60;});
   const reset = await host.evaluate(()=>nativeBattle.diagnostics());
@@ -119,9 +115,15 @@ try {
   assert.ok(cleared.host<before.host+150,`banner gone after the rematch on the host (${cleared.host})`);
   assert.ok(cleared.guest<before.guest+150,`banner gone after the rematch on the guest (${cleared.guest})`);
   assert.ok(cleared.card<before.card+1500&&cleared.guestCard<before.guestCard+1500,"card gone after the rematch");
+  await playToResult();
+  await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.ticksSinceOver>=130);
+  await host.keyboard.press("ArrowRight");
+  await host.keyboard.press("Enter");
+  await host.waitForURL(u=>!u.search);
+  await host.waitForSelector("canvas[aria-label='Choose fighter and venue']");
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({before,after,declined,cleared,finishedAtTick:outcome.ticksSinceOver}));
-  console.log("A hosted match ended in a KO, showed the result banner to host and guest, and a rematch cleared it.");
+  console.log(JSON.stringify({before,after,cleared,finishedAtTick:outcome.ticksSinceOver}));
+  console.log("Host and guest saw the result. YES replayed the fight and NO returned the host to match selection.");
 } finally {
   await browser?.close();
   await new Promise(resolve=>server.close(resolve));

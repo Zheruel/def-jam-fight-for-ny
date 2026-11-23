@@ -14,6 +14,7 @@
     "test:match": "node verification/ps2-match.mjs",
     "test:native-menu": "node verification/native-menu-browser.mjs",
     "test:native-result-browser": "node verification/native-result-browser.mjs",
+    "test:native-cpu": "node verification/native-cpu-browser.mjs",
     "test:native-team": "node verification/native-team.mjs",
     "test:native-three": "node verification/native-four.mjs --three",
     "test:native-four": "node verification/native-four.mjs",

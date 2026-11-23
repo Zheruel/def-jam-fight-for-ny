@@ -477,10 +477,11 @@ async function display() {
     const cpuNote = query.cpu ? " · "+query.cpu+(query.cpu>1?" CPU opponents":" CPU opponent") : "";
     const pauseButton = document.querySelector("#pause");
     pauseButton.hidden = false;
+    const returnToMatchSelection = () => location.assign(location.pathname);
     pause = pauseMenu({
       onChange:(kind,percent)=>audio.setVolume(kind,percent),
       onClose:()=>{ audio.setActive(true); pauseButton.textContent="Pause"; previousFrame=undefined; carry=0; },
-      onQuit:()=>location.assign(location.pathname),
+      onQuit:returnToMatchSelection,
     });
     pause.redraw = draw;
     pause.syncAudio = () => { audio.setActive(!pause.open); pauseButton.textContent = pause.open ? "Resume" : "Pause"; };
@@ -531,7 +532,7 @@ async function display() {
     };
     // Once the result hold is over the retail REMATCH? card takes left/right (or A/D) and Enter: YES restarts the match.
     rematch = rematchChoice(() => { const result = fight.outcome(); return result.result && result.ticksSinceOver >= REMATCH_DELAY; },
-      () => document.getElementById("restart").click());
+      () => document.getElementById("restart").click(), returnToMatchSelection);
     addEventListener("keydown", event => {
       if (!event.repeat && !controls.isGuest() && rematch.key(event)) {
         event.preventDefault(); event.stopImmediatePropagation(); draw();
