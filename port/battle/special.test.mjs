@@ -296,7 +296,7 @@ test("ringout: the referee turns mark 0x80 into the RING OUT result (0x800, G+0x
   for (let i = 0; i < 3; i++) fight.tick([idle, idle]);
   const o = fight.outcome();
   assert.deepEqual([o.over, o.winner, o.loser], [true, 0, 1]);
-  assert.equal(m.getUint16(0x3f1088 + 12 + 2, true), 0x800, "table entry 7: mark 0x80 -> result 0x800");
+  assert.equal(m.getUint16(0x3f1088 + 26, true), 0x800, "table entry 7: mark 0x80 -> result 0x800");
 });
 
 test.todo("ringout: the natural throw that carries a fighter out of the ring (state 19 with mark 0x80) is not found; retail forced mark 0x80 shows RING OUT");
