@@ -75,7 +75,7 @@ export async function launch({ iso, patch = 'overlay', outDir, log = console.log
   const server = await serve({ iso, manifest });
   const port = server.address().port;
   // Always headless: these tests must never open a window.
-  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
+  const browser = await chromium.launch({ channel: process.platform === 'darwin' ? 'chrome' : undefined, headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
   page.on('pageerror', error => log('page error: ' + error.message));
   await page.goto(`http://127.0.0.1:${port}/?patch=${patch}`);

@@ -14,10 +14,12 @@ import { launch, REPO } from './harness.mjs';
 const { values, positionals } = parseArgs({ allowPositionals: true, options: {
   patch: { type: 'string', default: 'overlay' },
   iso: { type: 'string', default: path.join(REPO, 'private/ps2/reference.iso') },
-  out: { type: 'string', default: path.join(REPO, 'private/ps2-battle/e2e/explore') }
+  out: { type: 'string', default: path.join(REPO, 'private/ps2-battle/e2e/explore') },
+  manifest: { type: 'string' }  // default: ps2/battle/battle-patch.json
 } });
 
-const run = await launch({ iso: values.iso, patch: values.patch, outDir: values.out });
+const run = await launch({ iso: values.iso, patch: values.patch, outDir: values.out,
+  ...(values.manifest && { manifest: path.resolve(values.manifest) }) });
 try {
   for (const step of positionals.join(' ').split(/\s+/).filter(Boolean)) {
     const [kind, arg, extra] = step.split(':');

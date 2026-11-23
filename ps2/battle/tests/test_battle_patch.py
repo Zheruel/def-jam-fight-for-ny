@@ -242,6 +242,15 @@ class RetailTests(unittest.TestCase):
         elf = files[bp.ELF_PATH]
         at = bp.elf_offset(0x138108)
         self.assertEqual(struct.unpack_from("<I", elf, at)[0], bp.jal(0x135A48))
+        # Front-end restart: SetStartScreen(17 = battle/cmtype.swf) instead of 15 (main menu).
+        self.assertEqual(struct.unpack_from("<2I", elf, bp.elf_offset(0x1E435C)),
+                         (bp.jal(0x167F60), 0x24050011))
+        table = bp.elf_offset(0x378D80)
+        names = {}
+        for index in (15, 17):
+            pointer = struct.unpack_from("<I", elf, table + 4 * index)[0]
+            names[index] = bytes(elf[bp.elf_offset(pointer):bp.elf_offset(pointer) + 24]).split(b"\0")[0]
+        self.assertEqual(names, {15: b"intMain/mainMenu.swf", 17: b"battle/cmtype.swf"})
         # Retail StartBattleMode prologue is untouched: it is the function being called.
         self.assertEqual(struct.unpack_from("<2I", elf, bp.elf_offset(0x135A48)), (0x27BDFFE0, 0x3C040040))
 

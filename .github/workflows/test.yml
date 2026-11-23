@@ -11,6 +11,7 @@ jobs:
       - run: npm run setup
       - run: python3 -m unittest discover -s tests -p test_package_game.py
       - run: python3 -m unittest discover -s ps2/battle/tests
+      - run: python3 -m unittest discover -s ps2/content/tests
       - run: npm test
       - run: npx playwright install --with-deps chromium
         working-directory: netplay

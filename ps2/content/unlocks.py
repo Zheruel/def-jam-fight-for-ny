@@ -391,8 +391,8 @@ def patch_manifest(iso):
                     "setLayout": ["capacity", "count", "countMirrorPointer", "dataPointer"]},
         "signatures": [{"address": f"0x{a:08X}", "word": f"0x{w:08X}", "meaning": m} for a, w, m in SIGNATURES],
         "wrappers": {name: f"0x{address:08X}" for name, address in wrappers.items()},
-        "patches": [{"address": f"0x{a:08X}", "original": f"0x{elf.word(a):08X}", "value": f"0x{v:08X}",
-                     "what": what} for a, v, what in words],
+        # Retail bytes are not stored; unlock-disc-patch.json carries the SHA-256 of every range.
+        "patches": [{"address": f"0x{a:08X}", "value": f"0x{v:08X}", "what": what} for a, v, what in words],
     }
 
 

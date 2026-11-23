@@ -68,7 +68,7 @@ export async function launch({ iso = path.join(REPO, 'private/ps2/reference.iso'
   const { chromium } = await import(path.join(REPO, 'netplay/node_modules/playwright/index.mjs'));
   if (outDir) mkdirSync(outDir, { recursive: true });
   const server = await serve(iso);
-  const browser = await chromium.launch({ headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
+  const browser = await chromium.launch({ channel: process.platform === 'darwin' ? 'chrome' : undefined, headless: true, args: ['--autoplay-policy=no-user-gesture-required'] });
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
   page.on('pageerror', error => log('page error: ' + error.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/?unlocks=${unlocks ? 1 : 0}`);

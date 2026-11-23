@@ -171,6 +171,19 @@ PATCHES: list[BytesPatch | VivStringPatch] = [
         replacement=xml_transition("intMain/preStart", "trans/empty", 0, 0, 3602 - 3471),
         description="FEFLOW: match type's back transition leads to the title screen.",
     ),
+    # When the front end restarts after leaving a match, native code picks its first screen
+    # from the table at 0x378D80 through SetStartScreen (0x167F60). The branch at 0x1E4358
+    # asks for entry 15, intMain/mainMenu.swf; entry 17 is battle/cmtype.swf. The front end
+    # opens that first screen directly (no FEFLOW transition), and battle/cmtype then runs
+    # ResetMatchTypeList -> StartBattleMode as above.
+    BytesPatch(
+        id="front-end-restart-at-match-type",
+        file=ELF_PATH,
+        offset=elf_offset(0x1E4360),  # delay slot: addiu a1, zero, 15
+        original_sha256="63dc08dacb3f18e879dee97af425b0952aa3d0df9e03e901966d49b6e9406823",
+        replacement=words(0x24050011),  # addiu a1, zero, 17
+        description="A front end restarted after a match opens Battle > match type, not the main menu.",
+    ),
 ]
 
 

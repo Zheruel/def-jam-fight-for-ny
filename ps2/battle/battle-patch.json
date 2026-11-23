@@ -53,6 +53,15 @@
       "originalSha256": "af443bae50ef8b9611a85356e9f362a9be23d35c864ec44d7435a3aaf0766960",
       "replacement": "92d6040c2d8800002d200002be07040c180005240400548c",
       "description": "Opening Battle > match type runs the retail Game.StartBattleMode first."
+    },
+    {
+      "id": "front-end-restart-at-match-type",
+      "file": "/SLUS_210.04",
+      "fileOffset": 938848,
+      "isoOffset": 3976876896,
+      "originalSha256": "63dc08dacb3f18e879dee97af425b0952aa3d0df9e03e901966d49b6e9406823",
+      "replacement": "11000524",
+      "description": "A front end restarted after a match opens Battle > match type, not the main menu."
     }
   ]
 }
