@@ -8,7 +8,7 @@ export async function createHud(gl) {
     if (!response.ok) throw Error("Unable to load HUD "+name);
     return response;
   };
-  const [border,health,momentum] = await Promise.all(["mainBarContainer_1","healthBar","momentumBar"].map(async name=>
+  const [border,health,momentum,blazin] = await Promise.all(["mainBarContainer_1","healthBar","momentumBar","blazin"].map(async name=>
     createImageBitmap(await (await load(name+".png")).blob())));
   await Promise.all(["names","numbers"].map(async family=>{
     const face=new FontFace("Battle"+family,await (await load(family+".ttf")).arrayBuffer());
@@ -61,7 +61,7 @@ export async function createHud(gl) {
   let last, lastBanner="";
   return function draw({actors,ticks,outcome}) {
     const second=Math.floor(ticks/60);
-    const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score]);
+    const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin]);
     const key=[second,...bars.flat()].join(",");
     gl.bindTexture(gl.TEXTURE_2D,texture);
     if(key!==last) {
@@ -75,6 +75,7 @@ export async function createHud(gl) {
         if(hp>0)ctx.drawImage(green,0,0,hp,8,...anchors.pos_p1_healthBar,hp,8);
         if(mp>0)ctx.drawImage(gold,0,0,mp,8,...anchors.pos_p1_momentumBar,mp,8);
         ctx.restore();
+        if(actors[i].blazin)ctx.drawImage(blazin,...anchors["pos_"+id+"_blazin"]);
         label(actors[i].name.toUpperCase(),...anchors["text_"+id+"_name"],14,"names",i?"right":"left");
         label(String(score),...anchors["text_"+id+"_totalscore"],18,"numbers",i?"right":"left");
       }

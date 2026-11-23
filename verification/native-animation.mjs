@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { gzipSync,gunzipSync } from "node:zlib";
 import { strict as assert } from "node:assert";
 import { instantiateSampler } from "../port/animation/runtime.mjs";
-import { installWrestlingBank } from "../port/animation/banks.mjs";
+import { installWrestlingBank, installSignatureClips } from "../port/animation/banks.mjs";
 import inventory from "../ps2/content/inventory.json" with {type:"json"};
 const read = file=>fs.readFileSync(new URL(file,import.meta.url));
 const unzip = file=>Uint8Array.from(gunzipSync(read(file))).buffer;
@@ -68,6 +68,33 @@ for(const id of new Set(inventory.fighters.map(record=>record.fighterXml.coreID)
     }
   }
 }
+// The four signature clips already loaded in the Blaze/Doc snapshot provide a retail oracle.
+const sourceClips=ids=>new Map(ids.map(id=>[id,unzip(`../port/animation/banks/special${id}.gz`)]));
+if(seedMode) {
+  restore();
+  const oracle=await instantiateSampler(unzip("../port/animation/sampler.wasm.gz"));
+  oracle.ram.set(original);
+  const pair=[713,714,717,718];
+  installSignatureClips(sampler,sourceClips(pair));
+  for(const id of pair) for(const slot of [0,1]) {
+    const end=sampler.duration(slot,0,id);
+    assert.equal(end,oracle.duration(slot,0,id));
+    for(const t of [0,end/2,end-1]) {
+      assert.deepEqual(sampler.sample(slot,0,id,t),oracle.sample(slot,0,id,t));
+      assert.deepEqual(sampler.pose(slot),oracle.pose(slot));
+    }
+  }
+}
+for(let first=709;first<873;first+=4) {
+  restore();
+  const ids=[first,first+1,first+2,first+3];
+  installSignatureClips(sampler,sourceClips(ids));
+  for(const id of ids) for(const slot of [0,1]) {
+    const end=sampler.duration(slot,0,id);
+    assert(end>0 && end<2000,`Signature ${id} duration ${end}`);
+    for(const t of [0,end/2,end-1]) frame(slot,0,id,t);
+  }
+}
 if(seedMode) {
   const pages=sampler.pages;
   // Entire shared BASE00 resource, including variable-length compressed streams and lookup tables.
@@ -88,6 +115,6 @@ if(seedMode) {
     if(!page.some(Boolean)) continue;
     const record=Buffer.alloc(4100);record.writeUInt32LE(i);page.copy(record,4);records.push(record);
   }
-  fs.writeFileSync(new URL("../port/animation/shared.gz",import.meta.url),gzipSync(Buffer.concat(records),{level:9}));
+  fs.writeFileSync(process.argv[4] ?? new URL("../port/animation/shared.gz",import.meta.url),gzipSync(Buffer.concat(records),{level:9}));
 }
-console.log(`Verified 709 common clips and ${clips} fighter clip/slot combinations.`);
+console.log(`Verified 709 common clips and ${clips} fighter clip/slot combinations, plus both roles of all 82 Blazin’ moves.`);

@@ -1,5 +1,5 @@
 import { instantiateSampler } from "./runtime.mjs";
-import { installWrestlingBank } from "./banks.mjs";
+import { installSignatureClips, installWrestlingBank } from "./banks.mjs";
 import { composePose, createPoseWorkspace, NAMED_BONES, applyBoneEuler, applyFaceRest } from "../fighters/pose.mjs";
 import { fetchPacked } from "../viewer/scene.mjs";
 
@@ -12,12 +12,18 @@ export async function loadMatchAnimation(fighters) {
 }
 export async function createMatchAnimation(source,shared,banks) {
   const sampler=await instantiateSampler(source), sharedView=new DataView(shared);
+  let signatures;
+  function setSignatures(clips) {
+    installSignatureClips(sampler,clips);
+    signatures=clips;
+  }
   function reset() {
     sampler.ram.fill(0);
     sampler.resetScratch();
     for(let i=0;i<shared.byteLength;i+=4100)
       sampler.ram.set(new Uint8Array(shared,i+4,4096),sharedView.getUint32(i,true)*4096);
     banks.forEach((bank,slot)=>installWrestlingBank(sampler,slot,bank));
+    if(signatures) installSignatureClips(sampler,signatures);
   }
   // The sampler RAM is seeded with Blaze and Doc: give every fighter its own face-bone rest (see pose.mjs faceRest).
   const blendTarget=slot=>{
@@ -66,7 +72,7 @@ export async function createMatchAnimation(source,shared,banks) {
     state.shownPose ??= createPoseWorkspace(state);
     state.skin=composePose(state,shown,state.shownPose).skin;
   }
-  return {reset,duration:sampler.duration,finish,
+  return {reset,setSignatures,duration:sampler.duration,finish,
     sample(state,slot,bank,local,frame,blendWeight,transition) {
       const root=sampler.sample(slot,bank,local,frame,{blend:blendWeight,transition});
       applyFaceRest(state,sampler.pose(slot));

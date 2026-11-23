@@ -18,7 +18,25 @@ export async function loadFoundationFight(fighters,venue) {
     fetchPacked(new URL("../kernel/match-rules.gz",import.meta.url)),
     loadMatchAnimation(fighters),
   ]);
-  return createFoundationFight(fighters,source,seed,arena,rules,animation);
+  const fight=await createFoundationFight(fighters,source,seed,arena,rules,animation);
+  const clips=signatureClipIds(fight.memory);
+  animation.setSignatures(new Map(await Promise.all(clips.map(async clip=>[
+    clip,await fetchPacked(new URL(`../animation/banks/special${clip}.gz`,import.meta.url))
+  ]))));
+  return fight;
+}
+
+// The WPAR parser writes the four right-stick assignments to the fighter profile.
+// Retail 0x30a580 converts the assignment to a pair of BASE00 clip numbers.
+export function signatureClipIds(memory) {
+  const ids=new Set();
+  for(const actor of ACTOR) for(let direction=0;direction<4;direction++) {
+    const move=memory.getUint32(actor+0xbb8+4*direction,true);
+    if(move>=82) throw RangeError("Invalid signature move in fighter profile");
+    ids.add(709+2*move);
+    ids.add(710+2*move);
+  }
+  return [...ids];
 }
 
 export async function createFoundationFight(fighters,source,seed,arena,rules,animation) {
@@ -147,7 +165,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   function diagnostics() {
     return {ticks,actors: ACTOR.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
-      score:word(a+0x480),momentum:scalar(a+0x364)})),outcome:outcome.read()};
+      score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
   }
   return { states, tick, restart, rematch: restart, outcome: () => outcome.read(), diagnostics, observedPages:kernel.observedPages, memory, kernel };
 }

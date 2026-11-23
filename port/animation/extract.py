@@ -9,7 +9,7 @@ import sys
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path.insert(0, str(ROOT / 'port/fighters'))
-from animbank import Disc, read_bank
+from animbank import Bank, Disc, clip_names, decompress, read_bank
 
 
 def word(data, offset):
@@ -49,6 +49,23 @@ def pack(bank):
     return header + struct.pack(f'<{len(relocations)}I', *sorted(relocations)) + data
 
 
+def signature_banks(disc):
+    archive = '/MOTION/BLAZIN.VIV'
+
+    def member(name):
+        data = disc.read(archive, *disc.viv_entry(archive, name))
+        return decompress(data) if data.startswith(bytes.fromhex('10fb')) else data
+
+    names = clip_names(member('blazin.mnl'))
+    common = json.loads((ROOT / 'port/motion/library.json').read_text())['common']
+    if names != common[709:] or len(names) != 164:
+        raise ValueError('Signature clips differ from the retail executable')
+    for index, name in enumerate(names):
+        stem = name.replace('N06I0_', 'N06i0_')  # The disc filenames alone use lowercase i.
+        bank = Bank(member(stem + '.ord'), member(stem + '.orl'), [name])
+        yield f'special{709 + index}', pack(bank)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('iso')
@@ -59,16 +76,20 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     disc = Disc(args.iso)
     try:
-        for number in sorted({f['fighterXml']['coreID'] for f in inventory['fighters']}):
-            stem = f'wres{number:03}'
-            bank = read_bank(disc, '/MOTION/WRES_ALL.VIV', stem)
-            payload = pack(bank)
+        def save(stem, payload):
             path = args.output / (stem + '.gz')
             if args.check:
                 if gzip.decompress(path.read_bytes()) != payload:
                     raise ValueError(f'{path} differs from disc')
             else:
                 path.write_bytes(gzip.compress(payload, mtime=0))
+
+        for number in sorted({f['fighterXml']['coreID'] for f in inventory['fighters']}):
+            stem = f'wres{number:03}'
+            bank = read_bank(disc, '/MOTION/WRES_ALL.VIV', stem)
+            save(stem, pack(bank))
+        for stem, payload in signature_banks(disc):
+            save(stem, payload)
     finally:
         disc.close()
 
