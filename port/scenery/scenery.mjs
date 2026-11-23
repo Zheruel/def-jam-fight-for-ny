@@ -393,7 +393,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
   }
   gl.bindVertexArray(null);
 
-  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, people: showPeople = true, particleEvents = [], fire = null, particles: showParticles = true, sight = [], occlusion = true, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
+  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, people: showPeople = true, particleEvents = [], fire = null, particles: showParticles = true, sight = [], occlusion = false, weapons: shown = {}, hiddenWeapons = false, dynamicWeapons = [] }) {
     // Spectators (and the instanced crowd) standing between the camera and a fighter fade out, see occlusion.mjs.
     const eye = occlusion && sight.length ? eyeOf(viewProjection) : null;
     if (state.props) {
