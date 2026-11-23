@@ -62,7 +62,7 @@ PARENTS = {
     "HeadBones": "head", "Blink": "HeadBones", "JAW": "HeadBones", "BotLip": "JAW",
     "L_Brow": "HeadBones", "L_Eye": "HeadBones", "placellip": "HeadBones", "L_Lip": "HeadBones",
     "placerlip": "HeadBones", "R_Lip": "HeadBones", "R_Brow": "HeadBones", "R_Eye": "HeadBones",
-    "Sneer": "HeadBones", "Squint": "HeadBones", "backbone_eff3": "chest",
+    "Sneer": "HeadBones", "Squint": "HeadBones", "backbone_eff3": "head",
     "Pendant1": "chest", "Pendant2": "Pendant1",
     "R_hipbone_root": "tophip", "R_hipbone": "R_hipbone_root", "R_hipbone_eff": "R_hipbone",
     "R_leg_root": "R_hipbone", "R_leg1": "R_leg_root", "R_leg2": "R_leg1", "R_leg_eff": "R_leg2",
@@ -70,7 +70,7 @@ PARENTS = {
 }
 for _side in "LR":
     for _finger in ("Thumb", "pointer", "middle", "pinky", "ring"):
-        PARENTS[f"{_side}_{_finger}1"] = f"{_side}_hand"
+        PARENTS[f"{_side}_{_finger}1"] = f"{_side}_arm_eff"
         PARENTS[f"{_side}_{_finger}2"] = f"{_side}_{_finger}1"
         PARENTS[f"{_side}_{_finger}3"] = f"{_side}_{_finger}2"
 
