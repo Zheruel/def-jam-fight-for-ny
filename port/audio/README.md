@@ -5,7 +5,7 @@ Everything here is decoded from the verified US retail disc (SLUS-21004). `extra
 ```sh
 python3 port/audio/extract.py private/ps2/reference.iso --decoder private/vgmstream/build/cli/vgmstream-cli
 python3 port/audio/verify.py  private/ps2/reference.iso --decoder private/vgmstream/build/cli/vgmstream-cli
-node --test port/audio/venue.test.mjs port/audio/match.test.mjs
+node --test port/audio/*.test.mjs
 node port/audio/browser-check.mjs      # headless Chrome, all 24 venues
 ```
 
@@ -74,9 +74,39 @@ match.drain();                // events fired since the last call: {tick, slot, 
 
 `coreID` is `FIGHTER.XML`'s. Cue choice inside a player's retail set is a seeded pick (the selection is compiled into the ABKC banks), so a host and replays with the same seed agree. `match.test.mjs` runs the 460-tick native Blaze/Doc exchange headless and checks both fighters' whooshes, grunts and impacts and that every cue is a real subsong of its retail bank.
 
+## Battle music (`music.json`, `music/`, `mpf.py`, `music.mjs`)
+
+Each of the 33 tunes is an EA PathFinder pair: `tune.mpf` (the node graph, little-endian `PFDx` v4, decoded in `mpf.py`) and `main.mus` (streamed 36 kHz stereo EA-XA) plus `loading0.mus`/`overlay0.mus` (RAM banks, 24 kHz). `mpf.py` documents the layout. A node plays one sample (`sample` indexes the whole table; vgmstream subsong N is sample N-1, with a `.txtm` mapping the three `.mus` files) or is a marker. One sub-entry is "go to node X"; several are ranges of a 0..127 draw, i.e. four interchangeable remix lanes per bar; `(0,0,exit)` + `(1,127,loop)` is a loop router.
+
+**Confirmed from the disc**
+- The graph, sample table and `.mus` pairing: every main-track sample's table length equals its decoded length; the shipped tracks re-decode from the retail files at correlation 1.0000 (`verify.py`).
+- Structure: a tune starts at node 0 in an intro/waiting loop, leaves it, then plays a song body of 88–134 bar-sized nodes whose bars draw one of four lanes, and the body closes back on its first node (a loop of 120–350 s). `nwa`, `minitrack2`, `asiandragon` and `venu` do not loop; they end after 114–142 s.
+- Levels, from `AUDIO/TV.TXT`: `Music_Vol` 60 % × `Master_Vol` (32767) = gain 0.6; `FE_Music_Vol` 50 %; `Music_Fade_Time` 30; duckers `Crowd_Ducker` 65, `Crowd_Ducker_2` 50, `Ambient_Ducker` 50, `SFX_Ducker` 0. The engine also loads two music filters (`cribfilt1c.fx`, `djlopass1.fx`).
+- The match-start routines (`0x110a38`, `0x111520`, called from the stage start at `0x127bec`/`0x127c04`) build a `BACKEND::BATTLESONGS` list from the game data and, when it is empty, log "Setting primary song to default song" and use the tune `dirty`.
+
+**Not confirmed (stated as such in `music.json`)**
+- Which tune a match plays. The twelve tunes `arewecuttin getintoit getitnow ricache mamasaid nuffrespect pump poppalarge seizetheday hitem nwa minitrack2` sit right after the `BACKEND::BATTLESONGS` tag in the executable's string pool, but no instruction references them, so `playlist` is a candidate list, not a recovered selection. `createMusic` takes an explicit `tune`, else picks `playlist[seed % 12]`, else `dirty`.
+- What retail's 27 music events (action lists after the nodes) send to leave a waiting loop. `fight_path` plays each waiting loop once and leaves it by the first loop router that leads back into the path.
+- The lane draws. Retail draws them as it plays; each shipped track is one realization (`seed` 1, node list in `music.json`), and the song body repeats that realization.
+- Ducking, fades and the two filters are recorded, not applied.
+- `tunes[*].introSeconds/loopSeconds` come from the sample table, whose lengths are wrong for RAM-bank samples (up to ~8 s off for `pump`); the shipped files carry the decoded lengths.
+
+13 tracks ship (`dirty` plus the twelve, 40 kb/s Opus, 13.9 MB; `--only music` rebuilds them, `--music TUNE` builds any other tune). Nothing loads until `start()`:
+
+```js
+import { venueAudio } from "../audio/venue.mjs";
+import { createMusic } from "../audio/music.mjs";
+const audio = venueAudio(arena.file);
+const music = createMusic(audio, { seed });   // or { tune: "hitem" }
+await music.start();                           // fetches music.json and one ~1 MB track, plays through audio's bus
+music.stop();                                  // match end
+```
+
+The track goes through the same bus as the ambience and cues, so it is in the host's `MediaStream` and WebRTC guests hear it (`browser-check.mjs` plays `hitem` and `nwa` in headless Chrome and measures the host mix and a loopback guest). Looping tunes loop on `introSeconds` to the end of the file; `nwa` and `minitrack2` end and the next playlist tune starts. `music.test.mjs` also runs the native Blaze/Doc exchange with the music playing and combat cues beside it.
+
 ## Not decoded
 
-- Music: `music.json` lists all 33 tunes with their MPF section tables (`--music TUNE` exports the main track). The MPF node graph that sequences sections, so the retail music loop points, is not decoded, and the track chosen for a fight is not recovered.
+- Music: see above (selection, events, lane draws, ducking).
 - Speech: `speech.json` indexes the 535 speech sets (`SPEECH1–3.VIV`); lines are SCHl streams (`--speech SET` exports a set). Announcer selection logic beyond the venue record's speech id is not decoded.
 - Which sample inside a player plays (random, compiled in the ABKC banks), tag words after the first two, which floor/weapon module a venue bank's repeated `Feet`/`Falls`/`Weapon_*` event uses (the first stands in), crowd banks (their modules carry no event names; the crowd reactions are posted by game code, not tags), and events with no bank (`Rope`, `Rail_Hit`, `Burn_Yell`).
 - The ambient banks' mono one-shots (`--shots`) and the random scheduler.

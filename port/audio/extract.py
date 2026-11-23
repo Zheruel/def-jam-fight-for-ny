@@ -22,6 +22,7 @@ sys.path.insert(0, str(HERE.parents[1] / "ps2/battle"))
 sys.path.insert(0, str(HERE))
 from battle_patch import Disc  # noqa: E402
 import combat  # noqa: E402
+import mpf  # noqa: E402
 import retail  # noqa: E402
 
 RATE = 48000
@@ -341,61 +342,100 @@ def music_member(disc, tune, name):
     return None
 
 
-def main_sections(decoder, mpf, count):
-    """Sections that decode from tune.mus (track 0). The graph also lists sections that live in the
-    loading/overlay .mus files, which vgmstream cannot pair; those follow the main ones."""
-    sections = []
-    for i in range(1, count + 1):
-        try:
-            info = probe(decoder, mpf, i)
-        except subprocess.CalledProcessError:
-            break
-        sections.append([info["numberOfSamples"], info["sampleRate"], info["channels"]])
-    return sections
+# Retail battle music. CGameAudio's match-start builders (0x110a38 story, 0x111520 other modes, called from
+# the stage start 0x127bec/0x127c04) build the "BACKEND::BATTLESONGS" list and fall back to the tune
+# "dirty" ("[BACKEND] Setting primary song to default song"). The twelve tune names stored right after
+# that allocation tag in the executable's string pool (0x3ad340..0x3ad3d0) are the candidate list; nothing
+# in the executable references them directly, so the list is recorded as unconfirmed.
+DEFAULT_SONG = "dirty"
+BATTLE_SONGS = ["arewecuttin", "getintoit", "getitnow", "ricache", "mamasaid", "nuffrespect", "pump",
+                "poppalarge", "seizetheday", "hitem", "nwa", "minitrack2"]
+MUSIC_SEED = 1
+MUSIC_BITRATE = "40k"
 
 
-def build_music(disc, decoder):
-    tunes = []
-    for tune in tune_names(disc):
-        entry = {"name": tune}
-        for name in ("main.mus", "loading0.mus", "overlay0.mus", "tune.mpf"):
-            found = music_member(disc, tune, name)
-            if found:
-                entry[name] = {"archive": found[0].split("/")[-1], "offset": found[1], "size": found[2]}
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            for name, new in (("main.mus", "tune.mus"), ("tune.mpf", "tune.mpf")):
-                viv, offset, size = music_member(disc, tune, name)
-                (root / new).write_bytes(disc.read(viv, offset, size))
-            count = subsong_count(decoder, root / "tune.mpf")
-            sections = main_sections(decoder, root / "tune.mpf", count)
-            entry["streams"] = count  # the rest belong to the loading/overlay tracks (other .mus files)
-            entry["sections"] = sections
-            entry["seconds"] = round(sum(s[0] / s[1] for s in sections), 3)
-        tunes.append(entry)
-        print(f"music/{tune}: {len(sections)} sections {entry['seconds']}s", flush=True)
-    (HERE / "music.json").write_text(json.dumps({
-        "format": "def-jam-music/1",
-        "note": "main.mus is the EA PathFinder stream; tune.mpf is its node graph (sections in playback-file order). "
-                "The retail loop graph is not decoded; sections are exported in file order.",
-        "tunes": tunes}, separators=(",", ":")) + "\n")
+def load_graph(disc, tune):
+    viv, offset, size = music_member(disc, tune, "tune.mpf")
+    return mpf.parse(disc.read(viv, offset, size))
 
 
-def decode_music(disc, decoder, tune, target):
+def tune_summary(graph, path):
+    samples = graph["samples"]
+    seconds = lambda nodes: round(sum(samples[i][1] for i in mpf.samples_of(graph, nodes)) / 1000, 3)
+    at = path["loopAt"]
+    return {"nodes": len(graph["nodes"]), "samples": len(samples), "mainSamples": graph["trackSamples"][0],
+            "ends": path["ends"], "introSeconds": seconds(path["nodes"][:at]) if at is not None else seconds(path["nodes"]),
+            "loopSeconds": seconds(path["nodes"][at:]) if at is not None else 0}
+
+
+def build_track(disc, decoder, tune, target):
+    """One tune's retail fight path (intro, then the song body) as a single Opus file; returns its manifest entry."""
+    graph = load_graph(disc, tune)
+    path = mpf.fight_path(graph, MUSIC_SEED)
+    order = mpf.samples_of(graph, path["nodes"])
+    at = path["loopAt"]
+    before = len(mpf.samples_of(graph, path["nodes"][:at])) if at is not None else len(order)
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
-        for name, new in (("main.mus", "tune.mus"), ("tune.mpf", "tune.mpf")):
+        # Tracks: main.mus (streamed SCHl), loading0.mus and overlay0.mus (RAM banks, 24 kHz); .txtm maps them for vgmstream.
+        files = ["main.mus", "loading0.mus", "overlay0.mus"]
+        for name in files + ["tune.mpf"]:
             viv, offset, size = music_member(disc, tune, name)
-            (root / new).write_bytes(disc.read(viv, offset, size))
-        count = len(main_sections(decoder, root / "tune.mpf", subsong_count(decoder, root / "tune.mpf")))
-        pcm = bytearray()
-        for i in range(1, count + 1):
+            (root / name).write_bytes(disc.read(viv, offset, size))
+        (root / ".txtm").write_text("tune.mpf: " + ", ".join(files) + "\n")
+        pcm = {}
+        for sample in dict.fromkeys(order):
             wav = root / "s.wav"
-            run(decoder, "-i", "-s", i, "-o", wav, root / "tune.mpf", stdout=subprocess.DEVNULL)
-            pcm += run("ffmpeg", "-nostdin", "-loglevel", "error", "-i", wav, "-ac", "2", "-ar", str(RATE), "-f", "s16le", "-",
-                       stdout=subprocess.PIPE).stdout
-        (root / "m.raw").write_bytes(pcm)
-        encode(["-f", "s16le", "-ar", str(RATE), "-ac", "2", "-i", root / "m.raw"], target, "96k")
+            info = probe(decoder, root / "tune.mpf", sample + 1)
+            if info["channels"] != 2:
+                raise ValueError(f"{tune} sample {sample}: {info['channels']} channels")
+            run(decoder, "-i", "-s", sample + 1, "-o", wav, root / "tune.mpf", stdout=subprocess.DEVNULL)
+            pcm[sample] = run("ffmpeg", "-nostdin", "-loglevel", "error", "-i", wav, "-af", "aresample=36000", "-f", "s16le", "-",
+                              stdout=subprocess.PIPE).stdout
+        joined = b"".join(pcm[i] for i in order)
+        intro_frames = sum(len(pcm[i]) for i in order[:before]) // 4
+        (root / "t.raw").write_bytes(joined)
+        encode(["-f", "s16le", "-ar", "36000", "-ac", "2", "-i", root / "t.raw"], target, MUSIC_BITRATE, "aresample=48000")
+    frames = len(joined) // 4
+    entry = {"name": tune, "file": f"music/{tune}.ogg", "sourceRate": 36000, "rate": RATE, "sourceFrames": frames,
+             "introSourceFrames": intro_frames, "introSeconds": intro_frames / 36000, "seconds": frames / 36000,
+             "loops": not path["ends"], "seed": MUSIC_SEED, "path": path["nodes"], "loopAt": path["loopAt"],
+             "sampleOrder": order}
+    return entry
+
+
+def build_music(disc, decoder, tunes=None):
+    out = HERE / "music"
+    out.mkdir(exist_ok=True)
+    wanted = tunes or [DEFAULT_SONG] + BATTLE_SONGS
+    shipped = []
+    for tune in wanted:
+        entry = build_track(disc, decoder, tune, out / f"{tune}.ogg")
+        shipped.append(entry)
+        print(f"music/{tune}: {entry['seconds']:.1f}s intro {entry['introSeconds']:.1f}s "
+              f"{'loops' if entry['loops'] else 'ends'}, {(out / (tune + '.ogg')).stat().st_size // 1024} KiB", flush=True)
+    summary = {}
+    for tune in tune_names(disc):
+        graph = load_graph(disc, tune)
+        summary[tune] = tune_summary(graph, mpf.fight_path(graph, MUSIC_SEED))
+    mix = json.loads((HERE / "mix.json").read_text())
+    (HERE / "music.json").write_text(json.dumps({
+        "format": "def-jam-music/2",
+        "default": DEFAULT_SONG, "playlist": BATTLE_SONGS,
+        "confirmed": ["PFDx v4 node graph, sample table and .mus pairing (shipped tracks re-decode at correlation 1.0)",
+                      "tune start, waiting loops, loop routers, four-lane weighted bars, looping song body",
+                      "Music_Vol 60% x Master_Vol = gain 0.6; ducker, fade and filter settings",
+                      "match-start builders create BACKEND::BATTLESONGS and fall back to the tune dirty"],
+        "unconfirmed": ["which tune a match plays: playlist is the unreferenced string-pool list after the BATTLESONGS tag",
+                        "the music events that leave a waiting loop (router exits stand in)",
+                        "runtime lane draws (one seeded realization is shipped per tune)",
+                        "ducking, fades and the two music filters are recorded, not applied",
+                        "tunes[*] intro/loop seconds use the sample table, which misreports RAM-bank sample lengths"],
+        "levels": {key: mix["raw"][key] for key in ("Music_Vol", "FE_Music_Vol", "Music_ScaleMul", "Music_Fade_Time",
+                                                     "Crowd_Ducker", "Crowd_Ducker_2", "Ambient_Ducker", "SFX_Ducker")},
+        "gain": mix["gain"]["Music_Vol"] * mix["gain"]["Master_Vol"],
+        "tracks": {entry["name"]: entry for entry in shipped},
+        "tunes": summary}, separators=(",", ":")) + "\n")
 
 
 def speech_sets(disc):
@@ -459,7 +499,7 @@ def main():
     disc = Disc(args.iso)
     try:
         if args.music:
-            return decode_music(disc, args.decoder, args.music, args.out or f"{args.music}.ogg")
+            return print(json.dumps(build_track(disc, args.decoder, args.music, args.out or f"{args.music}.ogg")))
         if args.speech:
             return decode_speech(disc, args.decoder, args.speech, args.out or f"{args.speech}.ogg")
         venues = None

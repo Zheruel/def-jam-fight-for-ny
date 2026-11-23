@@ -19,6 +19,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import combat  # noqa: E402
 import extract  # noqa: E402
+import mpf  # noqa: E402
 import retail  # noqa: E402
 
 
@@ -89,6 +90,29 @@ def main():
             failures.append("combat.json tag classes differ from the executable and ANIMTAGS.DAT")
         if shipped_combat["venueOut"] != sorted(v["coreID"] for v in venues if v["flag"]):
             failures.append("combat.json outdoor venues differ from the venue table")
+        music = json.loads((HERE / "music.json").read_text())
+        for tune, track in music["tracks"].items():
+            graph = extract.load_graph(disc, tune)
+            path = mpf.fight_path(graph, track["seed"])
+            if [path["nodes"], path["loopAt"]] != [track["path"], track["loopAt"]]:
+                failures.append(f"music {tune}: graph walk differs from music.json")
+            if extract.tune_summary(graph, path) != music["tunes"][tune]:
+                failures.append(f"music {tune}: graph summary differs")
+        for tune in extract.tune_names(disc):
+            graph = extract.load_graph(disc, tune)
+            if extract.tune_summary(graph, mpf.fight_path(graph, extract.MUSIC_SEED)) != music["tunes"][tune]:
+                failures.append(f"music {tune}: summary differs")
+        for tune in ("nwa", "hitem"):  # decode the retail path again and correlate with the shipped Opus
+            with tempfile.TemporaryDirectory() as temp:
+                again = extract.build_track(disc, args.decoder, tune, Path(temp) / "t.ogg")
+                if again != music["tracks"][tune]:
+                    failures.append(f"music {tune}: manifest entry differs")
+                fresh = pcm(["ffmpeg", "-nostdin", "-loglevel", "error", "-i", Path(temp) / "t.ogg", "-ac", "2", "-ar", "48000", "-f", "s16le", "-"])
+            shipped_music = pcm(["ffmpeg", "-nostdin", "-loglevel", "error", "-i", HERE / music["tracks"][tune]["file"], "-ac", "2", "-ar", "48000", "-f", "s16le", "-"])
+            r = correlation(fresh, shipped_music, 11)
+            print(f"music {tune}: {len(shipped_music) // 2} frames, corr {r:.4f}")
+            if len(fresh) != len(shipped_music) or r < 0.999:
+                failures.append(f"music {tune}: shipped track does not match the retail decode (corr {r:.4f})")
         events = json.loads((HERE / "events.json").read_text())
         if events["dispatch"] != json.loads(json.dumps(retail.packed_events(elf))):
             failures.append("events.json dispatch differs from the executable")

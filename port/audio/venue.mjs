@@ -18,6 +18,7 @@ function json(path, fetcher) {
 export const venueManifest = (fetcher = globalThis.fetch) => json("venues.json", fetcher);
 export const cueManifest = (fetcher = globalThis.fetch) => json("cues.json", fetcher);
 export const mixLevels = (fetcher = globalThis.fetch) => json("mix.json", fetcher);
+export const musicManifest = (fetcher = globalThis.fetch) => json("music.json", fetcher);
 export const combatManifest = (fetcher = globalThis.fetch) => json("combat.json", fetcher);
 
 // Retail per-animation audio tags (ANIMTAGS.DAT): {anims:[[name,[[frame,n,...words]]]]}.
@@ -30,7 +31,7 @@ export async function loadAnimTags(fetcher = globalThis.fetch) {
 
 // Every runtime file one venue needs, for publication lists and cold-boot audits.
 export const venueFiles = (venue) => [venue.bed].filter(Boolean);
-export const sharedFiles = ["venue.mjs", "venues.json", "cues.json", "mix.json", "combat.json", "match.mjs", "animtags.json.gz"];
+export const sharedFiles = ["venue.mjs", "venues.json", "cues.json", "mix.json", "combat.json", "match.mjs", "music.json", "music.mjs", "animtags.json.gz"];
 
 export function venueAudio(file, {
   fetcher = globalThis.fetch, Context = globalThis.AudioContext, doc = globalThis.document,
@@ -38,7 +39,7 @@ export function venueAudio(file, {
 } = {}) {
   let context, bus, local, broadcast, bedGain, bed, source, venue, loading, level = 30000 / 32767;
   let active = true, requested = false, muted = false;
-  const banks = new Map(), playing = new Set();
+  const banks = new Map(), playing = new Set(), tracks = new Set();
   let generation = 0;
 
   const hidden = () => doc?.hidden === true;
@@ -177,8 +178,27 @@ export function venueAudio(file, {
       node.start(when ? context.currentTime + when : 0, cue.start / entry.rate, cue.frames / entry.rate);
       return node;
     },
+    // Stream a music file into the host mix (so WebRTC guests hear it): `loopStart` seconds into the file the
+    // track loops to its end when `loop`; otherwise it plays once and `onEnded` fires. Returns {stop()}.
+    async track(path, {gain = 1, loop = false, loopStart = 0, onEnded} = {}) {
+      if (!requested) start();
+      graph();
+      const buffer = await decode(path);
+      await context.resume();
+      const node = context.createBufferSource(), volume = context.createGain();
+      const handle = { node, stop() { if (!tracks.delete(handle)) return; node.onended = null; try { node.stop(); } catch {} node.disconnect(); volume.disconnect(); } };
+      tracks.add(handle);
+      node.buffer = buffer;
+      if (loop) { node.loop = true; node.loopStart = loopStart; node.loopEnd = buffer.duration; }
+      node.onended = () => { if (!tracks.delete(handle)) return; node.disconnect(); volume.disconnect(); onEnded?.(); };
+      volume.gain.value = gain;
+      node.connect(volume); volume.connect(bus);
+      node.start();
+      return handle;
+    },
     dispose() {
       generation++;
+      for (const handle of [...tracks]) handle.stop();
       active = false;
       win?.removeEventListener("pointerdown", unlock);
       win?.removeEventListener("keydown", unlock);
