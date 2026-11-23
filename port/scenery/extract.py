@@ -1,0 +1,511 @@
+"""Extract The Foundation's original stage props and instanced crowd from the retail PS2 disc.
+
+  python3 port/scenery/extract.py [iso] [--check]
+
+Writes port/scenery/foundation/{props.scene.gz,crowd.bin.gz,scenery.json}. Every value
+comes from the retail archives ASSETS/V2BG.VIV and ASSETS/ICROWD.VIV; nothing is authored.
+"""
+
+from __future__ import annotations
+
+import argparse
+import gzip
+import hashlib
+import json
+import math
+from pathlib import Path
+import re
+import struct
+import sys
+
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
+sys.path.insert(0, str(REPO / "port" / "geometry"))
+sys.path.insert(0, str(REPO / "ps2" / "battle"))
+
+import venues  # noqa: E402
+from battle_patch import Disc  # noqa: E402
+from foundation import elf_links, triangle_indices, vif_tag  # noqa: E402
+from refpack import decompress  # noqa: E402
+from ssh import textures  # noqa: E402
+
+DEFAULT_ISO = REPO / "private" / "ps2" / "reference.iso"
+OUTPUT = HERE / "foundation"
+STAGE = "/ASSETS/V2BG.VIV"
+CROWD = "/ASSETS/ICROWD.VIV"
+VENUE = "V2BG_02A"
+CROWD_MODEL = "icrowd01"
+CROWD_LAYOUT = "icl_02A"
+U32 = struct.Struct("<I")
+VERTEX = struct.Struct("<5f4B")
+
+
+def member(disc: Disc, archive: str, name: str) -> bytes:
+    at, size = disc.viv_entry(archive, name)
+    raw = disc.read(archive, at, size)
+    return decompress(raw) if raw[:2] == b"\x10\xfb" else raw
+
+
+def sha256(blob: bytes) -> str:
+    return hashlib.sha256(blob).hexdigest()
+
+
+# ---------------------------------------------------------------- stage XML
+
+def stage_text(blob: bytes) -> str:
+    # The exporter wrote Shift-JIS comments inside unterminated <? ... processing
+    # instructions, so the files are read as tagged text, not as XML documents.
+    return blob.decode("shift_jis").replace("\r", "")
+
+
+def section(text: str, tag: str) -> str:
+    match = re.search(rf"<{tag}>(.*?)</{tag}>", text, re.S)
+    if not match:
+        raise ValueError(f"missing <{tag}>")
+    return match[1]
+
+
+def blocks(text: str, tag: str) -> list[str]:
+    return re.findall(rf"<{tag}>(.*?)</{tag}>", text, re.S)
+
+
+def values(text: str, tag: str) -> list[str]:
+    return [v.strip() for v in re.findall(rf"<{tag}>([^<]*)</{tag}>", text)]
+
+
+def vector(text: str) -> list[float]:
+    return [float(v) + 0.0 for v in text.split(",")]
+
+
+def placements(text: str, group: str, item: str) -> list[dict]:
+    body = section(text, group)
+    found = [{"name": values(b, "name")[0], "translate": vector(values(b, "translate")[0]),
+              "rotate": vector(values(b, "rotate")[0])} for b in blocks(body, item)]
+    if int(values(body, "counts")[0]) != len(found):
+        raise ValueError(f"<{group}> count disagrees with its entries")
+    return found
+
+
+def stage_objects(objects_xml: str) -> list[dict]:
+    result = []
+    for body in blocks(section(objects_xml, "stageobjects"), "object"):
+        result.append({"name": values(body, "name")[0],
+                       "alpha": values(body, "alpha") == ["on"],
+                       "geometry": values(body, "geometry"),
+                       "morphs": values(body, "morph")})
+    return result
+
+
+def environment_attacks(stage_xml: str) -> list[dict]:
+    attacks = []
+    for body in blocks(section(stage_xml, "stageenvironment"), "environmentattack"):
+        # Drop commented-out lines (an unterminated "<?" starts each comment).
+        body = "\n".join(line for line in body.split("\n") if not line.lstrip().startswith("<?"))
+        attack = {"name": values(body, "name")[0]}
+        for tag, key in (("geometry", "geometry"), ("particle", "particles"),
+                         ("movparticle", "movingParticles"), ("delparticle", "deleteParticles"),
+                         ("venueweapon", "weapons"), ("light", "light"), ("sound", "sounds")):
+            entries = [[part.strip() for part in v.split(",")] for v in values(body, tag)]
+            if entries:
+                attack[key] = entries
+        attacks.append(attack)
+    return attacks
+
+
+# ---------------------------------------------------------------- props
+
+class Window(dict):
+    """Relocations restricted to one geometry state's display-list block.
+
+    venues.geometry walks `keys()` for draw calls and checks `items()` for unreached
+    packets; lookups through `[]` still see the whole object.
+    """
+
+    def __init__(self, mapping: dict, lo: int, hi: int):
+        super().__init__(mapping)
+        self.lo, self.hi = lo, hi
+
+    def keys(self):
+        return {k for k in dict.keys(self) if self.lo <= k < self.hi}
+
+    def items(self):
+        return [(k, v) for k, v in dict.items(self) if self.lo <= k < self.hi]
+
+
+def prop_states(name: str, blob: bytes) -> list[dict]:
+    """Decode each geometry state of a breakable prop.
+
+    EAGL stores the states as consecutive display-list blocks that each begin with the
+    microcode relocation. Each block is decoded with the venue decoder on its own, and
+    its bounds must equal one retail per-geometry bounding record exactly.
+    """
+    model = f"__Model:::{name}_branch"
+    data, local, external = elf_links(blob, model)
+    starts = sorted(at for at, symbol in external.items() if symbol.endswith("__EAGLMicroCode"))
+    states = []
+    original = venues.elf_links
+    try:
+        for k, lo in enumerate(starts):
+            hi = starts[k + 1] if k + 1 < len(starts) else len(data)
+            venues.elf_links = lambda _blob, _model, lo=lo, hi=hi: (
+                data, Window(local, lo, hi), Window(external, lo, hi))
+            vertices, indices, meta = venues.geometry(name, blob)
+            record = struct.pack("<8f", *meta["bounds"]["min"], 1, *meta["bounds"]["max"], 1)
+            hits = [at for at in range(0, len(data) - 31, 4) if data[at:at + 32] == record]
+            if not hits:
+                raise ValueError(f"{name} state {k}: bounds match no retail bounding record")
+            states.append({"vertices": vertices, "indices": indices, "meta": meta,
+                           "boundsRecord": hits[0]})
+    finally:
+        venues.elf_links = original
+    reached = sum(s["meta"]["packets"] for s in states)
+    whole = venues.geometry(name, blob)[2]["packets"]
+    if reached != whole:
+        raise ValueError(f"{name}: states reach {reached} of {whole} draws")
+    return states
+
+
+def pack_props(objects: list[dict], decoded: dict, images: dict) -> tuple[bytes, dict]:
+    vertices, indices, shapes = bytearray(), [], set()
+    manifest = []
+    for obj in objects:
+        states = decoded[obj["name"]]
+        entry = {"name": obj["name"], "alpha": obj["alpha"], "states": []}
+        for state_name, state in zip(obj["geometry"], states):
+            base = len(vertices) // VERTEX.size
+            first = len(indices)
+            vertices.extend(state["vertices"])
+            indices.extend(i + base for i in state["indices"])
+            batches = [{"shape": b["shape"], "first": b["first"] + first, "count": b["count"]}
+                       for b in state["meta"]["batches"]]
+            shapes.update(b["shape"] for b in batches if b["shape"])
+            entry["states"].append({"name": state_name, "bounds": state["meta"]["bounds"],
+                                    "packets": state["meta"]["packets"],
+                                    "vertices": len(state["vertices"]) // VERTEX.size,
+                                    "boundsRecord": state["boundsRecord"], "batches": batches})
+        manifest.append(entry)
+    header = {"model": f"{VENUE}_props", "vertices": len(vertices) // VERTEX.size,
+              "indices": len(indices), "indexBytes": 2 if max(indices) < 65536 else 4,
+              "objects": manifest, "textures": {}}
+    buf = bytearray(vertices)
+    buf.extend(struct.pack(f"<{len(indices)}" + ("H" if header["indexBytes"] == 2 else "I"), *indices))
+    for shape in sorted(shapes):
+        header["textures"][shape] = [len(buf), len(images[shape])]
+        buf.extend(images[shape])
+    return djs(b"DJS1", header, buf), header
+
+
+def djs(magic: bytes, header: dict, payload: bytes) -> bytes:
+    text = json.dumps(header, separators=(",", ":")).encode()
+    text += b" " * (-len(text) % 4)
+    return gzip.compress(magic + U32.pack(len(text)) + text + payload, compresslevel=9, mtime=0)
+
+
+# ---------------------------------------------------------------- instanced crowd
+
+def word(data: bytes, at: int) -> int:
+    return U32.unpack_from(data, at)[0]
+
+
+def unpack(data: bytes, at: int, command: int, count: int, address: int) -> int:
+    """Return the payload offset of a masked, unsigned VIF UNPACK at `at`."""
+    if word(data, at) != (command << 24 | count << 16 | 0xC000 | address):
+        raise ValueError(f"expected UNPACK {command:#x} x{count} @{address:#x} at {at}")
+    return at + 4
+
+
+def crowd_positions(data: bytes, at: int, count: int) -> bytes:
+    # STMASK 0x40404040 (W from the row), STROW 1.0, STCYCL 1, V3-16 unsigned to VU 1.
+    if word(data, at) != 0x20000000 or word(data, at + 4) != 0x40404040:
+        raise ValueError("crowd frame: expected STMASK 0x40404040")
+    if word(data, at + 8) != 0x30000000 or data[at + 12:at + 28] != struct.pack("<4f", 1, 1, 1, 1):
+        raise ValueError("crowd frame: expected STROW 1.0")
+    if word(data, at + 28) != 0x05000001:
+        raise ValueError("crowd frame: expected STMOD 1")
+    start = unpack(data, at + 32, 0x79, count, 1)
+    return data[start:start + 6 * count]
+
+
+def crowd_static(data: bytes, at: int, count: int) -> tuple[bytes, list[int]]:
+    if data[at + 12:at + 32] != vif_tag(0x6C, 1, 0) + struct.pack("<4I", count, 0, 0, 0):
+        raise ValueError("crowd part: vertex count header disagrees")
+    at += 32
+    if word(data, at) != 0x20000000 or word(data, at + 4) != 0x50505050:
+        raise ValueError("crowd part: expected UV STMASK")
+    if data[at + 8:at + 28] != U32.pack(0x30000000) + struct.pack("<4f", 0, 0, 1, 1):
+        raise ValueError("crowd part: expected UV STROW")
+    if word(data, at + 28) != 0x05000001:
+        raise ValueError("crowd part: expected UV STMOD 1")
+    start = unpack(data, at + 32, 0x74, count, 0x61)
+    uv = data[start:start + 8 * count]
+    at = start + 8 * count
+    if data[at:at + 12] != bytes.fromhex("00000020 00000000 00000005".replace(" ", "")):
+        raise ValueError("crowd part: expected strip STMASK/STMOD")
+    at += 12
+    boundary = b""
+    for address in (0xC1, 0xC2, 0xC3):
+        boundary += data[unpack(data, at, 0x6E, 1, address):][:4]
+        at += 8
+    if word(data, at) != 0x17000000:
+        raise ValueError("crowd part: missing MSCNT")
+    boundary = boundary.rstrip(b"\0")
+    if any(v % 3 for v in boundary):
+        raise ValueError("crowd part: strip boundary not a multiple of 3")
+    cuts = [0, *(v // 3 for v in boundary), count]
+    if any(b - a < 3 for a, b in zip(cuts, cuts[1:])):
+        raise ValueError("crowd part: invalid strip")
+    return uv, cuts
+
+
+def decode_crowd(blob: bytes) -> dict:
+    data, local, external = elf_links(blob, f"__Model:::{CROWD_MODEL}")
+    top = 388648
+    if word(data, top + 8) != 383:
+        raise ValueError("unexpected crowd frame count")
+    frames = word(data, top + 8)
+    scale = list(struct.unpack_from("<3f", data, top + 0x4C))
+    half = struct.unpack_from("<3f", data, top + 0x5C)
+    if any(abs(h * 2 - s) > 1e-5 for h, s in zip(half, scale)):
+        raise ValueError("crowd scale and half-scale disagree")
+    # Display list: CALL into a table of one DMA CALL per frame.
+    call = next(at for at, symbol in external.items() if symbol == "InstanceCrowd0__EAGLMicroCode")
+    table_at = next(at for at in range(call, call + 128, 4)
+                    if word(data, at - 4) == 0x04000002 and at in local)
+    table = local[table_at]
+    parts = []
+    per_frame = []
+    for f in range(frames):
+        if word(data, table + 16 * f) != 0x50000000:
+            raise ValueError(f"crowd frame {f}: expected DMA CALL")
+        sub = local[table + 16 * f + 4]
+        refs = []
+        for r in range(4):
+            tag = word(data, sub + 16 * r)
+            if tag >> 28 != 3:
+                raise ValueError(f"crowd frame {f}: expected REF")
+            refs.append((local[sub + 16 * r + 4], tag & 0xFFFF))
+        if word(data, sub + 64) >> 28 != 6:
+            raise ValueError(f"crowd frame {f}: expected RET")
+        per_frame.append(refs)
+    statics = {(refs[1], refs[3]) for refs in per_frame}
+    if len(statics) != 1:
+        raise ValueError("crowd frames must share one static topology")
+    (static0, static1), = statics
+    counts = []
+    for static in (static0, static1):
+        count = word(data, static[0] + 16)
+        uv, cuts = crowd_static(data, static[0], count)
+        counts.append(count)
+        parts.append({"vertices": count, "strips": cuts, "uv": uv})
+    positions = bytearray()
+    mins, maxs = [math.inf] * 3, [-math.inf] * 3
+    for refs in per_frame:
+        for (at, _), count in zip((refs[0], refs[2]), counts):
+            raw = crowd_positions(data, at, count)
+            positions.extend(raw)
+            for i, value in enumerate(struct.unpack(f"<{3 * count}H", raw)):
+                p = (value / 65536 - 0.5) * scale[i % 3]
+                mins[i % 3] = min(mins[i % 3], p)
+                maxs[i % 3] = max(maxs[i % 3], p)
+    bbox = struct.unpack_from("<6f", data, 350176)
+    # Positions are 16-bit, so the retail box holds them to within one quantum per axis.
+    step = [s / 65536 for s in scale] * 2
+    if any(abs(a - b) > q for a, b, q in zip(mins + maxs, bbox, step)):
+        raise ValueError(f"crowd positions {mins}{maxs} disagree with __BBOX {bbox}")
+    return {"frames": frames, "scale": scale, "parts": parts, "positions": bytes(positions),
+            "bbox": {"min": list(bbox[:3]), "max": list(bbox[3:])}}
+
+
+def crowd_layout(blob: bytes) -> list[dict]:
+    """Read the 60 instance transforms from the ICROWD skeleton in icl_02A.o."""
+    section_table, = struct.unpack_from("<I", blob, 32)
+    count, names_index = struct.unpack_from("<HH", blob, 48)
+    sections = [struct.unpack_from("<10I", blob, section_table + 40 * i) for i in range(count)]
+    strings = lambda s: blob[s[4]:s[4] + s[5]]
+    names = strings(sections[names_index])
+    named = {names[s[0]:names.index(b"\0", s[0])].decode(): i for i, s in enumerate(sections)}
+    data = strings(sections[named[".data"]])
+    symbols = strings(sections[named[".symtab"]])
+    symbol_names = strings(sections[sections[named[".symtab"]][6]])
+    bones = {}
+    for name_at, value, *_ in struct.iter_unpack("<IIIBBH", symbols):
+        name = symbol_names[name_at:symbol_names.index(b"\0", name_at)].decode()
+        if name.startswith("__Bone:::ICROWD."):
+            bones[word(data, value)] = name.split(".", 1)[1]
+        elif name == "__Skeleton:::ICROWD":
+            skeleton = value
+    total = word(data, skeleton + 8)
+    if skeleton + 16 + total * 112 != len(data) or len(bones) != total:
+        raise ValueError("unexpected ICROWD skeleton layout")
+    instances = []
+    for i in range(total):
+        at = skeleton + 16 + 112 * i
+        scale = struct.unpack_from("<3f", data, at)
+        parent, = struct.unpack_from("<i", data, at + 12)
+        quat = struct.unpack_from("<4f", data, at + 16)
+        translate = struct.unpack_from("<3f", data, at + 32)
+        index = word(data, at + 44)
+        inverse = struct.unpack_from("<16f", data, at + 48)
+        if index != i or scale != (1, 1, 1):
+            raise ValueError("unexpected ICROWD bone record")
+        if i == 0:
+            if parent != -1 or bones[0] != "ICROWD":
+                raise ValueError("ICROWD root expected first")
+            continue
+        if parent != 0 or abs(quat[0]) > 1e-6 or abs(quat[2]) > 1e-6:
+            raise ValueError("crowd instance is not a yaw-only child of the root")
+        yaw = 2 * math.atan2(quat[1], quat[3])
+        # Inverse bind is Ry(-yaw) and -R^T t; check both against the quaternion.
+        c, s = math.cos(yaw), math.sin(yaw)
+        expect_t = (-(c * translate[0] - s * translate[2]), -translate[1],
+                    -(s * translate[0] + c * translate[2]))
+        if any(abs(a - b) > 1e-3 for a, b in zip(expect_t, inverse[12:15])) or \
+                abs(inverse[0] - c) > 1e-5 or abs(inverse[2] - s) > 1e-5:
+            raise ValueError(f"bone {bones[i]}: inverse bind disagrees with its transform")
+        group, row, variant = bones[i].split("_")
+        instances.append({"name": bones[i], "group": group, "row": int(row), "variant": int(variant),
+                          "translate": [round(v, 5) + 0.0 for v in translate],
+                          "quaternion": [round(v, 7) + 0.0 for v in quat],
+                          "yawDegrees": round(math.degrees(yaw), 4)})
+    return instances
+
+
+def pack_crowd(crowd: dict, instances: list[dict], image: bytes, loops: dict) -> tuple[bytes, dict]:
+    buf = bytearray(crowd["positions"])
+    layout = {"positions": [0, len(buf)]}
+    uv = b"".join(p["uv"] for p in crowd["parts"])
+    layout["uv"] = [len(buf), len(uv)]
+    buf.extend(uv)
+    indices, base = [], 0
+    for part in crowd["parts"]:
+        indices.extend(triangle_indices(base, part["strips"]))
+        base += part["vertices"]
+    layout["indices"] = [len(buf), 2 * len(indices)]
+    buf.extend(struct.pack(f"<{len(indices)}H", *indices))
+    buf.extend(b"\0" * (-len(buf) % 4))
+    layout["texture"] = [len(buf), len(image)]
+    buf.extend(image)
+    header = {"model": CROWD_MODEL, "frames": crowd["frames"],
+              "vertices": base, "parts": [{"vertices": p["vertices"], "strips": p["strips"]}
+                                          for p in crowd["parts"]],
+              "indices": len(indices), "scale": crowd["scale"], "bounds": crowd["bbox"],
+              "loops": loops, "instances": instances, "layout": layout,
+              "quantization": "position = (uint16 / 65536 - 0.5) * scale"}
+    return djs(b"DJC1", header, buf), header
+
+
+def crowd_loops(crowd: dict, xml: str) -> dict:
+    """Frame ranges for icrowd01.xml's idle and excited cycles.
+
+    383 = 240 idle + 3 rest + 140 excited. Frames 1, 241, 242 and 382 equal frame 0 (the
+    rest pose) exactly, so both cycles pass through the rest pose and can hand over there.
+    """
+    idle, excited = int(values(xml, "idle")[0]), int(values(xml, "excited")[0])
+    frames, vertices = crowd["frames"], sum(p["vertices"] for p in crowd["parts"])
+    stride = 6 * vertices
+    frame = lambda f: crowd["positions"][f * stride:(f + 1) * stride]
+    rest = [f for f in range(frames) if frame(f) == frame(0)]
+    if rest != [0, 1, idle + 1, idle + 2, frames - 1] or frames - idle - excited != 3:
+        raise ValueError(f"unexpected crowd cycle layout, rest frames {rest}")
+    return {"idle": [0, idle], "excited": [frames - excited, frames], "rest": rest}
+
+
+# ---------------------------------------------------------------- build
+
+def build(iso: Path) -> dict[str, bytes]:
+    disc = Disc(str(iso))
+    try:
+        get = lambda archive, name: member(disc, archive, name)
+        stage_xml_blob = get(STAGE, f"{VENUE}.xml")
+        objects_xml_blob = get(STAGE, f"{VENUE}_O.xml")
+        ssh_blob = get(STAGE, f"{VENUE}.ssh")
+        stage_xml, objects_xml = stage_text(stage_xml_blob), stage_text(objects_xml_blob)
+        objects = [o for o in stage_objects(objects_xml) if o["geometry"]]
+        sources = {f"{VENUE}.xml": sha256(stage_xml_blob), f"{VENUE}_O.xml": sha256(objects_xml_blob),
+                   f"{VENUE}.ssh": sha256(ssh_blob)}
+        decoded = {}
+        for obj in objects:
+            blob = get(STAGE, obj["name"] + ".o")
+            sources[obj["name"] + ".o"] = sha256(blob)
+            decoded[obj["name"]] = prop_states(obj["name"], blob)
+            if len(decoded[obj["name"]]) != len(obj["geometry"]):
+                raise ValueError(f"{obj['name']}: {len(decoded[obj['name']])} blocks for "
+                                 f"{len(obj['geometry'])} named states")
+        props, props_header = pack_props(objects, decoded, textures(ssh_blob))
+
+        crowd_blob = get(CROWD, CROWD_MODEL + ".o")
+        crowd_ssh = get(CROWD, CROWD_MODEL + ".ssh")
+        crowd_xml = get(CROWD, CROWD_MODEL + ".xml")
+        layout_blob = get(CROWD, CROWD_LAYOUT + ".o")
+        crowd = decode_crowd(crowd_blob)
+        crowd_images = textures(crowd_ssh)
+        if list(crowd_images) != ["Low_"]:
+            raise ValueError("unexpected crowd textures")
+        packed_crowd, crowd_header = pack_crowd(crowd, crowd_layout(layout_blob),
+                                                crowd_images["Low_"],
+                                                crowd_loops(crowd, crowd_xml.decode("ascii")))
+        for name, blob in ((CROWD_MODEL + ".o", crowd_blob), (CROWD_MODEL + ".ssh", crowd_ssh),
+                           (CROWD_MODEL + ".xml", crowd_xml), (CROWD_LAYOUT + ".o", layout_blob)):
+            sources[name] = sha256(blob)
+    finally:
+        disc.close()
+
+    alpha = {p["name"].replace("alpha_", "V2BG_"): p for p in placements(objects_xml, "alphaposition", "alpha")}
+    scenery = {
+        "format": "def-jam-ps2-scenery/1",
+        "venue": VENUE,
+        "sources": {"archives": {"stage": STAGE[1:], "crowd": CROWD[1:]}, "sha256": sources},
+        "props": [{"name": o["name"], "alpha": o["alpha"], "states": o["geometry"],
+                   "morphs": o["morphs"],
+                   # Without an alphaposition entry, the model is already in venue space.
+                   "placement": ({k: alpha[o["name"]][k] for k in ("translate", "rotate")}
+                                 if o["name"] in alpha else None)}
+                  for o in objects],
+        "venueMorphs": next(o["morphs"] for o in stage_objects(objects_xml) if o["name"] == VENUE),
+        "environmentAttacks": environment_attacks(stage_xml),
+        "nearCrowd": placements(objects_xml, "crowdposition", "crowd"),
+        "weapons": placements(objects_xml, "weaponposition", "weapon"),
+        "hiddenWeapons": values(section(stage_xml, "hiddenweapon"), "name"),
+        "crowdGroup": {k: int(values(stage_xml, f"crowdgroup{k}num")[0]) for k in ("normal", "reduced")},
+        "crowdModelRatio": {tag: vector(values(section(stage_xml, "crowdsmodelratio"), tag)[0])
+                            for tag in ("sex", "class", "seasonal", "racial", "brightness",
+                                        "temperature", "vividness")},
+        "defaultParticles": [[p.strip() for p in v.split(",")]
+                             for v in values(section(stage_xml, "defaultparticles"), "particle")],
+        "instancedCrowd": {"file": "crowd.bin.gz", "model": CROWD_MODEL, "layout": CROWD_LAYOUT,
+                           "frames": crowd_header["frames"], "loops": crowd_header["loops"],
+                           "instances": len(crowd_header["instances"])},
+        "propsFile": "props.scene.gz",
+    }
+    if set(alpha) - {o["name"] for o in objects}:
+        raise ValueError("alphaposition names an unknown object")
+    return {"props.scene.gz": props, "crowd.bin.gz": packed_crowd,
+            "scenery.json": (json.dumps(scenery, indent=1, ensure_ascii=False) + "\n").encode()}
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("iso", type=Path, nargs="?", default=DEFAULT_ISO)
+    ap.add_argument("--check", action="store_true", help="compare with the committed files")
+    args = ap.parse_args(argv)
+    files = build(args.iso)
+    OUTPUT.mkdir(exist_ok=True)
+    bad = []
+    for name, blob in files.items():
+        path = OUTPUT / name
+        if args.check:
+            current = path.read_bytes() if path.exists() else b""
+            same = (gzip.decompress(current) == gzip.decompress(blob)) if name.endswith(".gz") and current \
+                else current == blob
+            if not same:
+                bad.append(name)
+        else:
+            path.write_bytes(blob)
+    if bad:
+        print("out of date: " + ", ".join(bad))
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
