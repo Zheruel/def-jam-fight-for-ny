@@ -66,8 +66,8 @@ export function createWalker(tags) {
   };
 }
 
-export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, play, actors = ACTORS, seed = 1 }) {
-  const random = mulberry32(seed);
+export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, play, actors = ACTORS, seed = 1, record = true }) {
+  let random = mulberry32(seed);
   const walkers = actors.map(() => createWalker(tags));
   const eventModules = new Map(); // `${bank}\0${event}` -> modules
   for (const [bank, info] of Object.entries(combat.banks)) {
@@ -111,13 +111,19 @@ export function createMatchAudio({ combat, tags, mix, venue, fighters, clips, pl
     for (const event of spec.events) {
       const target = route(slot, event, words);
       const entry = { tick: ticks, slot, clip: name, frame, class: cls, event, ...(target ?? { bank: null }) };
-      log.push(entry);
+      if (record) log.push(entry);
       if (target) play?.(target.bank, target.cue, { gain: target.gain });
     }
   }
 
   return {
     log, walkers,
+    reset() {
+      for (const walker of walkers) Object.assign(walker.state,{key:null,last:-1,next:0,first:true});
+      random = mulberry32(seed);
+      ticks = 0;
+      log.length = 0;
+    },
     tick(fight) {
       const memory = fight.memory;
       actors.forEach((actor, slot) => {
@@ -139,6 +145,6 @@ export async function loadMatchAudio(audio, { file, fighters, clips, seed, fetch
   const [combat, tags, mix, venues] = await Promise.all([combatManifest(fetcher), loadAnimTags(fetcher), mixLevels(fetcher), venueManifest(fetcher)]);
   const venue = venues.venues.find(entry => entry.file === file);
   if (!venue) throw new RangeError("Unknown venue " + file);
-  return createMatchAudio({ combat, tags, mix, venue, fighters, clips, seed,
+  return createMatchAudio({ combat, tags, mix, venue, fighters, clips, seed, record:false,
     play: (bank, subsong, options) => audio.cue(bank, subsong, options).catch(() => {}) });
 }

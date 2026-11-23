@@ -12,6 +12,7 @@
     "setup": "npm ci --prefix netplay",
     "test:netplay": "npm --prefix netplay test",
     "test:match": "node verification/ps2-match.mjs",
+    "test:native-outcome": "node verification/native-outcome.mjs",
     "test:native-venue": "node verification/native-venue.mjs",
     "test:native-battle": "node verification/native-combat.mjs && node verification/native-roster.mjs && node verification/native-battle.mjs",
     "test:native-damage": "node verification/native-damage.mjs",

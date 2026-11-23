@@ -99,7 +99,7 @@ async function display() {
   const battle = document.body.hasAttribute("data-battle");
   const stepMs = 1000/60;
   let fight, controls, camera, hud, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
-  let scenery, lighting;
+  let scenery, lighting, combatAudio;
   const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
   const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
@@ -159,6 +159,7 @@ async function display() {
       try {
         while (carry >= stepMs) {
           fight.tick(controls.inputs());
+          combatAudio?.tick(fight);
           camera.step();
           carry -= stepMs;
           advanced = true;
@@ -333,7 +334,15 @@ async function display() {
     const { battleCamera } = await import("../battle/camera.mjs");
     const { createHud } = await import("../hud/hud.mjs");
     const { venueAudio } = await import("../audio/venue.mjs");
-    const audio = venueAudio(arena.file);
+    const audio = venueAudio(arena.file,{onStart: async () => {
+      try {
+        const [{loadMatchAudio},{default:clips}] = await Promise.all([
+          import("../audio/match.mjs"),import("../motion/library.json",{with:{type:"json"}})
+        ]);
+        combatAudio = await loadMatchAudio(audio,{file:arena.file,
+          fighters:selected.map(f=>f.record.fighterXml),clips});
+      } catch (error) { console.error("Could not load combat audio",error); }
+    }});
     const {createSceneryRenderer,loadScenery} = await import("../scenery/scenery.mjs");
     const [stage, lights] = await Promise.all([loadScenery(arena.file),loadLighting(arena.file)]);
     lighting = lights.settings[0]?.sets[0];
@@ -344,7 +353,7 @@ async function display() {
     camera = battleCamera(fight.kernel, arena.file);
     status.textContent = "WASD and arrows to move · Controls below";
     document.getElementById("restart").onclick = () => {
-      controls.release(); fight.restart(); camera.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = "WASD and arrows to move · Controls below";
     };
     // Enter starts the rematch once the result banner has offered it.

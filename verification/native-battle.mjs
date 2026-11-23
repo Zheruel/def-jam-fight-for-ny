@@ -17,11 +17,21 @@ try {
   const errors = [], requests = [];
   host.on("pageerror",error => errors.push(error.message));
   host.on("request",request => requests.push(new URL(request.url()).pathname));
+  await host.addInitScript(() => {
+    const original = AudioBufferSourceNode.prototype.start;
+    window.shortCues = 0;
+    AudioBufferSourceNode.prototype.start = function (...args) {
+      if (!this.loop && args.length === 3 && args[2] > 0) window.shortCues++;
+      return original.apply(this,args);
+    };
+  });
   await host.goto(url);
   await host.waitForFunction(()=>window.nativeBattle?.diagnostics().ticks>5).catch(async error => {
     throw new Error("Match failed to start: " + await host.locator("#status").textContent() +
       (errors.length ? " (" + errors.join(", ") + ")" : ""), {cause:error});
   });
+  assert.ok(!requests.some(p=>p.includes("/port/audio/cues/")),"Cold boot must not fetch cue banks");
+  await host.locator("canvas").click();
   const bench = await host.evaluate(async () => {
     document.querySelector("#restart").click();
     const actions=[new Set(),new Set()];
@@ -49,6 +59,8 @@ try {
   assert.ok(bench.actions[0].includes(67) && bench.actions[1].includes(1069),"Both players must strike");
   assert.ok(bench.actions[0].includes(10334) && bench.actions[1].includes(10328),"Both players must react");
   assert.deepEqual(bench.scores,[250,250]);
+  assert.ok(await host.evaluate(()=>window.shortCues>1),"The mixer started multiple short combat cues");
+  assert.ok(requests.some(p=>p.endsWith("/cues/fighter_med_hits_ring.ogg")),"The hit bank loaded during contact");
   if(process.env.NATIVE_SCREENSHOT) await host.locator("canvas").screenshot({path:process.env.NATIVE_SCREENSHOT});
   assert.deepEqual(errors,[]);
   assert.ok(requests.every(p=>!/(?:\/runtime\/|\/game-assets\/|\.iso$)/.test(p)));

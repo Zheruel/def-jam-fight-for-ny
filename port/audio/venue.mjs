@@ -34,11 +34,12 @@ export const sharedFiles = ["venue.mjs", "venues.json", "cues.json", "mix.json",
 
 export function venueAudio(file, {
   fetcher = globalThis.fetch, Context = globalThis.AudioContext, doc = globalThis.document,
-  win = globalThis.window, button = doc?.querySelector?.("#sound"),
+  win = globalThis.window, button = doc?.querySelector?.("#sound"), onStart,
 } = {}) {
   let context, bus, local, broadcast, bedGain, bed, source, venue, loading, level = 30000 / 32767;
   let active = true, requested = false, muted = false;
-  const banks = new Map();
+  const banks = new Map(), playing = new Set();
+  let generation = 0;
 
   const hidden = () => doc?.hidden === true;
   const label = () => { if (button) button.textContent = muted ? "Unmute" : "Mute"; };
@@ -93,8 +94,11 @@ export function venueAudio(file, {
   }
 
   function start() {
-    requested = true;
     graph();
+    if (!requested) {
+      requested = true;
+      onStart?.();
+    }
     play();
     return broadcast.stream;
   }
@@ -141,6 +145,9 @@ export function venueAudio(file, {
     stream: start,
     setActive(value) { active = value; synchronize(); },
     restart() {
+      generation++;
+      for (const effect of playing) effect.stop();
+      playing.clear();
       if (!requested || !context) return;
       if (source) { source.stop(); source.disconnect(); source = undefined; }
       loopBed();
@@ -153,11 +160,16 @@ export function venueAudio(file, {
     async cue(name, index, {gain = 1, rate = 1, when = 0} = {}) {
       if (!requested) start();
       graph();
+      const version = generation;
       const {entry, buffer} = await bank(name);
+      if (version !== generation || !active || hidden()) return;
       const cue = entry.cues.find(c => c.i === index && c.frames);
       if (!cue) throw Error(`No cue ${index} in ${name}`);
       await context.resume();
+      if (version !== generation || !active || hidden()) return;
       const node = context.createBufferSource(), volume = context.createGain();
+      playing.add(node);
+      node.onended = () => { playing.delete(node); node.disconnect(); volume.disconnect(); };
       node.buffer = buffer;
       node.playbackRate.value = rate;
       volume.gain.value = gain;
@@ -166,6 +178,8 @@ export function venueAudio(file, {
       return node;
     },
     dispose() {
+      generation++;
+      active = false;
       win?.removeEventListener("pointerdown", unlock);
       win?.removeEventListener("keydown", unlock);
       doc?.removeEventListener?.("visibilitychange", synchronize);
