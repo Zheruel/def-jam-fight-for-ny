@@ -70,6 +70,18 @@ function multiply(a, ao, b, bo, out, oo) {
   }
 }
 
+// The parent world transform always has fourth column [0,0,0,1]. Preserve the
+// left matrix's actual homogeneous weight, including non-unit retail inverse binds.
+function multiplyByWorld(left, leftAt, world, worldAt, out, outAt) {
+  for (let row=0; row<4; row++, leftAt+=4, outAt+=4) {
+    const x=left[leftAt], y=left[leftAt+1], z=left[leftAt+2], w=left[leftAt+3];
+    out[outAt]   = x*world[worldAt]   + y*world[worldAt+4] + z*world[worldAt+8]  + w*world[worldAt+12];
+    out[outAt+1] = x*world[worldAt+1] + y*world[worldAt+5] + z*world[worldAt+9]  + w*world[worldAt+13];
+    out[outAt+2] = x*world[worldAt+2] + y*world[worldAt+6] + z*world[worldAt+10] + w*world[worldAt+14];
+    out[outAt+3] = x*0 + y*0 + z*0 + w; // preserve signed zeros in the retail matrices
+  }
+}
+
 /** Separate workspaces keep the simulation pose and the displayed transition pose independent. */
 export function createPoseWorkspace(model) {
   const size = model.bones.length * 16;
@@ -94,8 +106,8 @@ export function composePose(model, entries, workspace = createPoseWorkspace(mode
     const {parent, inverseBind} = model.bones[k], at = k*16;
     localMatrix(entries,k,local);
     if (parent === null) preciseWorld.set(local,at);
-    else multiply(local,0,preciseWorld,parent*16,preciseWorld,at);
-    multiply(inverseBind,0,preciseWorld,at,skin,at);
+    else multiplyByWorld(local,0,preciseWorld,parent*16,preciseWorld,at);
+    multiplyByWorld(inverseBind,0,preciseWorld,at,skin,at);
   }
   world.set(preciseWorld);
   return {world,skin};

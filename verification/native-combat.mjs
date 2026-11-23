@@ -26,7 +26,9 @@ if (process.argv[2] === "--extract") {
   writeFileSync(fixture,JSON.stringify(samples)+"\n");
 }
 const frames = JSON.parse(readFileSync(fixture));
-let wasm = packed("port/kernel/battle.wasm.gz");
+let wasm = await WebAssembly.compile(packed("port/kernel/battle.wasm.gz"));
+assert.ok(!WebAssembly.Module.imports(wasm).some(entry => entry.name === "memcpy"),
+  "Battle register copies must stay inside WebAssembly");
 let seed = packed("port/kernel/foundation-start.gz");
 const makeSeed = process.argv[2] === "--seed";
 let original;

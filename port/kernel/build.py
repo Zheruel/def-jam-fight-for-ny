@@ -59,7 +59,11 @@ def main():
         raise ValueError("No Battle functions")
     bodies = {base: translated_body(path) for base, path in definitions}
     join_split_delay_slot(bodies)
-    entry = ['#include "abi.hpp"']
+    # Clang emits memcpy calls for register and struct copies in translated functions.
+    # With -mbulk-memory its memmove intrinsic lowers to a single overlap-safe memory.copy.
+    entry = ['#include "abi.hpp"',
+             'extern "C" void* memcpy(void* dst, const void* src, size_t length) {',
+             '  return __builtin_memmove(dst, src, length);', '}']
     for base, path in definitions:
         entry += [f'void {path.stem}(uint8_t*,R5900Context*,PS2Runtime*);']
     entry += ['#include "entry.inc"', 'void callBattle(uint32_t target,uint32_t site) {',

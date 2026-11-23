@@ -2,6 +2,8 @@
 
 The browser calls the statically translated SLUS-21004 Battle update at 0x2dbdd0 once per simulation tick. The module includes the 785 Battle-region functions and the retail support routines listed in presentation.txt. Their original data addresses are offsets into a WebAssembly buffer. The host provides controller inputs, sampled poses, joint transforms and math services. An unimplemented engine call reports its address. The Foundation starting data holds the pages the verified match needs. Player inputs control both actors from that point onward.
 
+The translated code copies registers and structures with WebAssembly’s bulk memory instruction. In a four-controller Team replay on an M5 Pro, the median time for 4,000 simulation ticks was 0.84 seconds across five warmed runs, down from 1.77 seconds with the JavaScript copy callback. All 32 MiB of match memory and the four final skinning palettes matched after each run. This benchmark measures simulation time separately from drawing and streaming.
+
 ## Rebuild
 
 From the repository root, extract the verified US executable to the input path in game.toml. Run the PS2Recomp executable with that TOML as its argument. The translator revision used was e5636981a1c9de368f6b71e819c3dc188dfedbf4. Use a Clang installation with the wasm32 target and wasm-ld. [PS2Recomp source](https://github.com/ran-j/PS2Recomp/tree/e5636981a1c9de368f6b71e819c3dc188dfedbf4)
