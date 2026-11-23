@@ -679,6 +679,7 @@
  "nearCrowd": [],
  "weapons": [],
  "hiddenWeapons": [],
+ "hiddenWeaponModels": [],
  "crowdGroup": null,
  "crowdModelRatio": null,
  "defaultParticles": [],

@@ -3560,7 +3560,8 @@
     0.0,
     210.5,
     0.0
-   ]
+   ],
+   "model": "V2WP_026A"
   },
   {
    "name": "weapon_7B_026A",
@@ -3573,7 +3574,8 @@
     0.0,
     -40.0,
     0.0
-   ]
+   ],
+   "model": "V2WP_026A"
   },
   {
    "name": "weapon_23C_015A",
@@ -3586,7 +3588,8 @@
     0.0,
     120.0,
     0.0
-   ]
+   ],
+   "model": "V2WP_015A"
   },
   {
    "name": "weapon_5C_015A",
@@ -3599,10 +3602,12 @@
     0.0,
     240.0,
     0.0
-   ]
+   ],
+   "model": "V2WP_015A"
   }
  ],
  "hiddenWeapons": [],
+ "hiddenWeaponModels": [],
  "crowdGroup": {
   "normal": 10,
   "reduced": 10

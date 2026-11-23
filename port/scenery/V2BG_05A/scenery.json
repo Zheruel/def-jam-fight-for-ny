@@ -3374,6 +3374,7 @@
  ],
  "weapons": [],
  "hiddenWeapons": [],
+ "hiddenWeaponModels": [],
  "crowdGroup": {
   "normal": 3,
   "reduced": 3

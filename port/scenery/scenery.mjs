@@ -9,7 +9,7 @@
 // Coverage: props are static meshes with discrete break states (pick one state per prop);
 // the instanced crowd is vertex-animated (383 retail frames, idle and excited loops).
 import { fetchPacked } from "../viewer/scene.mjs";
-import { irradiance, sampleIrradiance } from "./irradiance.mjs";
+import { irradiance, irradianceGLSL, sampleIrradiance } from "./irradiance.mjs";
 
 const U32 = 4;
 
@@ -43,6 +43,16 @@ export async function loadSceneryIndex({ signal, base = new URL("./", import.met
   return JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("index.json", base), signal)));
 }
 
+/** DJF1 skinned mesh (the fighter container). Weapons are one-bone models, drawn in their bind pose. */
+export function parseSkinned(buffer) {
+  const [mesh, start] = header(buffer, 0x444a4631);
+  const vertices = new Uint8Array(buffer, start, mesh.vertices * 52);
+  const indices = new Uint8Array(buffer, start + mesh.vertices * 52, mesh.indices * 2);
+  const textures = new Map(Object.entries(mesh.textures).map(([shape, [at, size]]) =>
+    [shape, new Uint8Array(buffer, start + at, size)]));
+  return { mesh, vertices, indices, textures };
+}
+
 export async function loadScenery(venue, { signal, base = new URL("./", import.meta.url) } = {}) {
   const dir = new URL(venue === "V2BG_02A" ? "foundation/" : `${venue}/`, base);
   const manifest = JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("scenery.json", dir), signal)));
@@ -54,7 +64,13 @@ export async function loadScenery(venue, { signal, base = new URL("./", import.m
     crowd = parseCrowd(await fetchPacked(new URL(placed.file ?? placed.modelFile, dir), signal));
     if (placed.placements) crowd.mesh.instances = placed.placements;
   }
-  return { manifest, props, crowd };
+  // Weapon/bottle models this venue places or spawns, from the shared port/scenery/weapons/.
+  const wanted = [...new Set([...(manifest.weapons ?? []).map(w => w.model), ...(manifest.hiddenWeaponModels ?? [])])];
+  const weapons = new Map();
+  await Promise.all(wanted.map(async model => {
+    weapons.set(model, parseSkinned(await fetchPacked(new URL(`weapons/${model}.skin.gz`, base), signal)));
+  }));
+  return { manifest, props, crowd, weapons };
 }
 
 // Euler placement from the stage XML: degrees, applied X then Y then Z (all retail Foundation
@@ -106,6 +122,26 @@ void main() {
   texcoord = uv - vec2(mod(v, 2.0) < 0.5 ? 0.5 : 0.0, v < 1.5 ? 0.5 : 0.0); tint = shade;
   gl_Position = viewProjection * vec4(p, 1.0);
 }`;
+const WEAPON_VERTEX = `#version 300 es
+in vec3 position; in vec3 normal; in vec2 uv;
+uniform mat4 viewProjection; uniform mat4 model;
+out vec2 texcoord; out vec3 world;
+void main() {
+  texcoord = uv; world = mat3(model) * normal;
+  gl_Position = viewProjection * model * vec4(position, 1.0);
+}`;
+const WEAPON_FRAGMENT = `#version 300 es
+precision highp float;
+in vec2 texcoord; in vec3 world;
+uniform sampler2D diffuse; uniform bool lit; uniform float lightScale;
+out vec4 color;
+` + irradianceGLSL + `
+void main() {
+  vec4 texel = texture(diffuse, texcoord);
+  if (texel.a < 0.01) discard;
+  vec3 k = lit ? clamp(irradiance(normalize(world)) * lightScale, 0.0, 1.5) : vec3(1.0);
+  color = vec4(texel.rgb * k, 1.0);
+}`;
 const FRAGMENT = `#version 300 es
 precision highp float;
 in vec2 texcoord; in vec3 tint;
@@ -117,9 +153,9 @@ void main() {
   color = vec4(texel.rgb * tint, 1.0);
 }`;
 
-function program(gl, vertex) {
+function program(gl, vertex, fragment = FRAGMENT) {
   const p = gl.createProgram();
-  for (const [type, source] of [[gl.VERTEX_SHADER, vertex], [gl.FRAGMENT_SHADER, FRAGMENT]]) {
+  for (const [type, source] of [[gl.VERTEX_SHADER, vertex], [gl.FRAGMENT_SHADER, fragment]]) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
@@ -152,8 +188,8 @@ async function texture(gl, png) {
  *                   false hides it (e.g. after the retail break animation removes it)
  *   crowd           false hides the instanced crowd; otherwise tick/excited drive its frame
  */
-export async function createSceneryRenderer(gl, { manifest, props, crowd }, { lighting = null, lightScale = 1 } = {}) {
-  const state = { props: null, crowd: null };
+export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map() }, { lighting = null, lightScale = 1 } = {}) {
+  const state = { props: null, crowd: null, weapons: null };
   const placements = new Map(manifest.props.map(p => [p.name, p.placement]));
 
   if (props) {
@@ -210,9 +246,31 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd }, { li
     const atlas = await texture(gl, crowd.texture);
     state.crowd = { prog, vao, uv, ibo, instances, frames, atlas, count: list.length };
   }
+  if (weapons.size) {
+    const prog = program(gl, WEAPON_VERTEX, WEAPON_FRAGMENT);
+    const models = new Map();
+    for (const [name, data] of weapons) {
+      const vao = gl.createVertexArray();
+      gl.bindVertexArray(vao);
+      const vbo = gl.createBuffer(), ibo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, data.vertices, gl.STATIC_DRAW);
+      for (const [key, size, offset] of [["position", 3, 0], ["normal", 3, 12], ["uv", 2, 24]]) {
+        const at = gl.getAttribLocation(prog, key);
+        gl.enableVertexAttribArray(at);
+        gl.vertexAttribPointer(at, size, gl.FLOAT, false, 52, offset);
+      }
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.indices, gl.STATIC_DRAW);
+      const textures = new Map();
+      for (const [shape, png] of data.textures) textures.set(shape, await texture(gl, png));
+      models.set(name, { vao, vbo, ibo, textures, batches: data.mesh.batches });
+    }
+    state.weapons = { prog, models };
+  }
   gl.bindVertexArray(null);
 
-  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true }) {
+  function render({ viewProjection, props: choice = {}, tick = 0, excited = false, crowd: showCrowd = true, weapons: shown = {}, hiddenWeapons = false }) {
     if (state.props) {
       const { prog, vao, textures } = state.props;
       gl.useProgram(prog);
@@ -250,19 +308,44 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd }, { li
       gl.uniform1i(gl.getUniformLocation(prog, "diffuse"), 0);
       gl.drawElementsInstanced(gl.TRIANGLES, crowd.mesh.indices, gl.UNSIGNED_SHORT, 0, count);
     }
+    if (state.weapons) {
+      const { prog, models } = state.weapons;
+      const hidden = new Set((manifest.hiddenWeapons ?? []).map(n => "weapon_" + n));
+      gl.useProgram(prog);
+      gl.uniformMatrix4fv(gl.getUniformLocation(prog, "viewProjection"), false, viewProjection);
+      gl.uniform1i(gl.getUniformLocation(prog, "lit"), lighting ? 1 : 0);
+      gl.uniform1f(gl.getUniformLocation(prog, "lightScale"), lightScale);
+      gl.uniform1i(gl.getUniformLocation(prog, "diffuse"), 0);
+      gl.activeTexture(gl.TEXTURE0);
+      for (const w of manifest.weapons ?? []) {
+        if (shown[w.name] === false || (hidden.has(w.name) && !hiddenWeapons)) continue;
+        const model = models.get(w.model);
+        if (!model) continue;
+        if (lighting) gl.uniform3fv(gl.getUniformLocation(prog, "irradianceCoefficients"), sampleIrradiance(lighting, w.translate));
+        gl.uniformMatrix4fv(gl.getUniformLocation(prog, "model"), false, placementMatrix(w));
+        gl.bindVertexArray(model.vao);
+        for (const { shape, first, count } of model.batches) {
+          gl.bindTexture(gl.TEXTURE_2D, model.textures.get(shape) ?? null);
+          gl.drawElements(gl.TRIANGLES, count, gl.UNSIGNED_SHORT, first * 2);
+        }
+      }
+    }
     gl.bindVertexArray(null);
   }
 
   function dispose() {
-    for (const part of Object.values(state)) {
-      if (!part) continue;
-      gl.deleteProgram(part.prog);
-      gl.deleteVertexArray(part.vao);
+    const free = part => {
       for (const v of Object.values(part)) {
         if (v instanceof WebGLBuffer) gl.deleteBuffer(v);
         else if (v instanceof WebGLTexture) gl.deleteTexture(v);
-        else if (v instanceof Map) for (const t of v.values()) gl.deleteTexture(t);
+        else if (v instanceof WebGLVertexArrayObject) gl.deleteVertexArray(v);
+        else if (v instanceof Map) for (const t of v.values()) t instanceof WebGLTexture ? gl.deleteTexture(t) : free(t);
       }
+    };
+    for (const part of Object.values(state)) {
+      if (!part) continue;
+      gl.deleteProgram(part.prog);
+      free(part);
     }
   }
   return { render, dispose };

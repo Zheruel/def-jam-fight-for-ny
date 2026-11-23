@@ -252,7 +252,8 @@
     179.0,
     -6.75,
     0.0
-   ]
+   ],
+   "model": "V2WP_015C"
   },
   {
    "name": "weapon_1C_008B",
@@ -265,10 +266,12 @@
     -6.0,
     -10.5,
     1.0
-   ]
+   ],
+   "model": "V2WP_008B"
   }
  ],
  "hiddenWeapons": [],
+ "hiddenWeaponModels": [],
  "crowdGroup": null,
  "crowdModelRatio": null,
  "defaultParticles": [],

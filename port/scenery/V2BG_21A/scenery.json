@@ -1184,7 +1184,8 @@
     90.0,
     0.0,
     0.0
-   ]
+   ],
+   "model": "V2WP_029A"
   },
   {
    "name": "weapon_16_029A",
@@ -1197,10 +1198,12 @@
     90.0,
     0.0,
     0.0
-   ]
+   ],
+   "model": "V2WP_029A"
   }
  ],
  "hiddenWeapons": [],
+ "hiddenWeaponModels": [],
  "crowdGroup": {
   "normal": 5,
   "reduced": 5

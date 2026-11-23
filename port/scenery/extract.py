@@ -22,9 +22,12 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(REPO / "port" / "geometry"))
 sys.path.insert(0, str(REPO / "ps2" / "battle"))
+sys.path.insert(0, str(REPO / "port" / "fighters"))
+sys.path.insert(0, str(REPO / "port" / "render"))
 
 import venues  # noqa: E402
 from battle_patch import Disc  # noqa: E402
+import retail  # noqa: E402
 from foundation import elf_links, triangle_indices, vif_tag  # noqa: E402
 from refpack import decompress  # noqa: E402
 from ssh import textures  # noqa: E402
@@ -474,6 +477,82 @@ def entity_lighting(entity_text: str) -> dict[str, list[str]]:
     return found
 
 
+# ---------------------------------------------------------------- weapons (V2WP.VIV)
+
+WEAPONS = "/ASSETS/V2WP.VIV"
+
+
+def weapon_decode_packet(data: bytes, part: dict):
+    """retail.decode_packet with the VU addresses read from the packet: weapon microcode batches fewer
+    slots than a fighter's, so the UV and normal streams sit at different addresses."""
+    table, batches, batch = None, [], None
+    for code in retail.vif_codes(data, part["packet"], part["qwc"]):
+        if "unpack" not in code:
+            continue
+        kind, address, at, count = code["unpack"], code["address"], code["data"], code["count"]
+        if kind == 0xC and not code["tops"] and address == 4:
+            table = [struct.unpack_from("<4I", data, at + 16 * i) for i in range(count)]
+        elif kind == 0xC and address == 0:
+            batch = {"header": struct.unpack_from("<4I", data, at), "bounds": b""}
+        elif kind == 0xE and address in (1, 2, 3):
+            batch["bounds"] += data[at:at + 4]
+        elif kind == 0xD and address == 4:
+            batch["a"] = struct.unpack_from(f"<{4 * count}H", data, at)
+        elif kind == 0xD and not code["unsigned"]:
+            batch["b"] = struct.unpack_from(f"<{4 * count}h", data, at)
+        elif kind == 0xC and code["tops"] and address > 4:
+            batch["c"] = struct.unpack_from(f"<{4 * count}I", data, at)
+            batch["count"] = count
+            batches.append(batch)
+    return (table, batches) if table is not None and batches else None
+
+
+def weapon_models(disc: Disc) -> dict[str, bytes]:
+    """Every V2WP_nnnX model as a DJF1 skinned mesh (same container as port/render/fighters)."""
+    import export_fighters
+    original = retail.decode_packet, export_fighters.read_member
+    retail.decode_packet = weapon_decode_packet
+    export_fighters.read_member = lambda d, name: (None, member(d, WEAPONS, name), None)
+    try:
+        table = disc.read(WEAPONS, 0, 16)
+        count, header_size = struct.unpack_from(">II", table, 8)
+        listing = disc.read(WEAPONS, 0, header_size)
+        names, at = [], 16
+        for _ in range(count):
+            end = listing.index(b"\0", at + 8)
+            names.append(listing[at + 8:end].decode("latin-1"))
+            at = end + 1
+        return {name[:-2]: export_fighters.pack(disc, name[:-2])
+                for name in names if re.fullmatch(r"V2WP_\d{3}[A-Z]\.o", name)}
+    finally:
+        retail.decode_packet, export_fighters.read_member = original
+
+
+def weapon_table(xml: bytes) -> dict[str, dict]:
+    """weapon.xml: grip/carry placements and material per weapon (`nm` = V2WP_<nm>)."""
+    rows = {}
+    for body in blocks(xml.decode("shift_jis", errors="replace").replace("\r", ""), "weapon"):
+        fields = dict(re.findall(r"<(\w+)>([^<]*)</\w+>", body))
+        rows[fields.pop("nm").strip()] = {k: ([float(x) for x in v.split(",")] if "," in v else v.strip())
+                                          for k, v in fields.items()}
+    return rows
+
+
+def build_weapons(iso: Path) -> dict[str, bytes]:
+    disc = Disc(str(iso))
+    try:
+        models = weapon_models(disc)
+        xml = member(disc, WEAPONS, "weapon.xml")
+    finally:
+        disc.close()
+    table = weapon_table(xml)
+    files = {f"{name}.skin.gz": blob for name, blob in models.items()}
+    index = {name: {"file": f"{name}.skin.gz", **table.get(name[6:], {})} for name in sorted(models)}
+    files["index.json"] = (json.dumps({"format": "def-jam-ps2-weapons/1", "sourceSha256": sha256(xml),
+                                       "models": index}, indent=1) + "\n").encode()
+    return files
+
+
 # ---------------------------------------------------------------- build
 
 def optional(fn, *args, default):
@@ -596,8 +675,11 @@ def build(iso: Path, venue: str = "V2BG_02A") -> dict[str, bytes]:
         "venueMorphs": own["morphs"] if own else [],
         "environmentAttacks": optional(environment_attacks, stage_xml, default=[]),
         "nearCrowd": optional(placements, objects_xml, "crowdposition", "crowd", default=[]),
-        "weapons": optional(placements, objects_xml, "weaponposition", "weapon", default=[]),
+        "weapons": [{**w, "model": "V2WP_" + w["name"].split("_")[-1]}
+                    for w in optional(placements, objects_xml, "weaponposition", "weapon", default=[])],
         "hiddenWeapons": optional(lambda: values(section(stage_xml, "hiddenweapon"), "name"), default=[]),
+        "hiddenWeaponModels": optional(lambda: ["V2WP_" + n.split("_")[-1]
+                                                for n in values(section(stage_xml, "hiddenweapon"), "name")], default=[]),
         "crowdGroup": optional(lambda: {k: int(values(stage_xml, f"crowdgroup{k}num")[0])
                                         for k in ("normal", "reduced")}, default=None),
         "crowdModelRatio": optional(lambda: {tag: vector(values(section(stage_xml, "crowdsmodelratio"), tag)[0])
@@ -672,6 +754,16 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 path.write_bytes(blob)
     if args.venue == "all":
+        for name, blob in build_weapons(args.iso).items():
+            path = OUTPUT.parent / "weapons" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if args.check:
+                same = path.exists() and (gzip.decompress(path.read_bytes()) == gzip.decompress(blob)
+                                          if name.endswith(".gz") else path.read_bytes() == blob)
+                if not same:
+                    bad.append("weapons/" + name)
+            else:
+                path.write_bytes(blob)
         blob = (json.dumps(index, indent=1) + "\n").encode()
         path = OUTPUT.parent / "index.json"
         if args.check:

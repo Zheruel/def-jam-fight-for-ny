@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import test from "node:test";
 import { irradiance, sampleIrradiance } from "./irradiance.mjs";
-import { crowdFrame, instancePhase, parseCrowd, parseProps, placementMatrix } from "./scenery.mjs";
+import { parseSkinned, crowdFrame, instancePhase, parseCrowd, parseProps, placementMatrix } from "./scenery.mjs";
 
 const readBuffer = url => {
   const bytes = gunzipSync(readFileSync(url));
@@ -130,4 +130,25 @@ test("irradiance lighting: every venue setting has two coherent light sets and t
   const up = irradiance(sampleIrradiance(set, [0, 10, 0]), [0, 1, 0]);
   const down = irradiance(sampleIrradiance(set, [0, 10, 0]), [0, -1, 0]);
   assert.ok(up[0] > down[0], "the Foundation is lit from above");
+});
+
+test("weapon models: all 55 V2WP meshes parse and every venue placement names one", () => {
+  const dir = new URL("./", import.meta.url);
+  const { models } = JSON.parse(readFileSync(new URL("weapons/index.json", dir), "utf8"));
+  assert.equal(Object.keys(models).length, 55);
+  for (const [name, entry] of Object.entries(models)) {
+    const { mesh, textures } = parseSkinned(readBuffer(new URL(`weapons/${entry.file}`, dir)));
+    assert.equal(mesh.model, name);
+    assert.equal(mesh.bones.length, 1, name);
+    for (const b of mesh.batches) assert.ok(textures.has(b.shape) && b.count % 3 === 0, name);
+  }
+  assert.equal(models.V2WP_029A.pt, "BEER");
+  const index = JSON.parse(readFileSync(new URL("index.json", dir), "utf8"));
+  let placed = 0;
+  for (const entry of Object.values(index)) {
+    const manifest = JSON.parse(readFileSync(new URL(`${entry.dir}/scenery.json`, dir), "utf8"));
+    for (const w of manifest.weapons) { placed++; assert.ok(models[w.model], w.name); }
+    for (const m of manifest.hiddenWeaponModels) assert.ok(models[m], m);
+  }
+  assert.ok(placed >= 10);
 });

@@ -50,7 +50,11 @@ node port/scenery/compare.mjs      # headless Chrome; no emulator
 
 Undecoded props are skinned, bone-animated models (`*_Skin` microcode, e.g. the Gun Hill Garage cars) or use a VIF layout `port/geometry/venues.py` does not handle; they are listed by name in `scenery.json` `undecodedProps`.
 
-Not decoded: the `nearCrowd` characters (modular V2CM people with their `animcr` clips; see below), weapon/bottle models (`V2WP.VIV`), prop colour morphs (`V2BG_02A_A1.o`…), the per-instance retail animation phase, instance variant 5, the rim and shadow light terms in `.irr`, and the engine's ambient mix into the first coefficient.
+Not decoded: the `nearCrowd` characters (modular V2CM people with their `animcr` clips; see below), prop colour morphs (`V2BG_02A_A1.o`…), the per-instance retail animation phase, instance variant 5, the rim and shadow light terms in `.irr`, and the engine's ambient mix into the first coefficient.
+
+## Weapons and bottles
+
+`weapons/` holds all 55 `V2WP_nnnX` models from `V2WP.VIV` as DJF1 skinned meshes (the fighter container; one bone, drawn in bind pose) with `weapons/index.json` carrying each weapon's `weapon.xml` data (material `pt`, grips `fp/bp/cp/dp`, hand `hd`). Their packets batch fewer vertices than a fighter's, so the extractor reads the VU addresses from the packet instead of using `retail.decode_packet`'s fixed ones. A venue's `scenery.json` lists `weapons` (placements with `model`) and `hiddenWeaponModels`; `loadScenery` fetches those models and the renderer draws them (`weapons: {name: false}` hides one, `hiddenWeapons: true` shows the pillar weapons that appear when a pillar breaks). The Foundation's two bottles on the speakers match the retail frame (speaker correlation 0.79 to 0.88).
 
 ## Irradiance lighting
 
