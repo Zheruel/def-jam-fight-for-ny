@@ -25,7 +25,7 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
     venue: Math.max(0, found),
   };
   // With more than two fighters every fighter is distinct (the kernel profiles a fighter by its id), so a repeated pick moves on.
-  const taken = (seat, index) => seats > 2 && state.seats.some((s, i) => i !== seat && s.cursor === index);
+  const taken = (seat, index) => seats > 2 && state.seats.some((s, i) => i !== seat && roster[s.cursor].name === roster[index].name);
   state.seats.forEach((s, i) => { while (taken(i, s.cursor)) s.cursor = (s.cursor + 1) % roster.length; });
 
   const columnOf = i => i % columns, rowOf = i => Math.floor(i / columns);
@@ -34,7 +34,7 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
     let next = s.cursor;
     if (dx) next = (s.cursor + dx + roster.length) % roster.length;   // left/right walk the list and wrap
     if (dy) next = Math.min(last, Math.max(0, s.cursor + dy * columns));
-    if (taken(seat, next) && dx) next = (next + dx + roster.length) % roster.length;
+    while (dx && taken(seat, next)) next = (next + dx + roster.length) % roster.length;
     if (!taken(seat, next)) s.cursor = next;
   }
 

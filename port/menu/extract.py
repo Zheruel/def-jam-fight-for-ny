@@ -115,16 +115,19 @@ def export(iso, output: Path):
         stats = {f["handle"].lower(): f for f in combat}
         roster = []
         for ident, record in sorted(by_id.items()):
-            lettering, portrait = f"screens/match/3_fighters/l_ML_{ident}_2p.big", f"screens/match/3_fighters/p_ML_{ident + 1}_2p.big"
-            if not (source.has(lettering) and source.has(portrait)):
-                continue
-            name_png = next(iter(source.pictures(lettering).values()))
-            pieces = list(source.pictures(portrait).values())
-            head = next(p for p in pieces if size(p) == (256, 256))
-            chest = next(p for p in pieces if size(p) == (256, 80))
-            write(output / f"fighters/{ident}-n.png", name_png)
-            write(output / f"fighters/{ident}-h.png", head)
-            write(output / f"fighters/{ident}-c.png", chest)
+            if record["model"] == "V2IP_999A":
+                from hero_portrait import export_hero
+                export_hero(ROOT, output / "fighters")
+            else:
+                # The four late roster replacements kept the outgoing fighters' XML IDs.
+                # Their own front-end lettering and portraits use separate loading-card IDs.
+                art_id = {"Teck": 85, "Erick Sermon": 91, "O.E.": 92, "Santos": 93}.get(record["name"], ident)
+                lettering = f"screens/match/3_fighters/l_ML_{art_id}_2p.big"
+                portrait = f"screens/match/3_fighters/p_ML_{art_id + 1}_2p.big"
+                write(output / f"fighters/{ident}-n.png", next(iter(source.pictures(lettering).values())))
+                pieces = list(source.pictures(portrait).values())
+                write(output / f"fighters/{ident}-h.png", next(p for p in pieces if size(p) == (256, 256)))
+                write(output / f"fighters/{ident}-c.png", next(p for p in pieces if size(p) == (256, 80)))
             c = stats.get(record["handle"].lower())
             roster.append({"id": ident, "handle": record["handle"], "name": record["name"], "model": record["model"],
                            "stats": c["stats"] if c else None, "styles": c["styles"] if c else []})

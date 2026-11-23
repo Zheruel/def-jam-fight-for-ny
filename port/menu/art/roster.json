@@ -621,6 +621,41 @@
   ]
  },
  {
+  "id": 40,
+  "handle": "0x0700000E",
+  "name": "Teck",
+  "model": "V2IP_305A",
+  "stats": {
+   "upperPower": 30,
+   "lowerPower": 47,
+   "speed": 33,
+   "toughness": 50,
+   "health": 47,
+   "charisma": 27
+  },
+  "styles": [
+   "kickboxing",
+   "martialArts"
+  ]
+ },
+ {
+  "id": 41,
+  "handle": "0x07000048",
+  "name": "Santos",
+  "model": "V2IP_204A",
+  "stats": {
+   "upperPower": 27,
+   "lowerPower": 50,
+   "speed": 40,
+   "toughness": 47,
+   "health": 27,
+   "charisma": 27
+  },
+  "styles": [
+   "kickboxing"
+  ]
+ },
+ {
   "id": 43,
   "handle": "0x07000014",
   "name": "Memphis Bleek",
@@ -759,6 +794,23 @@
   "styles": [
    "streetfighting",
    "wrestling"
+  ]
+ },
+ {
+  "id": 52,
+  "handle": "0x0700000B",
+  "name": "O.E.",
+  "model": "V2IP_308A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 27,
+   "speed": 43,
+   "toughness": 40,
+   "health": 30,
+   "charisma": 43
+  },
+  "styles": [
+   "streetfighting"
   ]
  },
  {
@@ -1157,6 +1209,24 @@
   ]
  },
  {
+  "id": 78,
+  "handle": "0x07000000",
+  "name": "Erick Sermon",
+  "model": "V2IP_102A",
+  "stats": {
+   "upperPower": 47,
+   "lowerPower": 47,
+   "speed": 30,
+   "toughness": 50,
+   "health": 27,
+   "charisma": 33
+  },
+  "styles": [
+   "streetfighting",
+   "wrestling"
+  ]
+ },
+ {
   "id": 80,
   "handle": "0x0700001D",
   "name": "Sticky Fingaz",
@@ -1241,6 +1311,25 @@
   "styles": [
    "wrestling",
    "submissions"
+  ]
+ },
+ {
+  "id": 141,
+  "handle": "0x07000042",
+  "name": "Hero",
+  "model": "V2IP_999A",
+  "stats": {
+   "upperPower": 50,
+   "lowerPower": 50,
+   "speed": 50,
+   "toughness": 50,
+   "health": 50,
+   "charisma": 50
+  },
+  "styles": [
+   "kickboxing",
+   "streetfighting",
+   "wrestling"
   ]
  }
 ]

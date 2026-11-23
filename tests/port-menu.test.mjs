@@ -13,6 +13,7 @@ const roster = art("roster.json"), venues = art("venues.json");
 const options = { roster, venues, picks: ["0x07000030", "0x07000025"], venue: "V2BG_02A" };
 
 test("the roster and venues come from the game's inventory", () => {
+  assert.equal(new Set(roster.map(f => f.handle)).size, inventory.fighters.length);
   for (const f of roster) assert.ok(inventory.fighters.some(i => i.handle === f.handle && i.fighterXml.ID === f.id));
   assert.equal(venues.length, inventory.venues.length);
   venues.forEach(v => assert.ok(v.pin, `${v.name} has a map pin`));
@@ -112,4 +113,16 @@ test("CPU seats are the last ones, always leave a person, and travel as ?cpu=N",
   const query = selectionQuery(s.result());
   const parsed = parseBattleQuery(query, { fighters: inventory.fighters, venues: inventory.venues, ffa: true });
   assert.equal(parsed.cpu, 1);
+});
+
+test("the multiplayer selector keeps the displayed fighter when other seats occupy adjacent cells or name variants", () => {
+  const s = createSelection({ ...options, mode: "ffa", seats: 4, picks: roster.slice(0, 4).map(f => f.handle) });
+  s.press(0, "right");
+  assert.equal(s.state.seats[0].cursor, 4);
+  const blaze = roster.map((f, i) => [f, i]).filter(([f]) => f.name === "Blaze");
+  assert.ok(s.pickFighter(1, blaze[0][1]));
+  assert.equal(s.pickFighter(0, blaze[1][1]), false);
+  const result = s.result();
+  const query = parseBattleQuery(selectionQuery(result), { fighters: inventory.fighters, venues: inventory.venues, ffa: true });
+  assert.deepEqual(query.handles, result.handles);
 });
