@@ -1,0 +1,1460 @@
+{
+ "format": "def-jam-audio-events/1",
+ "eventSystem": {
+  "classes": [
+   {
+    "name": "A1cpWhooshes",
+    "a1c": 324
+   },
+   {
+    "name": "A1cpCrowd_Cheer",
+    "a1c": 1175
+   },
+   {
+    "name": "A1cpBling_Chain",
+    "a1c": 2423
+   },
+   {
+    "name": "A1cpFoot_Pillar",
+    "a1c": 3218
+   },
+   {
+    "name": "A1cbPunch_Kick",
+    "a1c": 4734
+   },
+   {
+    "name": "A1cpGrunts",
+    "a1c": 6605
+   },
+   {
+    "name": "A1cpWeapon_Grab",
+    "a1c": 7352
+   },
+   {
+    "name": "A1cpOmni_Event",
+    "a1c": 8111
+   },
+   {
+    "name": "A1cpWeapon_Break",
+    "a1c": 8368
+   },
+   {
+    "name": "A1ceGlobal_Crowd_fade",
+    "a1c": 8688
+   },
+   {
+    "name": "A1cpFE_SFX",
+    "a1c": 9707
+   },
+   {
+    "name": "A1cpPunch_Kick",
+    "a1c": 12531
+   },
+   {
+    "name": "A1cpFeet_cycle",
+    "a1c": 12984
+   },
+   {
+    "name": "A1ceAudio_engine_start",
+    "a1c": 13206
+   },
+   {
+    "name": "A1cbCrowd_Oh",
+    "a1c": 13529
+   },
+   {
+    "name": "A1cpSurface_Hit",
+    "a1c": 13936
+   },
+   {
+    "name": "A1ceCrowd_Boo",
+    "a1c": 16348
+   },
+   {
+    "name": "A1cpWeapon_Strike",
+    "a1c": 16476
+   },
+   {
+    "name": "A1cpGlobal_Ducker_Event",
+    "a1c": 16776
+   },
+   {
+    "name": "A1cpCrowd_Oh",
+    "a1c": 17475
+   },
+   {
+    "name": "A1cpHand_Slap",
+    "a1c": 17559
+   },
+   {
+    "name": "A1cpFeet",
+    "a1c": 17584
+   },
+   {
+    "name": "A1ceGlobal_Ducker_Event",
+    "a1c": 18077
+   },
+   {
+    "name": "A1ceFire_loop",
+    "a1c": 18106
+   },
+   {
+    "name": "A1cpFalls",
+    "a1c": 18963
+   },
+   {
+    "name": "A1cpPauseMenu_SFX",
+    "a1c": 19787
+   },
+   {
+    "name": "A1cpWeapon_Drop",
+    "a1c": 24702
+   },
+   {
+    "name": "A1ceCrowd_Cheer",
+    "a1c": 26409
+   },
+   {
+    "name": "A1cpGrunts_cycle",
+    "a1c": 27804
+   },
+   {
+    "name": "A1ceC_Moments_state",
+    "a1c": 28807
+   },
+   {
+    "name": "A1cpFire_loop",
+    "a1c": 29346
+   },
+   {
+    "name": "A1ceMoment_SFX",
+    "a1c": 29900
+   },
+   {
+    "name": "A1cpEnvironmental_Smash",
+    "a1c": 31305
+   }
+  ],
+  "objects": [
+   {
+    "name": "Grunts_cycle",
+    "a1c": 609
+   },
+   {
+    "name": "Points_Move",
+    "a1c": 839
+   },
+   {
+    "name": "Falls",
+    "a1c": 897
+   },
+   {
+    "name": "Rope",
+    "a1c": 1428
+   },
+   {
+    "name": "Bling_Chain",
+    "a1c": 1549
+   },
+   {
+    "name": "Barber_BG",
+    "a1c": 1573
+   },
+   {
+    "name": "PauseMenu_SFX",
+    "a1c": 2345
+   },
+   {
+    "name": "MusicShop_BG",
+    "a1c": 2749
+   },
+   {
+    "name": "Blood_Gush",
+    "a1c": 2906
+   },
+   {
+    "name": "Crowd_Cheer",
+    "a1c": 3053
+   },
+   {
+    "name": "Audio_engine_start",
+    "a1c": 3131
+   },
+   {
+    "name": "Weapon_Drop",
+    "a1c": 3911
+   },
+   {
+    "name": "Blood_Sweat",
+    "a1c": 4958
+   },
+   {
+    "name": "Special_Chest",
+    "a1c": 5520
+   },
+   {
+    "name": "Special_Boob",
+    "a1c": 6237
+   },
+   {
+    "name": "Land",
+    "a1c": 6482
+   },
+   {
+    "name": "Whooshes",
+    "a1c": 7307
+   },
+   {
+    "name": "Special_Punch",
+    "a1c": 7646
+   },
+   {
+    "name": "Blazin_sfx",
+    "a1c": 8195
+   },
+   {
+    "name": "Blaze_Alarm",
+    "a1c": 8211
+   },
+   {
+    "name": "Feet_cycle",
+    "a1c": 9017
+   },
+   {
+    "name": "Hand_Slap",
+    "a1c": 9286
+   },
+   {
+    "name": "Amb_train",
+    "a1c": 9585
+   },
+   {
+    "name": "Rail_Hit",
+    "a1c": 9727
+   },
+   {
+    "name": "Fight_Bell",
+    "a1c": 9968
+   },
+   {
+    "name": "Crib_BG",
+    "a1c": 10052
+   },
+   {
+    "name": "Turnbuckle_Hit",
+    "a1c": 10076
+   },
+   {
+    "name": "Text_Typing",
+    "a1c": 10185
+   },
+   {
+    "name": "Taunt",
+    "a1c": 11764
+   },
+   {
+    "name": "Combo_Stab",
+    "a1c": 12384
+   },
+   {
+    "name": "Special_Ass",
+    "a1c": 12533
+   },
+   {
+    "name": "Punch_Kick",
+    "a1c": 12636
+   },
+   {
+    "name": "Weapon_Break",
+    "a1c": 12831
+   },
+   {
+    "name": "Ceiling_Crane",
+    "a1c": 13973
+   },
+   {
+    "name": "Foley_Fx",
+    "a1c": 14472
+   },
+   {
+    "name": "C_Moments_state",
+    "a1c": 14925
+   },
+   {
+    "name": "Grunts",
+    "a1c": 15348
+   },
+   {
+    "name": "Weapon_Strike",
+    "a1c": 15374
+   },
+   {
+    "name": "Chops",
+    "a1c": 15523
+   },
+   {
+    "name": "Feet",
+    "a1c": 15653
+   },
+   {
+    "name": "Special_Kick",
+    "a1c": 16465
+   },
+   {
+    "name": "FE_SFX",
+    "a1c": 17358
+   },
+   {
+    "name": "Burn_Yell",
+    "a1c": 17493
+   },
+   {
+    "name": "Tattoo_BG",
+    "a1c": 17772
+   },
+   {
+    "name": "Fire_loop",
+    "a1c": 17896
+   },
+   {
+    "name": "C_TauntEvent",
+    "a1c": 18124
+   },
+   {
+    "name": "Environmental_Smash",
+    "a1c": 19090
+   },
+   {
+    "name": "Global_Crowd_fade",
+    "a1c": 19621
+   },
+   {
+    "name": "ClothingStore_BG",
+    "a1c": 20504
+   },
+   {
+    "name": "Falling_Wood",
+    "a1c": 21268
+   },
+   {
+    "name": "Muscle",
+    "a1c": 21602
+   },
+   {
+    "name": "Vib",
+    "a1c": 22101
+   },
+   {
+    "name": "DJ_Speech",
+    "a1c": 22198
+   },
+   {
+    "name": "Groin_Punch",
+    "a1c": 22234
+   },
+   {
+    "name": "Police_Station_BG",
+    "a1c": 22464
+   },
+   {
+    "name": "Extro",
+    "a1c": 22608
+   },
+   {
+    "name": "Crowd_Boo",
+    "a1c": 22775
+   },
+   {
+    "name": "Face_Hits",
+    "a1c": 22815
+   },
+   {
+    "name": "Surface_Hit",
+    "a1c": 22857
+   },
+   {
+    "name": "Intro",
+    "a1c": 24076
+   },
+   {
+    "name": "Crowd_Oh",
+    "a1c": 24280
+   },
+   {
+    "name": "Foot_Pillar",
+    "a1c": 24430
+   },
+   {
+    "name": "Jewelry_BG",
+    "a1c": 26078
+   },
+   {
+    "name": "Char_Speech",
+    "a1c": 26537
+   },
+   {
+    "name": "Special_Cork",
+    "a1c": 26561
+   },
+   {
+    "name": "Bone_Crunch",
+    "a1c": 26651
+   },
+   {
+    "name": "Moment_SFX",
+    "a1c": 27627
+   },
+   {
+    "name": "Count",
+    "a1c": 28076
+   },
+   {
+    "name": "Omni_Event",
+    "a1c": 29098
+   },
+   {
+    "name": "City_BG",
+    "a1c": 29386
+   },
+   {
+    "name": "Weapon_Grab",
+    "a1c": 29569
+   },
+   {
+    "name": "Global_Ducker_Event",
+    "a1c": 30402
+   },
+   {
+    "name": "Transition_sfx",
+    "a1c": 30426
+   },
+   {
+    "name": "Random_Generator",
+    "a1c": 31225
+   },
+   {
+    "name": "Body_Contacts",
+    "a1c": 32032
+   },
+   {
+    "name": "Traffiker_BG",
+    "a1c": 32375
+   }
+  ]
+ },
+ "soundClasses": [
+  [
+   null,
+   0
+  ],
+  [
+   28,
+   524546
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   19,
+   524546
+  ],
+  [
+   22,
+   524546
+  ],
+  [
+   22,
+   524546
+  ],
+  [
+   22,
+   524546
+  ],
+  [
+   29,
+   524546
+  ],
+  [
+   29,
+   524546
+  ],
+  [
+   25,
+   524546
+  ],
+  [
+   2,
+   524546
+  ],
+  [
+   530,
+   65794
+  ],
+  [
+   32,
+   524546
+  ],
+  [
+   23,
+   524546
+  ],
+  [
+   33,
+   524546
+  ],
+  [
+   9,
+   524546
+  ],
+  [
+   12,
+   65794
+  ],
+  [
+   0,
+   524546
+  ],
+  [
+   3,
+   524546
+  ],
+  [
+   27,
+   524546
+  ],
+  [
+   15,
+   524545
+  ],
+  [
+   26,
+   524546
+  ],
+  [
+   8,
+   459010
+  ],
+  [
+   31,
+   65794
+  ],
+  [
+   21,
+   524546
+  ],
+  [
+   13,
+   524546
+  ],
+  [
+   14,
+   524546
+  ],
+  [
+   1,
+   524546
+  ],
+  [
+   34,
+   524546
+  ],
+  [
+   20,
+   524546
+  ],
+  [
+   17,
+   524546
+  ],
+  [
+   24,
+   524546
+  ],
+  [
+   16,
+   524546
+  ],
+  [
+   37,
+   524546
+  ],
+  [
+   7,
+   524545
+  ],
+  [
+   6,
+   524546
+  ],
+  [
+   11,
+   524546
+  ],
+  [
+   10,
+   524546
+  ],
+  [
+   35,
+   590081
+  ],
+  [
+   5,
+   524546
+  ],
+  [
+   39,
+   524546
+  ],
+  [
+   36,
+   131331
+  ],
+  [
+   528,
+   590082
+  ],
+  [
+   18,
+   197121
+  ],
+  [
+   500,
+   262658
+  ],
+  [
+   522,
+   393729
+  ],
+  [
+   38,
+   328194
+  ],
+  [
+   521,
+   262658
+  ],
+  [
+   519,
+   328194
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   502,
+   131331
+  ],
+  [
+   502,
+   131331
+  ],
+  [
+   502,
+   131331
+  ],
+  [
+   535,
+   590082
+  ],
+  [
+   525,
+   524546
+  ],
+  [
+   512,
+   524545
+  ],
+  [
+   524,
+   524546
+  ],
+  [
+   531,
+   524546
+  ],
+  [
+   529,
+   524546
+  ],
+  [
+   503,
+   524546
+  ],
+  [
+   526,
+   524546
+  ],
+  [
+   508,
+   524546
+  ],
+  [
+   507,
+   131331
+  ],
+  [
+   510,
+   524545
+  ],
+  [
+   518,
+   524546
+  ],
+  [
+   517,
+   65794
+  ],
+  [
+   506,
+   524546
+  ],
+  [
+   null,
+   590082
+  ],
+  [
+   null,
+   590082
+  ],
+  [
+   520,
+   131331
+  ],
+  [
+   527,
+   524545
+  ],
+  [
+   4,
+   590082
+  ],
+  [
+   515,
+   65793
+  ],
+  [
+   513,
+   524546
+  ],
+  [
+   514,
+   524546
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   524546
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   516,
+   328193
+  ],
+  [
+   520,
+   65794
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   null,
+   0
+  ],
+  [
+   536,
+   524546
+  ],
+  [
+   536,
+   524546
+  ],
+  [
+   536,
+   524546
+  ],
+  [
+   536,
+   524546
+  ]
+ ],
+ "snd": {
+  "packer": 2414040,
+  "post": 2411832,
+  "postPointer": 3708744,
+  "playing": 1228416,
+  "note": "post(eventWord, argc, args...) queues {eventWord, args[argc]}; eventWord = a0<<24|a1<<16|id"
+ },
+ "dispatch": [
+  {
+   "pc": 1206468,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24686,
+   "post": {
+    "argc": 1,
+    "args": [
+     1,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1206524,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24686,
+   "post": {
+    "argc": 1,
+    "args": [
+     2,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1206580,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24686,
+   "post": {
+    "argc": 1,
+    "args": [
+     4,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1206636,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24686,
+   "post": {
+    "argc": 1,
+    "args": [
+     8,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1206692,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24686,
+   "post": {
+    "argc": 1,
+    "args": [
+     16,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1206748,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24686,
+   "post": {
+    "argc": 1,
+    "args": [
+     32,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1208520,
+   "function": 1203120,
+   "a0": 3,
+   "a1": 0,
+   "id": 24705,
+   "post": {
+    "argc": 0,
+    "args": [
+     24705,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1282936,
+    1395328,
+    1395368,
+    1395508,
+    1395540
+   ]
+  },
+  {
+   "pc": 1209016,
+   "function": 1208796,
+   "a0": 1,
+   "a1": 0,
+   "id": 8254,
+   "post": {
+    "argc": 3,
+    "args": [
+     null,
+     2,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1209068,
+   "function": 1208796,
+   "a0": null,
+   "a1": 0,
+   "id": 8253,
+   "post": {
+    "argc": 3,
+    "args": [
+     2,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1210324,
+   "function": 1209936,
+   "a0": 6,
+   "a1": 0,
+   "id": 49282,
+   "post": {
+    "argc": 0,
+    "args": [
+     49282,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1634108,
+    1634148,
+    1634188,
+    1634232
+   ]
+  },
+  {
+   "pc": 1210376,
+   "function": 1209936,
+   "a0": 6,
+   "a1": 0,
+   "id": 49284,
+   "post": {
+    "argc": 0,
+    "args": [
+     49284,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1634108,
+    1634148,
+    1634188,
+    1634232
+   ]
+  },
+  {
+   "pc": 1222952,
+   "function": 1222580,
+   "a0": 4,
+   "a1": 0,
+   "id": 32771,
+   "post": {
+    "argc": 2,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1223324,
+   "function": 1223040,
+   "a0": 1,
+   "a1": 0,
+   "id": 8220,
+   "post": {
+    "argc": 2,
+    "args": [
+     4,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1231116,
+    1231156,
+    1247084,
+    1249724
+   ]
+  },
+  {
+   "pc": 1228660,
+   "function": 1228492,
+   "a0": 1,
+   "a1": 0,
+   "id": 8214,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1235524,
+   "function": 1233680,
+   "a0": 1,
+   "a1": 0,
+   "id": 8239,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1232648,
+    1246288,
+    1249748,
+    1251028,
+    1251184,
+    1251460
+   ]
+  },
+  {
+   "pc": 1237656,
+   "function": 1235896,
+   "a0": 1,
+   "a1": 0,
+   "id": 8238,
+   "post": {
+    "argc": 2,
+    "args": [
+     4,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1237752,
+   "function": 1235896,
+   "a0": 0,
+   "a1": 0,
+   "id": 1,
+   "post": {
+    "argc": 3,
+    "args": [
+     null,
+     4,
+     1
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1237848,
+   "function": 1235896,
+   "a0": 0,
+   "a1": 0,
+   "id": 2,
+   "post": {
+    "argc": 3,
+    "args": [
+     null,
+     2,
+     1
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1237952,
+   "function": 1235896,
+   "a0": 0,
+   "a1": 0,
+   "id": 3,
+   "post": {
+    "argc": 3,
+    "args": [
+     null,
+     8,
+     1
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1238060,
+   "function": 1235896,
+   "a0": 0,
+   "a1": 0,
+   "id": 0,
+   "post": {
+    "argc": 3,
+    "args": [
+     null,
+     1,
+     1
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1238164,
+   "function": 1235896,
+   "a0": 5,
+   "a1": 0,
+   "id": 40964,
+   "post": {
+    "argc": 3,
+    "args": [
+     null,
+     2,
+     1
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1243976,
+   "function": 1235896,
+   "a0": 2,
+   "a1": 0,
+   "id": 16441,
+   "post": {
+    "argc": 4,
+    "args": [
+     null,
+     16,
+     1
+    ]
+   },
+   "callers": [
+    1232940
+   ]
+  },
+  {
+   "pc": 1246076,
+   "function": 1245668,
+   "a0": 1,
+   "a1": 0,
+   "id": 8212,
+   "post": {
+    "argc": 3,
+    "args": [
+     2,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1246128,
+   "function": 1245668,
+   "a0": 1,
+   "a1": 0,
+   "id": 8197,
+   "post": {
+    "argc": 3,
+    "args": [
+     2,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1246376,
+   "function": 1246256,
+   "a0": 1,
+   "a1": 0,
+   "id": 8211,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1248644,
+   "function": 1248564,
+   "a0": 1,
+   "a1": 0,
+   "id": 8242,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1249836,
+   "function": 1249528,
+   "a0": 1,
+   "a1": 0,
+   "id": 8243,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1250080,
+   "function": 1249904,
+   "a0": 1,
+   "a1": 0,
+   "id": 8228,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1250500,
+   "function": 1250176,
+   "a0": 1,
+   "a1": 0,
+   "id": 8227,
+   "post": {
+    "argc": 2,
+    "args": [
+     4,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1251988,
+   "function": 1251720,
+   "a0": 1,
+   "a1": 0,
+   "id": 8244,
+   "post": {
+    "argc": 1,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": []
+  },
+  {
+   "pc": 1253808,
+   "function": 1253560,
+   "a0": 1,
+   "a1": 0,
+   "id": 8215,
+   "post": {
+    "argc": 2,
+    "args": [
+     null,
+     null,
+     null
+    ]
+   },
+   "callers": [
+    1238484
+   ]
+  },
+  {
+   "pc": 2424852,
+   "function": 2424672,
+   "a0": null,
+   "a1": null,
+   "id": null,
+   "post": null,
+   "callers": [
+    2406628,
+    2406784
+   ]
+  }
+ ]
+}
