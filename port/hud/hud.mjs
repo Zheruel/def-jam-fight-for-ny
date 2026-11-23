@@ -75,7 +75,7 @@ export async function createHud(gl) {
   const LOWER={top:352,axis:444.5,nameHeight:17,scoreHeight:20};
   function drawSeat(context,actor,seat,[hp,mp,score],popup,tick) {
     const id="p"+(seat%2+1),lowerSeat=seat>=2,right=seat%2===1;
-    const out=actor.health<1;
+    const out=actor.eliminated;
     context.save();
     context.setTransform(right?-1:1,0,0,lowerSeat?-1:1,right?640:0,lowerSeat?LOWER.axis-LOWER.top:0);
     context.drawImage(border,...anchors.pos_p1_mainBarContainer);
@@ -83,7 +83,7 @@ export async function createHud(gl) {
     if(mp>0)context.drawImage(gold,0,0,mp,8,...anchors.pos_p1_momentumBar,mp,8);
     context.restore();
     const [nx,ny]=anchors["text_"+id+"_name"],[sx,sy]=anchors["text_"+id+"_totalscore"];
-    // A fighter whose health the referee has zeroed is out of the match: dimmed text and a K.O. tag in the empty bar.
+    // The retail referee marks eliminated fighters independently of the health bar.
     context.globalAlpha=out?0.45:1;
     const align=right?"right":"left";
     const row=(y,height)=>lowerSeat?LOWER.axis-LOWER.top-y-height:y;
@@ -107,7 +107,7 @@ export async function createHud(gl) {
   // `rematch` (port/hud/rematch.mjs) is the YES/NO choice; its card replaces the banner's plain rematch line.
   return function draw({actors,ticks,outcome,rematch}) {
     const second=Math.floor(ticks/60);
-    const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin]);
+    const bars=actors.map(a=>[Math.round(208*a.health/a.maxHealth),Math.round(125*a.momentum/100),a.score,a.blazin,a.eliminated]);
     const four=actors.length>2;
     if(four) {
       popups=popups.slice(0,actors.length);

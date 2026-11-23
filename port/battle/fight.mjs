@@ -171,7 +171,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
   function diagnostics() {
     return {ticks,voice:voice?.diagnostics(),actors: actors.map((a,i)=>({name:fighters[i].record?.name,action:word(a+0x80),state:word(a+0x30),
       frame:scalar(a+0x9c),position:readVector(a+0x44),health:scalar(a+0x350),maxHealth:scalar(a+0x354),
-      score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
+      eliminated:Boolean(memory.getUint16(a+0x932,true)&0x200),score:word(a+0x480),momentum:scalar(a+0x364),blazin:memory.getUint8(a+0x93e)&3})),outcome:outcome.read()};
   }
   return { states, tick, restart, setVoicePlayer(player) {voice=player;}, rematch: restart, outcome: () => outcome.read(), diagnostics, observedPages:kernel.observedPages, memory, kernel };
 }

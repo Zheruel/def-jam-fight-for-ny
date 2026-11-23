@@ -21,10 +21,10 @@ try {
     }
     throw Error("Waiting for "+pattern+", last screen: "+text);
   }
-  const press=button=>run.press(button,{hold:12,after:80});
+  const press=async button=>{await run.waitFrames(30);await run.press(button,{hold:8,after:70});};
   await screen(/Autosave Warning/i);
-  await press("cross");await screen(/enable the autosave/i);
-  await press("cross");await screen(/which memory card slot/i);
+  await press("cross");await screen(/enable the autosave/i,"cross");
+  await press("cross");await screen(/which memory card slot/i,"cross");
   await press("cross");await screen(/NO EXCUSES/i,"start");
   await press("right");
   const mode=await screen(/DOUBLE UP|FOR HIMSELF/i);
