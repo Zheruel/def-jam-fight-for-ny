@@ -1,6 +1,6 @@
 # Native Battle library
 
-The browser calls the statically translated SLUS-21004 Battle update at 0x2dbdd0 once per simulation tick. The module contains 785 functions from the Battle region. Their original data addresses are offsets into a WebAssembly buffer. The host provides controller inputs, sampled poses, joint transforms and math services. An unimplemented engine call reports its address. The Foundation starting data holds the pages the verified match needs. Player inputs control both actors from that point onward.
+The browser calls the statically translated SLUS-21004 Battle update at 0x2dbdd0 once per simulation tick. The module includes the 785 Battle-region functions and the retail support routines listed in presentation.txt. Their original data addresses are offsets into a WebAssembly buffer. The host provides controller inputs, sampled poses, joint transforms and math services. An unimplemented engine call reports its address. The Foundation starting data holds the pages the verified match needs. Player inputs control both actors from that point onward.
 
 ## Rebuild
 
@@ -29,3 +29,5 @@ The native player loads the original MAIN_ALL.DAT through the compiled match rul
 ```sh
 python3 port/motion/extract.py private/ps2/reference.iso --check
 ```
+
+The extended combat check exercises 24,000 ticks of directional movement, strikes and grapples. It checks both fighters’ scores, finite actor positions, appearance damage and restart. Run `node verification/native-roster.mjs --endurance`.

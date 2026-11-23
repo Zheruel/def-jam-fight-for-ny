@@ -17,6 +17,35 @@ function loadFighter(record) {
   const body=JSON.parse(new TextDecoder().decode(new Uint8Array(asset,8,length)));
   return {model,body,record};
 }
+// Exercise unrecorded throws, guards, directional moves, venue collisions and damage stages.
+function sustainedMatch(match) {
+  match.restart();
+  let random=17;
+  const next=()=>{random=(Math.imul(random,1664525)+1013904223)>>>0;return random;};
+  const buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
+  let pressed=[0,0];
+  const actions=new Set(), levels=new Set();
+  for(let tick=0;tick<24000;tick++) {
+    const actors=match.diagnostics().actors;
+    const dx=actors[1].position[0]-actors[0].position[0], dz=actors[1].position[2]-actors[0].position[2];
+    const distance=Math.hypot(dx,dz);
+    if(tick%18===0) pressed=actors.map(()=>buttons[next()%buttons.length]);
+    match.tick(actors.map((actor,slot)=>{
+      actions.add(actor.action);
+      levels.add(match.states[slot].damage);
+      assert.ok(actor.position.every(Number.isFinite) && Number.isFinite(actor.health));
+      const direction=slot?-1:1;
+      return {buttons:distance>10 ? 0x2000 : tick%18<4 ? pressed[slot] : 0,
+        x:distance>7 ? direction*dx/distance : 0,z:distance>7 ? -direction*dz/distance : 0};
+    }));
+  }
+  assert.ok(actions.size>50);
+  assert.ok(levels.has(1));
+  assert.ok(match.diagnostics().actors.every(a=>a.score>1000));
+  match.restart();
+  assert.deepEqual(match.states.map(a=>a.damage),[0,0]);
+  console.log(`Sustained match advanced 24,000 ticks through ${actions.size} actions and damage levels ${Array.from(levels)}.`);
+}
 let tested=0,scored=0;
 const results=[];
 for(let index=-1;index<inventory.fighters.length;index++) {
@@ -44,6 +73,7 @@ for(let index=-1;index<inventory.fighters.length;index++) {
     if(index<0) {
       assert.deepEqual(actors.map(a=>a.score),[250,250]);
       assert.ok(maxError<0.71);
+      if(process.argv.includes("--endurance")) sustainedMatch(match);
       console.log(`Original live motions match both actors' states and actions across 460 ticks. Maximum position difference ${maxError.toFixed(3)}.`);
     } else {
       tested++;

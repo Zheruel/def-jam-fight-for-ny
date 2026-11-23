@@ -1,7 +1,11 @@
+import damage from "../port/render/damage/tiles.json" with {type:"json"};
 import inventory from "../ps2/content/inventory.json" with { type: "json" };
 
 // Runtime files shared by the local native port and the Pages deployment.
 export const portFiles = [
+  "port/scenery/scenery.mjs","port/scenery/foundation/scenery.json","port/scenery/foundation/props.scene.gz","port/scenery/foundation/crowd.bin.gz",
+  "port/render/damage.mjs","port/render/damage/tiles.json",
+  ...new Set(Object.values(damage).flatMap(levels=>Object.values(levels).map(tile=>"port/render/damage/"+tile.file))),
   ...inventory.fighters.map(({ model }) => `port/render/fighters/${model}.skin.gz`),
   ...inventory.venues.map(({ file }) => `port/geometry/venues/${file}.scene.gz`),
   "port/viewer/scene.mjs", "port/viewer/index.html", "port/viewer/viewer.mjs", "port/geometry/foundation.json",

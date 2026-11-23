@@ -17,6 +17,10 @@ export async function instantiateBattle(source, engine) {
       switch (target) {
         case 0x35e458: return registers.setFloat64(32,float(12),true);
         case 0x3608a8: return;
+        // The host owns this audio context on a single JS thread. Both native
+        // audio lock wrappers return zero after acquiring/releasing the lock.
+        case 0x2577a8:
+        case 0x257808: return result(0);
         case 0x346b54: {
           const address = arg(4), count = arg(6);
           new Uint8Array(memory.buffer,memory.byteOffset+address,count).fill(arg(5)&255);
@@ -25,6 +29,7 @@ export async function instantiateBattle(source, engine) {
         case 0x340500: return fpResult(Math.cos(float(12)));
         case 0x3406f0: return fpResult(Math.sin(float(12)));
         case 0x340fe8: return fpResult(Math.atan2(float(12),float(13)));
+        case 0x133070: return engine.damage?.(arg(4),arg(5));
         case 0x132a28: return engine.writeBone(arg(5),arg(6),arg(4),memory);
         case 0x132b48:
         case 0x132bb8: {

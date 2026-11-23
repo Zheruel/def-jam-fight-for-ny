@@ -14,6 +14,7 @@
     "test:match": "node verification/ps2-match.mjs",
     "test:native-venue": "node verification/native-venue.mjs",
     "test:native-battle": "node verification/native-combat.mjs && node verification/native-roster.mjs && node verification/native-battle.mjs",
+    "test:native-damage": "node verification/native-damage.mjs",
     "test:native-animation": "node verification/native-animation.mjs"
   }
 }

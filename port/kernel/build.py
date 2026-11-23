@@ -1,5 +1,6 @@
 """Build the AKI Battle functions as a standalone WebAssembly library."""
 import argparse
+import hashlib
 from pathlib import Path
 import re
 import subprocess
@@ -29,10 +30,11 @@ def main():
     parser.add_argument("--track",action="store_true",help="Record memory page usage for extracting match data")
     args = parser.parse_args()
     args.out.mkdir(parents=True,exist_ok=True)
+    presentation = {int(line,16) for line in (HERE/"presentation.txt").read_text().split()}
     definitions = []
     for item in sorted(args.generated.glob("sub_*_0x*.cpp")):
         address = int(item.stem.split("_0x")[-1],16)
-        if 0x2da000 <= address < 0x323000:
+        if 0x2da000 <= address < 0x323000 or address in presentation:
             definitions.append((address,item))
     if not definitions:
         raise ValueError("No Battle functions")
@@ -49,16 +51,31 @@ def main():
         entry.append(f'      {path.stem}(data,&registers,&runtime); break;')
     entry += ['    default: battle_service(site,target); registers.pc = GPR_U32((&registers),31); break;','  }','}']
     chunks = []
-    for i in range(0,len(definitions),40):
-        file = args.out / f"battle-{i//40}.cpp"
-        file.write_text('#include "abi.hpp"\n' + '\n'.join(translated_body(p) for _,p in definitions[i:i+40]))
-        chunks.append(file)
+    for group, members in (("battle",[(a,p) for a,p in definitions if a not in presentation]),
+                           ("presentation",[(a,p) for a,p in definitions if a in presentation])):
+        for i in range(0,len(members),40):
+            file = args.out / f"{group}-{i//40}.cpp"
+            file.write_text('#include "abi.hpp"\n' + '\n'.join(translated_body(p) for _,p in members[i:i+40]))
+            chunks.append(file)
     main_file = args.out / "entry.cpp"
     main_file.write_text("\n".join(entry))
-    subprocess.run([args.clang,"--target=wasm32-unknown-unknown","-std=c++20","-O1","-ffreestanding",
-                    "-fno-exceptions","-fno-rtti","-ffp-contract=off","-mbulk-memory","-nostdlib",
-                    *(["-DBATTLE_TRACK_PAGES"] if args.track else []), "-Wl,--no-entry","-Wl,--export-dynamic","-Wl,--allow-undefined","-Wl,--strip-all",
-                    "-I"+str(HERE),str(main_file),*map(str,chunks),"-o",str(args.out/"battle.wasm")],check=True)
+    flags = ["--target=wasm32-unknown-unknown","-std=c++20","-O1","-ffreestanding",
+             "-fno-exceptions","-fno-rtti","-ffp-contract=off","-mbulk-memory","-nostdlib",
+             *(["-DBATTLE_TRACK_PAGES"] if args.track else []),"-I"+str(HERE)]
+    compiler = subprocess.check_output([args.clang,"--version"])
+    common = (HERE/"abi.hpp").read_bytes() + (HERE/"entry.inc").read_bytes() + compiler + repr(flags).encode()
+    objects = []
+    for unit in [main_file,*chunks]:
+        obj=unit.with_suffix(".o")
+        tag=unit.with_suffix(".sha256")
+        digest=hashlib.sha256(common+unit.read_bytes()).hexdigest()
+        if not (obj.exists() and tag.exists() and tag.read_text()==digest):
+            subprocess.run([args.clang,*flags,"-c",str(unit),"-o",str(obj)],check=True)
+            tag.write_text(digest)
+        objects.append(obj)
+    subprocess.run([args.clang,"--target=wasm32-unknown-unknown","-nostdlib","-Wl,--no-entry",
+                    "-Wl,--export-dynamic","-Wl,--allow-undefined","-Wl,--strip-all",*map(str,objects),
+                    "-o",str(args.out/"battle.wasm")],check=True)
     print(f"Compiled {len(definitions)} Battle functions")
 
 

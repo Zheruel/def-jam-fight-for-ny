@@ -19,7 +19,7 @@ Open [the local player](http://127.0.0.1:8174). A fresh checkout fetches game co
 
 ## Native port
 
-All 75 fighter records and 24 venues can be selected in a native one-on-one match. The browser runs statically translated Battle and skeletal animation routines. It loads the motion resources for the selected fighters on demand. A local Chrome test measured 60.0 rendered frames per second at 979 × 734 during a two-hit exchange. The test replayed that exchange for every fighter in both slots. Match endings, special moves, venue interactions, audio and visual parity are still in development. [Native port and verification](port/README.md)
+All 75 fighter records and 24 venues can be selected in a native one-on-one match. The browser runs statically translated Battle and skeletal animation routines. It loads the motion resources for the selected fighters on demand. At The Foundation, the native renderer draws the original speaker stacks, lights, pillars and 60 animated background spectators. A headless Chrome test on an M5 Pro measured 60.0 rendered frames per second at 941 × 705 during a two-hit exchange. A separate gameplay test replayed the inputs with every fighter in both slots. Match endings, special moves, venue interactions, audio and visual parity are still in development. [Native port and verification](port/README.md)
 
 ## Playable reference
 

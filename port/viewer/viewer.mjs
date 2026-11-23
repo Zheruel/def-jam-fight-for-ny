@@ -89,6 +89,7 @@ async function display() {
 
   const battle = document.body.hasAttribute("data-battle");
   let fight, controls, camera, hud, paused = false, previousFrame, carry = 0, renderedFrames = 0;
+  let scenery;
   let scene, request, skinRequest, selected = [];
   const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
   const pose = gl.createBuffer();
@@ -175,7 +176,8 @@ async function display() {
     }
     gl.useProgram(program);
     gl.uniform1i(perspective,Boolean(camera));
-    if(camera) gl.uniformMatrix4fv(viewProjection,false,camera.matrix());
+    const projection=camera?.matrix();
+    if(projection) gl.uniformMatrix4fv(viewProjection,false,projection);
     gl.viewport(0, 0, width, height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -191,6 +193,10 @@ async function display() {
     gl.uniform3f(scale, size * Math.min(1, height / width), size * Math.min(1, width / height), 0.98 / (radius * 2));
     gl.uniform1i(skinned, 0);
     scene.draw();
+    if(scenery && projection) {
+      scenery.render({viewProjection:projection,tick:fight?.diagnostics().ticks??0});
+      gl.useProgram(program);
+    }
     if (selected.length) {
 
       gl.uniform1i(skinned, 1);
@@ -211,7 +217,7 @@ async function display() {
           gl.uniform3f(origin,x,0,z);
           gl.uniform1f(heading,Math.atan2(target[0]-x,target[1]-z));
         }
-        body.draw();
+        body.draw(live?.damage??0);
       });
       if (fight) hud(fight.diagnostics());
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
@@ -304,6 +310,10 @@ async function display() {
     const { foundationAudio }=await import("../audio/foundation.mjs");
     const audio=arena.file==="V2BG_02A" ? foundationAudio() : undefined;
     if(!audio) document.querySelector("#sound").hidden=true;
+    if(arena.file==="V2BG_02A") {
+      const {createSceneryRenderer,loadScenery}=await import("../scenery/scenery.mjs");
+      scenery=await createSceneryRenderer(gl,await loadScenery(arena.file));
+    }
     camera=foundationCamera();
     hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio);

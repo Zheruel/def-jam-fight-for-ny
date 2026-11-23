@@ -1,3 +1,4 @@
+import {damageTextures} from "../render/damage.mjs";
 // DJS1 keeps interleaved PS2 attributes and a shared index buffer ready for GPU upload.
 export function loadScene(model, signal) {
   return loadMesh(model, new URL(`../geometry/venues/${model}.scene.gz`, import.meta.url), signal, false);
@@ -51,7 +52,9 @@ export function uploadScene(gl, program, { mesh, vertices, indices, images, skin
   const vertexBuffer = gl.createBuffer();
   const indexBuffer = gl.createBuffer();
   const textures = new Map();
+  const damage=skinned ? damageTextures(gl,mesh.model,textures) : null;
   function dispose() {
+    damage?.dispose();
     for (const texture of textures.values()) gl.deleteTexture(texture);
     gl.deleteBuffer(vertexBuffer);
     gl.deleteBuffer(indexBuffer);
@@ -97,10 +100,10 @@ export function uploadScene(gl, program, { mesh, vertices, indices, images, skin
     return {
       bounds: mesh.bounds,
       bones: mesh.bones,
-      draw() {
+      draw(level=0) {
         gl.bindVertexArray(vao);
         for (const { shape, first, count } of mesh.batches) {
-          gl.bindTexture(gl.TEXTURE_2D, textures.get(shape));
+          gl.bindTexture(gl.TEXTURE_2D, damage ? damage.get(level,shape) : textures.get(shape));
           gl.drawElements(gl.TRIANGLES, count, indexType, first * mesh.indexBytes);
         }
       },

@@ -25,7 +25,8 @@ export function battleControls(redraw,audio) {
       const axis=controller?.axes[i]??0;
       return Number(keys.has(positive))-Number(keys.has(negative)) || (Math.abs(axis)>0.15 ? axis : 0);
     });
-    return {buttons,x,z};
+    // The native pad record expresses forward as positive. Browser Y increases downwards.
+    return {buttons,x,z:-z};
   }
   function send() {
     if (!guest || !room) return;
