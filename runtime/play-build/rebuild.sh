@@ -23,8 +23,14 @@ if [[ "$(git -C "$source_dir" rev-parse HEAD)" != "$commit" ]]; then
 fi
 git -C "$source_dir" submodule update --init --recursive --depth 1
 
-for patch_name in browser-netplay.patch browser-disc-cache.patch; do
-  patch_file="$runtime_dir/$patch_name"
+patch_files=(
+  "$runtime_dir/browser-netplay.patch"
+  "$runtime_dir/browser-disc-cache.patch"
+  "$runtime_dir/browser-webgl-samplers.patch"
+  "$runtime_dir/../../ps2/diagnostics/browser-disk-ready.patch"
+)
+for patch_file in "${patch_files[@]}"; do
+  patch_name=${patch_file##*/}
   if git -C "$source_dir" apply --reverse --check "$patch_file" 2>/dev/null; then
     echo "$patch_name is already applied."
   else

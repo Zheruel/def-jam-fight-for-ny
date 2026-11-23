@@ -1,0 +1,135 @@
+diff --git a/Source/gs/GSH_OpenGL/GSH_OpenGL.cpp b/Source/gs/GSH_OpenGL/GSH_OpenGL.cpp
+index 7eb9460f..3b65a792 100644
+--- a/Source/gs/GSH_OpenGL/GSH_OpenGL.cpp
++++ b/Source/gs/GSH_OpenGL/GSH_OpenGL.cpp
+@@ -207,7 +207,9 @@ void CGSH_OpenGL::FlipImpl(const DISPLAY_INFO& dispInfo)
+ 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+ 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+ 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
++#ifndef __EMSCRIPTEN__
+ 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_RED);
++#endif
+ 
+ 		glUseProgram(*m_presentProgram);
+ 
+@@ -1366,6 +1368,9 @@ void CGSH_OpenGL::SetupTexture(uint64 primReg, uint64 tex0Reg, uint64 tex1Reg, u
+ 	m_fragmentParams.clampMin[1] = static_cast<float>(clampMin[1]);
+ 	m_fragmentParams.clampMax[0] = static_cast<float>(clampMax[0]);
+ 	m_fragmentParams.clampMax[1] = static_cast<float>(clampMax[1]);
++#ifdef __EMSCRIPTEN__
++	m_fragmentParams.textureAlphaAsIndex = texInfo.alphaAsIndex;
++#endif
+ 	m_fragmentParams.texA0 = static_cast<float>(texA.nTA0) / 255.f;
+ 	m_fragmentParams.texA1 = static_cast<float>(texA.nTA1) / 255.f;
+ 	m_validGlState &= ~GLSTATE_FRAGMENT_PARAMS;
+@@ -1790,18 +1795,26 @@ void CGSH_OpenGL::DoRenderPass()
+ 	{
+ 		glActiveTexture(GL_TEXTURE0);
+ 		glBindTexture(GL_TEXTURE_2D, m_renderState.texture0Handle);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_renderState.texture0MinFilter);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_renderState.texture0MagFilter);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_renderState.texture0WrapS);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_renderState.texture0WrapT);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, m_renderState.texture0AlphaAsIndex ? GL_ALPHA : GL_RED);
++		if(m_renderState.texture0Handle)
++		{
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_renderState.texture0MinFilter);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_renderState.texture0MagFilter);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_renderState.texture0WrapS);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_renderState.texture0WrapT);
++#ifndef __EMSCRIPTEN__
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, m_renderState.texture0AlphaAsIndex ? GL_ALPHA : GL_RED);
++#endif
++		}
+ 
+ 		glActiveTexture(GL_TEXTURE1);
+ 		glBindTexture(GL_TEXTURE_2D, m_renderState.texture1Handle);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
++		if(m_renderState.texture1Handle)
++		{
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
++			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
++		}
+ 
+ 		m_validGlState |= GLSTATE_TEXTURE;
+ 	}
+diff --git a/Source/gs/GSH_OpenGL/GSH_OpenGL.h b/Source/gs/GSH_OpenGL/GSH_OpenGL.h
+index 290deb70..ab8cc7c0 100644
+--- a/Source/gs/GSH_OpenGL/GSH_OpenGL.h
++++ b/Source/gs/GSH_OpenGL/GSH_OpenGL.h
+@@ -172,7 +172,11 @@ private:
+ 		uint32 alphaRef;
+ 		float alphaFix;
+ 		float fogColor[3];
++#ifdef __EMSCRIPTEN__
++		uint32 textureAlphaAsIndex;
++#else
+ 		float padding2;
++#endif
+ 	};
+ 	static_assert(sizeof(FRAGMENTPARAMS) == 0x40, "Size of FRAGMENTPARAMS must be 64 bytes.");
+ 
+diff --git a/Source/gs/GSH_OpenGL/GSH_OpenGL_Shader.cpp b/Source/gs/GSH_OpenGL/GSH_OpenGL_Shader.cpp
+index 3f37572a..66a65af6 100644
+--- a/Source/gs/GSH_OpenGL/GSH_OpenGL_Shader.cpp
++++ b/Source/gs/GSH_OpenGL/GSH_OpenGL_Shader.cpp
+@@ -188,6 +188,9 @@ Framework::OpenGl::CShader CGSH_OpenGL::GenerateFragmentShader(const SHADERCAPS&
+ 	shaderBuilder << "	uint g_alphaRef;" << std::endl;
+ 	shaderBuilder << "	float g_alphaFix;" << std::endl;
+ 	shaderBuilder << "	vec3 g_fogColor;" << std::endl;
++#ifdef __EMSCRIPTEN__
++	shaderBuilder << "	uint g_textureAlphaAsIndex;" << std::endl;
++#endif
+ 	shaderBuilder << "};" << std::endl;
+ 
+ 	if(caps.texClampS == TEXTURE_CLAMP_MODE_REGION_REPEAT || caps.texClampT == TEXTURE_CLAMP_MODE_REGION_REPEAT)
+@@ -196,6 +199,20 @@ Framework::OpenGl::CShader CGSH_OpenGL::GenerateFragmentShader(const SHADERCAPS&
+ 		shaderBuilder << s_orFunction << std::endl;
+ 	}
+ 
++	if(caps.isIndexedTextureSource())
++	{
++		shaderBuilder << "float sampleTextureIndex(vec2 coordinates)" << std::endl;
++		shaderBuilder << "{" << std::endl;
++#ifdef __EMSCRIPTEN__
++		// WebGL has no texture channel swizzle. RGBA framebuffer indices use alpha.
++		shaderBuilder << "	vec4 texel = texture(g_texture, coordinates);" << std::endl;
++		shaderBuilder << "	return (g_textureAlphaAsIndex != 0u ? texel.a : texel.r) * 255.0;" << std::endl;
++#else
++		shaderBuilder << "	return texture(g_texture, coordinates).r * 255.0;" << std::endl;
++#endif
++		shaderBuilder << "}" << std::endl;
++	}
++
+ 	shaderBuilder << "float combineColors(float a, float b)" << std::endl;
+ 	shaderBuilder << "{" << std::endl;
+ 	shaderBuilder << "	uint aInt = uint(a * 255.0);" << std::endl;
+@@ -254,7 +271,7 @@ Framework::OpenGl::CShader CGSH_OpenGL::GenerateFragmentShader(const SHADERCAPS&
+ 	{
+ 		if(!caps.texBilinearFilter)
+ 		{
+-			shaderBuilder << "	float colorIndex = texture(g_texture, texCoord.st).r * 255.0;" << std::endl;
++			shaderBuilder << "	float colorIndex = sampleTextureIndex(texCoord.st);" << std::endl;
+ 			if(caps.texSourceMode == TEXTURE_SOURCE_MODE_IDX4)
+ 			{
+ 				shaderBuilder << "	float paletteTexelBias = 0.5 / 16.0;" << std::endl;
+@@ -268,10 +285,10 @@ Framework::OpenGl::CShader CGSH_OpenGL::GenerateFragmentShader(const SHADERCAPS&
+ 		}
+ 		else
+ 		{
+-			shaderBuilder << "	float tlIdx = texture(g_texture, texCoord.st                                     ).r * 255.0;" << std::endl;
+-			shaderBuilder << "	float trIdx = texture(g_texture, texCoord.st + vec2(g_texelSize.x, 0)            ).r * 255.0;" << std::endl;
+-			shaderBuilder << "	float blIdx = texture(g_texture, texCoord.st + vec2(0, g_texelSize.y)            ).r * 255.0;" << std::endl;
+-			shaderBuilder << "	float brIdx = texture(g_texture, texCoord.st + vec2(g_texelSize.x, g_texelSize.y)).r * 255.0;" << std::endl;
++			shaderBuilder << "	float tlIdx = sampleTextureIndex(texCoord.st);" << std::endl;
++			shaderBuilder << "	float trIdx = sampleTextureIndex(texCoord.st + vec2(g_texelSize.x, 0));" << std::endl;
++			shaderBuilder << "	float blIdx = sampleTextureIndex(texCoord.st + vec2(0, g_texelSize.y));" << std::endl;
++			shaderBuilder << "	float brIdx = sampleTextureIndex(texCoord.st + vec2(g_texelSize.x, g_texelSize.y));" << std::endl;
+ 
+ 			if(caps.texSourceMode == TEXTURE_SOURCE_MODE_IDX4)
+ 			{

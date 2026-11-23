@@ -1,0 +1,59 @@
+diff --git a/Source/PS2VM.cpp b/Source/PS2VM.cpp
+--- a/Source/PS2VM.cpp
++++ b/Source/PS2VM.cpp
+@@ -1,6 +1,7 @@
+ #include <cstdio>
+ #include <exception>
+ #include <memory>
++#include <string_view>
+ #include <climits>
+ #include <fenv.h>
+ #include "FpUtils.h"
+@@ -887,6 +888,12 @@
+ void CPS2VM::OnExecutableChange()
+ {
+ 	CGameConfig::ApplyGameConfig(*this);
++#ifdef __EMSCRIPTEN__
++	const std::string_view executable(m_ee->m_os->GetExecutableName());
++	const bool isDefJam = executable == "SLUS_210.04" || executable == "SLUS_210.04;1";
++	auto* iopBios = static_cast<CIopBios*>(m_iop->m_bios.get());
++	iopBios->GetCdvdfsv()->SetReducedDiskReadyDelay(isDefJam);
++#endif
+ }
+ 
+ void CPS2VM::OnCrtModeChange()
+diff --git a/Source/iop/Iop_Cdvdfsv.h b/Source/iop/Iop_Cdvdfsv.h
+--- a/Source/iop/Iop_Cdvdfsv.h
++++ b/Source/iop/Iop_Cdvdfsv.h
+@@ -23,6 +23,7 @@
+ 
+ 		void CountTicks(uint32);
+ 		void SetOpticalMedia(COpticalMedia*);
++		void SetReducedDiskReadyDelay(bool enabled) { m_reducedDiskReadyDelay = enabled; }
+ 
+ 		void LoadState(Framework::CZipArchiveReader&) override;
+ 		void SaveState(Framework::CZipArchiveWriter&) const override;
+@@ -80,6 +81,7 @@
+ 		uint32 m_pendingReadCount = 0;
+ 		uint32 m_pendingReadAddr = 0;
+ 
++		bool m_reducedDiskReadyDelay = false;
+ 		bool m_streaming = false;
+ 		uint32 m_streamPos = 0;
+ 		uint32 m_streamBufferSize = 0;
+diff --git a/Source/iop/Iop_Cdvdfsv.cpp b/Source/iop/Iop_Cdvdfsv.cpp
+--- a/Source/iop/Iop_Cdvdfsv.cpp
++++ b/Source/iop/Iop_Cdvdfsv.cpp
+@@ -549,9 +549,10 @@
+ 	}
+ 	else
+ 	{
+-		//Delay command (required by Downhill Domination)
++		// Downhill Domination needs the full delay. Def Jam checks readiness before
++		// each single-sector read and can use a shorter asynchronous reply.
+ 		m_pendingCommand = COMMAND_NDISKREADY;
+-		m_pendingCommandDelay = COMMAND_DEFAULT_DELAY;
++		m_pendingCommandDelay = m_reducedDiskReadyDelay ? COMMAND_DEFAULT_DELAY / 16 : COMMAND_DEFAULT_DELAY;
+ 		ret[0x00] = 2;
+ 		return false;
+ 	}

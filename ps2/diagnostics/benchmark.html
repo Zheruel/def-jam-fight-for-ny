@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Disc loading benchmark</title>
+<style>html,body{margin:0;background:#000}canvas{display:block}</style>
+</head>
+<body>
+<canvas id="outputCanvas" width="640" height="480"></canvas>
+<script type="module">
+import Play from './Play.js';
+import { localDisc } from '/web/disc.mjs';
+
+const source = await localDisc();
+const module = await Play({
+  canvas: document.querySelector('canvas'),
+  mainScriptUrlOrBlob: new URL('./Play.js', location.href).href,
+  locateFile: name => new URL(name, location.href).href,
+});
+let done = true;
+const samples = { frames: 0, reads: 0, bytes: 0, lastReadMs: null, maxReadMs: 0 };
+let origin = performance.now();
+let initialFrames = 0;
+let failure = null;
+let inflight = null;
+module.FS.mkdir('/work');
+module.discImageDevice = {
+  getFileSize: () => source.size,
+  isDone: () => done,
+  read(dst, offset, length) {
+    done = false;
+    const started = performance.now();
+    inflight = { offset, length, started };
+    samples.reads++;
+    samples.bytes += length;
+    source.read(offset, length).then(bytes => {
+      if (bytes.length !== length) throw new Error('Short read');
+      module.HEAPU8.set(bytes, dst);
+    }).catch(error => {
+      failure = error.message;
+      module.HEAPU8.fill(0, dst, dst + length);
+    }).finally(() => {
+      const completed = performance.now();
+      samples.lastReadMs = completed - origin;
+      samples.maxReadMs = Math.max(samples.maxReadMs, completed - started);
+      inflight = null;
+      done = true;
+    });
+  },
+};
+window.benchmark = {
+  module,
+  samples,
+  snapshot: () => ({ ...samples, frames: samples.frames - initialFrames, elapsedMs: performance.now() - origin, inflight, failure }),
+  resetMeasurement() {
+    origin = performance.now();
+    initialFrames = samples.frames;
+    samples.reads = 0;
+    samples.bytes = 0;
+    samples.lastReadMs = null;
+    samples.maxReadMs = 0;
+  },
+  async press(mask) {
+    module._setPad(0, mask, 0, 0, 0, 0);
+    await new Promise(resolve => setTimeout(resolve, 180));
+    module._setPad(0, 0, 0, 0, 0, 0);
+  },
+};
+module.ccall('initVm', '', [], []);
+module.bootDiscImage('reference.iso');
+setInterval(() => {
+  samples.frames += module.getFrames();
+  module.clearStats();
+}, 100);
+</script>
+</body>
+</html>
