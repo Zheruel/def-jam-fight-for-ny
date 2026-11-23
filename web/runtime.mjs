@@ -1,3 +1,4 @@
+import { withBattlePatch } from '/ps2/battle/overlay.mjs';
 import { fileDisc, localDisc, verifyTitle } from './disc.mjs';
 
 const runtimeUrl = '/runtime/play-build/Play.js';
@@ -15,6 +16,13 @@ export function makeRuntime({ canvas, onStatus }) {
   const pads = [null, null];
   async function start(source) {
     await verifyTitle(source);
+    const paths = ['/ps2/battle/battle-patch.json', '/ps2/content/unlock-disc-patch.json'];
+    const [battle, unlock] = await Promise.all(paths.map(async path => {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error('The PS2 Battle patch is missing. Check the project installation.');
+      return response.json();
+    }));
+    source = await withBattlePatch(source, { ...battle, patches: [...battle.patches, ...unlock.patches] });
     if (!crossOriginIsolated) throw new Error('Start the game using the included development server.');
     if (vm) throw new Error('Reload the page to restart the emulator.');
     onStatus('Initializing the PS2');
@@ -40,7 +48,6 @@ export function makeRuntime({ canvas, onStatus }) {
           module.HEAPU8.set(data, dst);
         }).catch(error => {
           failure = error.message;
-
           onStatus('Disc read failed. Reload to retry. ' + failure);
         }).finally(() => { done = !failure; });
       }

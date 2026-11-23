@@ -1,0 +1,113 @@
+{
+  "format": "def-jam-ps2-battle-patch/1",
+  "version": 1,
+  "serial": "SLUS-21004",
+  "disc": {
+    "size": 4694573056,
+    "sha1": "5eda39dfd703804c8734b91bd23039f642317837",
+    "volumeId": "DJFFNY",
+    "elfSha256": "4e65bf2947b3838ce372967cac448bfc8034709a6d70a87fd11d13c5f09b23b2"
+  },
+  "patches": [
+    {
+      "id": "unlocks-0014bfb0",
+      "file": "/SLUS_210.04",
+      "fileOffset": 315312,
+      "isoOffset": 3976253360,
+      "eeAddress": "0x0014BFB0",
+      "originalSha256": "9d5dc203d56b552771bcc35a7906e2e3f9f543a7eb6f0334084c0cbe101ba5b2",
+      "replacement": "0c0d888c460000117fff0f3c0400088d43000011ffffef350c00092500002b8d18006c291d00801504002d8d1900ac291a0080110c002e8d1800c01100170a3cffffad2517001824251058010800a00580180d0021186e000000638c24086f00030022140000000025106000ffffad258018180021186e00000062acf2ff001fffff182718000224040022ad0800238d0200601000000000000062ac2000092500002b8d4b006c291d00801504002d8d4c00ac291a0080110c002e8d1800c01100070a3cffffad254a001824251058010800a00580180d0021186e000000638c24086f00030022140000000025106000ffffad258018180021186e00000062acf2ff001fffff18274b000224040022ad0800238d0200601000000000000062ac0800200300000000",
+      "description": "Unlock-all fill routine"
+    },
+    {
+      "id": "unlocks-0014c970",
+      "file": "/SLUS_210.04",
+      "fileOffset": 317808,
+      "isoOffset": 3976255856,
+      "eeAddress": "0x0014C970",
+      "originalSha256": "37135dbdb69e99daaf05d1558ac690ad0a570f5357578f7944eb3c3ea58303c0",
+      "replacement": "0800e003251000001500193cec2f0508a0ab39271500193cec2f050838af39271500193cec2f0508c8b739271500193cec2f050870c939271500193cec2f0508f0c039271500193cec2f050800c339271500193cec2f050890c539271500193cec2f050870c93927",
+      "description": "Unlock binding wrappers"
+    },
+    {
+      "id": "unlocks-003b7af4",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853620,
+      "isoOffset": 3978791668,
+      "eeAddress": "0x003B7AF4",
+      "originalSha256": "b15178b5e0124f5958d209b9c64f37144b31a4bb6bbc1a4a4ab6a5d5bc80fee5",
+      "replacement": "78c91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7b0c",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853644,
+      "isoOffset": 3978791692,
+      "eeAddress": "0x003B7B0C",
+      "originalSha256": "5608e77a4b7543d3dca6f339ee37feef85d51f0b685eca98ccd7f15b336b39b8",
+      "replacement": "84c91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7b6c",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853740,
+      "isoOffset": 3978791788,
+      "eeAddress": "0x003B7B6C",
+      "originalSha256": "f13ce05895b6b71f1b147a9729fc48c268860dfc41e83917009663fd94df735d",
+      "replacement": "90c91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7b84",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853764,
+      "isoOffset": 3978791812,
+      "eeAddress": "0x003B7B84",
+      "originalSha256": "af385a2667e283dcc5c9890b93c748c5513738e695f9bb5819bdd69586003931",
+      "replacement": "9cc91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7bac",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853804,
+      "isoOffset": 3978791852,
+      "eeAddress": "0x003B7BAC",
+      "originalSha256": "e9486c52fd5604cab1169eee383c9bf6561f914b0b7456d961010ed1babbe79f",
+      "replacement": "a8c91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7bcc",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853836,
+      "isoOffset": 3978791884,
+      "eeAddress": "0x003B7BCC",
+      "originalSha256": "363bbe36145596665b2b0a9f4fa299b76c8a1920e1304715a1eb34c010d950e9",
+      "replacement": "b4c91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7be4",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853860,
+      "isoOffset": 3978791908,
+      "eeAddress": "0x003B7BE4",
+      "originalSha256": "649ae6163c97ee4b0143abf2a6a8f9beb2a028e08c32b9a9f73cbfc3337086a9",
+      "replacement": "c0c91400",
+      "description": "Unlock binding pointer"
+    },
+    {
+      "id": "unlocks-003b7bfc",
+      "file": "/SLUS_210.04",
+      "fileOffset": 2853884,
+      "isoOffset": 3978791932,
+      "eeAddress": "0x003B7BFC",
+      "originalSha256": "172a748dd8a26b7c7495a9d3a23efb4bff50781ad53b17481205f3e6cbef2464",
+      "replacement": "ccc91400",
+      "description": "Unlock binding pointer"
+    }
+  ]
+}

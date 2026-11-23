@@ -29,7 +29,6 @@ let muted = false;
 let installedAvailable = false;
 let match;
 let role;
-let stopVideoCapture;
 let roomGeneration = 0;
 const pressedKeys = new Set();
 const manualPads = new Map();
@@ -64,8 +63,9 @@ function showStart(title, message) {
   startPanel.hidden = false;
   screenTitle.textContent = title;
   screenMessage.textContent = message;
-  chooseDisc.hidden = loading || playing || role === "guest";
-  installed.hidden = !installedAvailable || chooseDisc.hidden;
+  const canStart = !loading && !playing && role !== "guest";
+  chooseDisc.hidden = !canStart || installedAvailable;
+  installed.hidden = !canStart || !installedAvailable;
   streamButton.hidden = true;
 }
 
@@ -199,18 +199,6 @@ const STATES = {
   error: "Connection failed"
 };
 
-function captureDisplay() {
-  // The emulator's visible canvas belongs to its worker. A second canvas gives
-  // WebRTC its own capture surface without taking over the render context.
-  const capture = document.createElement("canvas");
-  capture.width = 640;
-  capture.height = 480;
-  const context = capture.getContext("2d", { alpha: false });
-  const timer = setInterval(() => context.drawImage(canvas, 0, 0, capture.width, capture.height), 1000 / 30);
-  stopVideoCapture = () => clearInterval(timer);
-  return capture;
-}
-
 function setRoomState(state, error) {
   netStatus.textContent = error?.message || STATES[state] || state;
   if (role === "guest" && state === "connected" && !remote.paused) {
@@ -246,8 +234,6 @@ function leaveRoom() {
   pressedKeys.clear();
   manualPads.delete(2);
   oldMatch?.close();
-  stopVideoCapture?.();
-  stopVideoCapture = undefined;
   runtime.setPad(2, NEUTRAL_INPUT);
   remote.hidden = true;
   remote.srcObject = null;
@@ -256,7 +242,10 @@ function leaveRoom() {
   joinForm.hidden = false;
   hostButton.hidden = false;
   audioButton.disabled = !playing;
-  if (!playing) showStart(installedAvailable ? "Ready to play" : "Load a disc", "Choose a PlayStation 2 disc image to start.");
+  if (!playing) {
+    if (installedAvailable) showStart("Ready to play", "Def Jam: Fight for NY is installed on this machine.");
+    else showStart("Load a disc", "Choose a PlayStation 2 disc image to start.");
+  }
   status.textContent = playing ? "PlayStation 2 · " + runtime.diagnostics().discId : "Waiting for a disc";
   netStatus.textContent = playing ? "Room closed" : "Load the disc to host. Guests can join with a code.";
 }
@@ -269,9 +258,9 @@ hostButton.addEventListener("click", async () => {
     const { hostMatch } = await import("/netplay/client.mjs");
     const hosted = await hostMatch({
       ...await peerOptions(),
-      canvas: captureDisplay(),
+      canvas,
       audioStream: runtime.getAudioStream(),
-      frameRate: 30,
+      frameRate: 60,
       onInput(input) {
         if (generation === roomGeneration) runtime.setPad(2, manualPads.get(2) ?? input);
       },

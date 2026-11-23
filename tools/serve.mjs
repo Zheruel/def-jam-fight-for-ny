@@ -36,7 +36,7 @@ export function gameServer(directory = root) {
     }
     if (name === '/') name = '/web/index.html';
     if (name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
-    else if (!/^\/(web\/|runtime\/play-build\/|netplay\/client\.mjs$)/.test(name)) return fail(404);
+    else if (!/^\/(web\/|runtime\/play-build\/|netplay\/client\.mjs$|ps2\/battle\/(overlay\.mjs|battle-patch\.json)$|ps2\/content\/unlock-disc-patch\.json$)/.test(name)) return fail(404);
     if (name.split('/').some(part => part.startsWith('.')) || /[\\\0]/.test(name)) return fail(404);
     let file;
     try {

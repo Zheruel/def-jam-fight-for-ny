@@ -1,0 +1,33 @@
+{
+  "discSha256": "676ec0c5a313184b0cd476fc2d322cb0b02d6a7cec7d883743a92f3ffbdeca46",
+  "retailExploration": {
+    "directory": "private/verification/ps2-match/explore1",
+    "captures": {
+      "028-player-one-no-id.png": "d674d400c893f2e026961706b340e140d9c2c5f900ac61be86c6c81802094430",
+      "034-doc-costume.png": "630ac130d5b60473e53540de91e24958a654450d42507b56bbbb5f3fd01e32e2",
+      "035-doc-confirmed.png": "146c4ae3100932af4ed5890662505dc701d3e84666b6c2d5a8234087d44a196e",
+      "064-live-baseline.png": "e1f0873241fb5eecb9a1bf7333d8115d536e9a72c127cbca0a9a80f2e5535abb",
+      "065-live-host-moved.png": "b562c6e43c2519c4b57f39091913ad13b49636616b9c05c9efe447e8709aca21",
+      "066-live-guest-moved.png": "eb7f7f9c7d1700d1f78975a2aaa2b248b5867c66bfc59aa0448fd6439e29b51d",
+      "073-contact-result.png": "7baf606c9bd02fd40f4d7da1bf7faae03fdcf1c0b5f605bfb733254defc8c5a8",
+      "078-guest-hit-stream.png": "1b8f1a054fa5971536d12a33c449dff3cecfdd9f2ca476e65b49cc74de7b3c1a"
+    }
+  },
+  "retailHarness": {
+    "directory": "private/verification/ps2-match/run-ezigBl",
+    "wasmSha256": "be8e98599f04129b229a5cf01b71fc04fa438d908a501cfd26f6c4a2ebb49288",
+    "reportSha256": "e5b892c97bebf03572ebcaf56ccba049ac5ec7a2e9339919948cfbc3d3a71a49",
+    "captures": {
+      "13-two-human-controllers-host.png": "464fe9c7f7230c760733f4fdbf6560ac2b0979adfd0bfa340edbb2a0b6a8d688",
+      "17-two-fighters-ready-host.png": "bf512dd4490da9bcf106eb1bd2bd0e0bd9999ff8b961670a11e1e65881e2c55a",
+      "18-venue-foundation-host.png": "59c3188c883ee41dd6c1c763b5c1fc9b8998a0d827a8aa3bc88e14dd57db5755",
+      "21-fight-ready-host.png": "bb489b2d48ebe8e7369522c0c5fdfe0700636342a74a6731936e3038be099446",
+      "22-guest-fight-ready-guest.png": "5dfd7c544be55d3dd9215f9559401ea5a34c7d206ab44942d650d14e44fb25f6",
+      "23-host-movement-host.png": "864fe6c32068cb337928e5d930d49d5dd4d0e4bc6250a5f28e0fec8b74859658",
+      "24-guest-movement-host.png": "01fb173011d774bca31f38df67b40b34cd47e99e8f63dd9222ddcf56bb6a166c",
+      "25-host-punch-host.png": "da6cee3344d9798e3b2373d03a3c41a57acdc69ad24dc8b30d2180f039ea6949",
+      "26-guest-kick-host.png": "cc5276c567423420b0a8003c017c93ac6df92bff001d564c40a8051dc9db9087",
+      "27-after-actions-guest.png": "4675f5001963533b9d60d3f0d4e128702b49a95c89afdea7d293b561e522fa5c"
+    }
+  }
+}

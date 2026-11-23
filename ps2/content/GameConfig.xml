@@ -1,0 +1,112 @@
+<GameConfigs>
+	<GameConfig Executable="SLUS_210.04;1" Title="Def Jam: Fight for NY">
+		<Patch Address="0x0014BFB0" Value="0x8C880D0C" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFB4" Value="0x11000046" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFB8" Value="0x3C0FFF7F" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFBC" Value="0x8D080004" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFC0" Value="0x11000043" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFC4" Value="0x35EFFFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFC8" Value="0x2509000C" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFCC" Value="0x8D2B0000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFD0" Value="0x296C0018" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFD4" Value="0x1580001D" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFD8" Value="0x8D2D0004" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFDC" Value="0x29AC0019" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFE0" Value="0x1180001A" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFE4" Value="0x8D2E000C" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFE8" Value="0x11C00018" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFEC" Value="0x3C0A1700" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFF0" Value="0x25ADFFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFF4" Value="0x24180017" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFF8" Value="0x01581025" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014BFFC" Value="0x05A00008" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C000" Value="0x000D1880" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C004" Value="0x006E1821" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C008" Value="0x8C630000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C00C" Value="0x006F0824" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C010" Value="0x14220003" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C014" Value="0x00000000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C018" Value="0x00601025" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C01C" Value="0x25ADFFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C020" Value="0x00181880" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C024" Value="0x006E1821" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C028" Value="0xAC620000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C02C" Value="0x1F00FFF2" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C030" Value="0x2718FFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C034" Value="0x24020018" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C038" Value="0xAD220004" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C03C" Value="0x8D230008" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C040" Value="0x10600002" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C044" Value="0x00000000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C048" Value="0xAC620000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C04C" Value="0x25090020" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C050" Value="0x8D2B0000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C054" Value="0x296C004B" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C058" Value="0x1580001D" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C05C" Value="0x8D2D0004" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C060" Value="0x29AC004C" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C064" Value="0x1180001A" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C068" Value="0x8D2E000C" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C06C" Value="0x11C00018" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C070" Value="0x3C0A0700" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C074" Value="0x25ADFFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C078" Value="0x2418004A" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C07C" Value="0x01581025" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C080" Value="0x05A00008" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C084" Value="0x000D1880" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C088" Value="0x006E1821" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C08C" Value="0x8C630000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C090" Value="0x006F0824" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C094" Value="0x14220003" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C098" Value="0x00000000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C09C" Value="0x00601025" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0A0" Value="0x25ADFFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0A4" Value="0x00181880" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0A8" Value="0x006E1821" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0AC" Value="0xAC620000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0B0" Value="0x1F00FFF2" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0B4" Value="0x2718FFFF" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0B8" Value="0x2402004B" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0BC" Value="0xAD220004" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0C0" Value="0x8D230008" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0C4" Value="0x10600002" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0C8" Value="0x00000000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0CC" Value="0xAC620000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0D0" Value="0x03200008" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C0D4" Value="0x00000000" Description="Unlocks: fill routine" />
+		<Patch Address="0x0014C970" Value="0x03E00008" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C974" Value="0x00001025" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C978" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C97C" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C980" Value="0x2739ABA0" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C984" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C988" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C98C" Value="0x2739AF38" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C990" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C994" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C998" Value="0x2739B7C8" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C99C" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9A0" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9A4" Value="0x2739C970" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9A8" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9AC" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9B0" Value="0x2739C0F0" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9B4" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9B8" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9BC" Value="0x2739C300" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9C0" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9C4" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9C8" Value="0x2739C590" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9CC" Value="0x3C190015" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9D0" Value="0x08052FEC" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x0014C9D4" Value="0x2739C970" Description="Unlocks: binding wrappers" />
+		<Patch Address="0x003B7AF4" Value="0x0014C978" Description="Unlocks: GetGlobalCharUnlockInfo -> wrapper" />
+		<Patch Address="0x003B7B0C" Value="0x0014C984" Description="Unlocks: GetCharCostInfo -> wrapper" />
+		<Patch Address="0x003B7B6C" Value="0x0014C990" Description="Unlocks: GetCharacterList -> wrapper" />
+		<Patch Address="0x003B7B84" Value="0x0014C99C" Description="Unlocks: BuyCharacter -> wrapper" />
+		<Patch Address="0x003B7BAC" Value="0x0014C9A8" Description="Unlocks: GetGlobalVenueUnlockInfo -> wrapper" />
+		<Patch Address="0x003B7BCC" Value="0x0014C9B4" Description="Unlocks: GetVenueCostInfo -> wrapper" />
+		<Patch Address="0x003B7BE4" Value="0x0014C9C0" Description="Unlocks: GetVenueList -> wrapper" />
+		<Patch Address="0x003B7BFC" Value="0x0014C9CC" Description="Unlocks: BuyVenue -> wrapper" />
+	</GameConfig>
+</GameConfigs>

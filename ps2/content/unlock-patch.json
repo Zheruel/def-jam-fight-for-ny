@@ -1,0 +1,794 @@
+{
+  "format": "def-jam-ps2-unlocks/1",
+  "serial": "SLUS-21004",
+  "executable": "SLUS_210.04;1",
+  "elfSha256": "4e65bf2947b3838ce372967cac448bfc8034709a6d70a87fd11d13c5f09b23b2",
+  "description": "Every SOD fighter and venue handle is merged into the profile unlock sets whenever an unlock binding runs.",
+  "unlocks": {
+    "fighters": 75,
+    "venues": 24,
+    "fighterHandles": [
+      "0x07000000",
+      "0x0700004A"
+    ],
+    "venueHandles": [
+      "0x17000000",
+      "0x17000017"
+    ]
+  },
+  "profile": {
+    "registry": "0x003FDAA0",
+    "slot": 24,
+    "pointerChain": "R = [[0x003FDB00] + 4]",
+    "venueSet": "R+0xC",
+    "fighterSet": "R+0x20",
+    "setLayout": [
+      "capacity",
+      "count",
+      "countMirrorPointer",
+      "dataPointer"
+    ]
+  },
+  "signatures": [
+    {
+      "address": "0x001031FC",
+      "word": "0xFFBF0150",
+      "meaning": "profile ctor: sd ra,0x150(sp)"
+    },
+    {
+      "address": "0x00103210",
+      "word": "0x2405001E",
+      "meaning": "profile ctor: venue set capacity 30"
+    },
+    {
+      "address": "0x001031BC",
+      "word": "0x24070050",
+      "meaning": "profile ctor: fighter set capacity 80"
+    },
+    {
+      "address": "0x001031E8",
+      "word": "0x26241268",
+      "meaning": "profile ctor: venue data inline at body+0x1268"
+    },
+    {
+      "address": "0x0010322C",
+      "word": "0x262412E0",
+      "meaning": "profile ctor: fighter data inline at body+0x12E0"
+    },
+    {
+      "address": "0x0014AA20",
+      "word": "0x3C040040",
+      "meaning": "binder ctor: lui a0,0x40 (profile registry)"
+    },
+    {
+      "address": "0x0014AA24",
+      "word": "0x24050018",
+      "meaning": "binder ctor: registry slot 0x18"
+    },
+    {
+      "address": "0x0014AA2C",
+      "word": "0x2484DAA0",
+      "meaning": "binder ctor: registry 0x3FDAA0"
+    },
+    {
+      "address": "0x0014AA30",
+      "word": "0xAE020D0C",
+      "meaning": "binder ctor: sw v0,0xd0c(s0)"
+    },
+    {
+      "address": "0x0014BFEC",
+      "word": "0x8E030D0C",
+      "meaning": "BuyCharacter: lw v1,0xd0c(s0)"
+    },
+    {
+      "address": "0x0014BFF8",
+      "word": "0x8C660004",
+      "meaning": "BuyCharacter: R = [obj+4]"
+    },
+    {
+      "address": "0x0014C000",
+      "word": "0x24C90020",
+      "meaning": "BuyCharacter: fighter set at R+0x20"
+    },
+    {
+      "address": "0x0014C018",
+      "word": "0x8CC80024",
+      "meaning": "BuyCharacter: fighter count at R+0x24"
+    },
+    {
+      "address": "0x0014C9C0",
+      "word": "0x24C9000C",
+      "meaning": "BuyVenue: venue set at R+0x0C"
+    },
+    {
+      "address": "0x0014C9D8",
+      "word": "0x8CC80010",
+      "meaning": "BuyVenue: venue count at R+0x10"
+    },
+    {
+      "address": "0x0014C0B8",
+      "word": "0x8D230008",
+      "meaning": "BuyCharacter: count mirror pointer at set+8"
+    },
+    {
+      "address": "0x0014C0E4",
+      "word": "0x03E00008",
+      "meaning": "BuyCharacter: last word (jr ra)"
+    },
+    {
+      "address": "0x0014CAA4",
+      "word": "0x03E00008",
+      "meaning": "BuyVenue: last word (jr ra)"
+    },
+    {
+      "address": "0x00360990",
+      "word": "0x8C830000",
+      "meaning": "handle key: lw v1,0(a0)"
+    },
+    {
+      "address": "0x00360998",
+      "word": "0x3442FFFF",
+      "meaning": "handle key: mask 0xFF7FFFFF"
+    }
+  ],
+  "wrappers": {
+    "GetGlobalCharUnlockInfo": "0x0014C978",
+    "GetCharCostInfo": "0x0014C984",
+    "GetCharacterList": "0x0014C990",
+    "BuyCharacter": "0x0014C99C",
+    "GetGlobalVenueUnlockInfo": "0x0014C9A8",
+    "GetVenueCostInfo": "0x0014C9B4",
+    "GetVenueList": "0x0014C9C0",
+    "BuyVenue": "0x0014C9CC"
+  },
+  "patches": [
+    {
+      "address": "0x0014BFB0",
+      "original": "0x27BDFFB0",
+      "value": "0x8C880D0C",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFB4",
+      "original": "0x7FB00040",
+      "value": "0x11000046",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFB8",
+      "original": "0xFFBF0030",
+      "value": "0x3C0FFF7F",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFBC",
+      "original": "0x0080802D",
+      "value": "0x8D080004",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFC0",
+      "original": "0x0C0D215A",
+      "value": "0x11000043",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFC4",
+      "original": "0x8CA40000",
+      "value": "0x35EFFFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFC8",
+      "original": "0xAFA20000",
+      "value": "0x2509000C",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFCC",
+      "original": "0x0200202D",
+      "value": "0x8D2B0000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFD0",
+      "original": "0xAFA00004",
+      "value": "0x296C0018",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFD4",
+      "original": "0x6BA20007",
+      "value": "0x1580001D",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFD8",
+      "original": "0x6FA20000",
+      "value": "0x8D2D0004",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFDC",
+      "original": "0xB3A20017",
+      "value": "0x29AC0019",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFE0",
+      "original": "0xB7A20010",
+      "value": "0x1180001A",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFE4",
+      "original": "0x0C052CE0",
+      "value": "0x8D2E000C",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFE8",
+      "original": "0x27A50010",
+      "value": "0x11C00018",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFEC",
+      "original": "0x8E030D0C",
+      "value": "0x3C0A1700",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFF0",
+      "original": "0x3C07FF7F",
+      "value": "0x25ADFFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFF4",
+      "original": "0x34E7FFFF",
+      "value": "0x24180017",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFF8",
+      "original": "0x8C660004",
+      "value": "0x01581025",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014BFFC",
+      "original": "0x24C40004",
+      "value": "0x05A00008",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C000",
+      "original": "0x24C90020",
+      "value": "0x000D1880",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C004",
+      "original": "0x8C83004C",
+      "value": "0x006E1821",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C008",
+      "original": "0x00621823",
+      "value": "0x8C630000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C00C",
+      "original": "0xAC83004C",
+      "value": "0x006F0824",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C010",
+      "original": "0x8FA20000",
+      "value": "0x14220003",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C014",
+      "original": "0xAFA20020",
+      "value": "0x00000000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C018",
+      "original": "0x8CC80024",
+      "value": "0x00601025",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C01C",
+      "original": "0x25020001",
+      "value": "0x25ADFFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C020",
+      "original": "0x00082080",
+      "value": "0x00181880",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C024",
+      "original": "0xACC20024",
+      "value": "0x006E1821",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C028",
+      "original": "0x8D25000C",
+      "value": "0xAC620000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C02C",
+      "original": "0x8FA30020",
+      "value": "0x1F00FFF2",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C030",
+      "original": "0x00852021",
+      "value": "0x2718FFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C034",
+      "original": "0x8C82FFFC",
+      "value": "0x24020018",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C038",
+      "original": "0x00671824",
+      "value": "0xAD220004",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C03C",
+      "original": "0x00471024",
+      "value": "0x8D230008",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C040",
+      "original": "0x0062182B",
+      "value": "0x10600002",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C044",
+      "original": "0x10600017",
+      "value": "0x00000000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C048",
+      "original": "0x27AA0020",
+      "value": "0xAC620000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C04C",
+      "original": "0x11000016",
+      "value": "0x25090020",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C050",
+      "original": "0x8D22000C",
+      "value": "0x8D2B0000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C054",
+      "original": "0x3C06FF7F",
+      "value": "0x296C004B",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C058",
+      "original": "0x34C6FFFF",
+      "value": "0x1580001D",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C05C",
+      "original": "0x00000000",
+      "value": "0x8D2D0004",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C060",
+      "original": "0x00081880",
+      "value": "0x29AC004C",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C064",
+      "original": "0x2508FFFF",
+      "value": "0x1180001A",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C068",
+      "original": "0x00621821",
+      "value": "0x8D2E000C",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C06C",
+      "original": "0x00082080",
+      "value": "0x11C00018",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C070",
+      "original": "0x8C62FFFC",
+      "value": "0x3C0A0700",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C074",
+      "original": "0xAC620000",
+      "value": "0x25ADFFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C078",
+      "original": "0x8D25000C",
+      "value": "0x2418004A",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C07C",
+      "original": "0x8D430000",
+      "value": "0x01581025",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C080",
+      "original": "0x00852021",
+      "value": "0x05A00008",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C084",
+      "original": "0x8C82FFFC",
+      "value": "0x000D1880",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C088",
+      "original": "0x00661824",
+      "value": "0x006E1821",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C08C",
+      "original": "0x00461024",
+      "value": "0x8C630000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C090",
+      "original": "0x0062182B",
+      "value": "0x006F0824",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C094",
+      "original": "0x50600004",
+      "value": "0x14220003",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C098",
+      "original": "0x8D22000C",
+      "value": "0x00000000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C09C",
+      "original": "0x5500FFF0",
+      "value": "0x00601025",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0A0",
+      "original": "0x8D22000C",
+      "value": "0x25ADFFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0A4",
+      "original": "0x8D22000C",
+      "value": "0x00181880",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0A8",
+      "original": "0x00081880",
+      "value": "0x006E1821",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0AC",
+      "original": "0x8D440000",
+      "value": "0xAC620000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0B0",
+      "original": "0x00621821",
+      "value": "0x1F00FFF2",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0B4",
+      "original": "0xAC640000",
+      "value": "0x2718FFFF",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0B8",
+      "original": "0x8D230008",
+      "value": "0x2402004B",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0BC",
+      "original": "0x50600004",
+      "value": "0xAD220004",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0C0",
+      "original": "0x8E040D0C",
+      "value": "0x8D230008",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0C4",
+      "original": "0x8D220004",
+      "value": "0x10600002",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0C8",
+      "original": "0xAC620000",
+      "value": "0x00000000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0CC",
+      "original": "0x8E040D0C",
+      "value": "0xAC620000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0D0",
+      "original": "0x0C0440D2",
+      "value": "0x03200008",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C0D4",
+      "original": "0x24050001",
+      "value": "0x00000000",
+      "what": "fill routine"
+    },
+    {
+      "address": "0x0014C970",
+      "original": "0x27BDFFB0",
+      "value": "0x03E00008",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C974",
+      "original": "0x7FB00040",
+      "value": "0x00001025",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C978",
+      "original": "0xFFBF0030",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C97C",
+      "original": "0x0080802D",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C980",
+      "original": "0x0C0D215A",
+      "value": "0x2739ABA0",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C984",
+      "original": "0x8CA40000",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C988",
+      "original": "0xAFA20000",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C98C",
+      "original": "0x0200202D",
+      "value": "0x2739AF38",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C990",
+      "original": "0xAFA00004",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C994",
+      "original": "0x6BA20007",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C998",
+      "original": "0x6FA20000",
+      "value": "0x2739B7C8",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C99C",
+      "original": "0xB3A20017",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9A0",
+      "original": "0xB7A20010",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9A4",
+      "original": "0x0C053142",
+      "value": "0x2739C970",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9A8",
+      "original": "0x27A50010",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9AC",
+      "original": "0x8E030D0C",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9B0",
+      "original": "0x3C07FF7F",
+      "value": "0x2739C0F0",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9B4",
+      "original": "0x34E7FFFF",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9B8",
+      "original": "0x8C660004",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9BC",
+      "original": "0x24C40004",
+      "value": "0x2739C300",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9C0",
+      "original": "0x24C9000C",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9C4",
+      "original": "0x8C83004C",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9C8",
+      "original": "0x00621823",
+      "value": "0x2739C590",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9CC",
+      "original": "0xAC83004C",
+      "value": "0x3C190015",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9D0",
+      "original": "0x8FA20000",
+      "value": "0x08052FEC",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x0014C9D4",
+      "original": "0xAFA20020",
+      "value": "0x2739C970",
+      "what": "binding wrappers"
+    },
+    {
+      "address": "0x003B7AF4",
+      "original": "0x0014ABA0",
+      "value": "0x0014C978",
+      "what": "GetGlobalCharUnlockInfo -> wrapper"
+    },
+    {
+      "address": "0x003B7B0C",
+      "original": "0x0014AF38",
+      "value": "0x0014C984",
+      "what": "GetCharCostInfo -> wrapper"
+    },
+    {
+      "address": "0x003B7B6C",
+      "original": "0x0014B7C8",
+      "value": "0x0014C990",
+      "what": "GetCharacterList -> wrapper"
+    },
+    {
+      "address": "0x003B7B84",
+      "original": "0x0014BFB0",
+      "value": "0x0014C99C",
+      "what": "BuyCharacter -> wrapper"
+    },
+    {
+      "address": "0x003B7BAC",
+      "original": "0x0014C0F0",
+      "value": "0x0014C9A8",
+      "what": "GetGlobalVenueUnlockInfo -> wrapper"
+    },
+    {
+      "address": "0x003B7BCC",
+      "original": "0x0014C300",
+      "value": "0x0014C9B4",
+      "what": "GetVenueCostInfo -> wrapper"
+    },
+    {
+      "address": "0x003B7BE4",
+      "original": "0x0014C590",
+      "value": "0x0014C9C0",
+      "what": "GetVenueList -> wrapper"
+    },
+    {
+      "address": "0x003B7BFC",
+      "original": "0x0014C970",
+      "value": "0x0014C9CC",
+      "what": "BuyVenue -> wrapper"
+    }
+  ]
+}

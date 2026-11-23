@@ -1,0 +1,1671 @@
+{
+  "format": "def-jam-ps2-unlocks/1",
+  "serial": "SLUS-21004",
+  "disc": {
+    "size": 4694573056,
+    "sha1": "5eda39dfd703804c8734b91bd23039f642317837"
+  },
+  "sources": [
+    {
+      "path": "/SLUS_210.04",
+      "isoOffset": 3975938048,
+      "bytes": 3139200,
+      "sha256": "4e65bf2947b3838ce372967cac448bfc8034709a6d70a87fd11d13c5f09b23b2"
+    },
+    {
+      "path": "/ASSETS/DJV2.SOD",
+      "isoOffset": 4135241728,
+      "bytes": 259398,
+      "sha256": "5aabadea5478ee6dff9474fd5777f9613930c99e990b77c0a75305fd2b16048c"
+    },
+    {
+      "path": "/FIGHTER.XML",
+      "isoOffset": 3979112448,
+      "bytes": 45931,
+      "sha256": "21ff6088cebeb90bd9cf48285848e23898c094143fc5da8401e8c63371f9d870"
+    },
+    {
+      "path": "/VENUE.XML",
+      "isoOffset": 3979081728,
+      "bytes": 19378,
+      "sha256": "a123b24d427cf8133949d800e889a34977b596d7668f2c5fcfc95ecaf7a28737"
+    }
+  ],
+  "handleRule": "(SOD class index << 24) | position in the class's primary index; bit 23 masked on compare",
+  "fighterClass": {
+    "hash": "0x4CE5B1B2",
+    "index": 7,
+    "count": 75
+  },
+  "venueClass": {
+    "hash": "0xD7DCA628",
+    "index": 23,
+    "count": 24
+  },
+  "fighters": [
+    {
+      "handle": "0x07000000",
+      "index": 0,
+      "key": "Erick Sermon",
+      "name": "Erick Sermon",
+      "model": "V2IP_102A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183516,
+      "fighterXml": {
+        "ID": 78,
+        "coreID": 42,
+        "name": "S-WORD",
+        "dispname": "Eric Sermon (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000001",
+      "index": 1,
+      "key": "Bo",
+      "name": "Bo",
+      "model": "V2IP_012A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 180396,
+      "fighterXml": {
+        "ID": 1,
+        "coreID": 56,
+        "name": "BO",
+        "dispname": "Bo (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000002",
+      "index": 2,
+      "key": "WC",
+      "name": "WC",
+      "model": "V2IP_303A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179980,
+      "fighterXml": {
+        "ID": 16,
+        "coreID": 24,
+        "name": "WC",
+        "dispname": "WC (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000003",
+      "index": 3,
+      "key": "Crazy Legs",
+      "name": "Crazy Legs",
+      "model": "V2IP_121A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183204,
+      "fighterXml": {
+        "ID": 20,
+        "coreID": 35,
+        "name": "CRAZY LEGS",
+        "dispname": "Crazy Legs (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000004",
+      "index": 4,
+      "key": "Comp",
+      "name": "Comp",
+      "model": "V2IP_304A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183620,
+      "fighterXml": {
+        "ID": 46,
+        "coreID": 36,
+        "name": "COMP",
+        "dispname": "Comp (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000005",
+      "index": 5,
+      "key": "Crow",
+      "name": "Crow",
+      "model": "V2IP_126A",
+      "cost": 250,
+      "listed": 1,
+      "sodRecordOffset": 184868,
+      "fighterXml": {
+        "ID": 58,
+        "coreID": 1,
+        "name": "CROW",
+        "dispname": "Crow1 (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000006",
+      "index": 6,
+      "key": "Cruz",
+      "name": "Cruz",
+      "model": "V2IP_007A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 181540,
+      "fighterXml": {
+        "ID": 4,
+        "coreID": 60,
+        "name": "CRUZ",
+        "dispname": "Cruz (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000007",
+      "index": 7,
+      "key": "Masa",
+      "name": "Masa",
+      "model": "V2IP_005A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 185804,
+      "fighterXml": {
+        "ID": 14,
+        "coreID": 67,
+        "name": "MASA",
+        "dispname": "Masa (SUB)"
+      }
+    },
+    {
+      "handle": "0x07000008",
+      "index": 8,
+      "key": "Meca",
+      "name": "Meca",
+      "model": "V2IP_201A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 179876,
+      "fighterXml": {
+        "ID": 10,
+        "coreID": 75,
+        "name": "WIDOWMAKER",
+        "dispname": "Meca (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000009",
+      "index": 9,
+      "key": "NORE",
+      "name": "NORE",
+      "model": "V2IP_104A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 185180,
+      "fighterXml": {
+        "ID": 48,
+        "coreID": 14,
+        "name": "NORE",
+        "dispname": "NORE (STF)"
+      }
+    },
+    {
+      "handle": "0x0700000A",
+      "index": 10,
+      "key": "Nyne",
+      "name": "Nyne",
+      "model": "V2IP_009A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 182892,
+      "fighterXml": {
+        "ID": 2,
+        "coreID": 55,
+        "name": "NYNE",
+        "dispname": "Nyne (STF)"
+      }
+    },
+    {
+      "handle": "0x0700000B",
+      "index": 11,
+      "key": "Omar",
+      "name": "O.E.",
+      "model": "V2IP_308A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183100,
+      "fighterXml": {
+        "ID": 52,
+        "coreID": 12,
+        "name": "LL COOL J",
+        "dispname": "O.E (STF)"
+      }
+    },
+    {
+      "handle": "0x0700000C",
+      "index": 12,
+      "key": "Rome",
+      "name": "Rome",
+      "model": "V2IP_010A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 183412,
+      "fighterXml": {
+        "ID": 27,
+        "coreID": 61,
+        "name": "ROME",
+        "dispname": "Rome (STF)"
+      }
+    },
+    {
+      "handle": "0x0700000D",
+      "index": 13,
+      "key": "Solo",
+      "name": "Solo",
+      "model": "V2IP_011A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 181020,
+      "fighterXml": {
+        "ID": 9,
+        "coreID": 62,
+        "name": "SOLO",
+        "dispname": "Solo (MAR)"
+      }
+    },
+    {
+      "handle": "0x0700000E",
+      "index": 14,
+      "key": "Teck",
+      "name": "Teck",
+      "model": "V2IP_305A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 180292,
+      "fighterXml": {
+        "ID": 40,
+        "coreID": 70,
+        "name": "BULLETPROOF",
+        "dispname": "Teck (KIC)"
+      }
+    },
+    {
+      "handle": "0x0700000F",
+      "index": 15,
+      "key": "Starks",
+      "name": "Starks",
+      "model": "V2IP_203A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 180188,
+      "fighterXml": {
+        "ID": 62,
+        "coreID": 69,
+        "name": "STARKS",
+        "dispname": "Starks (STF)"
+      }
+    },
+    {
+      "handle": "0x07000010",
+      "index": 16,
+      "key": "Sticky",
+      "name": "Sticky Fingaz",
+      "model": "V2IP_114A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 181124,
+      "fighterXml": {
+        "ID": 57,
+        "coreID": 8,
+        "name": "STICKY",
+        "dispname": "Sticky1 (STF)"
+      }
+    },
+    {
+      "handle": "0x07000011",
+      "index": 17,
+      "key": "Capone",
+      "name": "Capone",
+      "model": "V2IP_105A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179148,
+      "fighterXml": {
+        "ID": 47,
+        "coreID": 19,
+        "name": "CAPONE",
+        "dispname": "Capone (STF)"
+      }
+    },
+    {
+      "handle": "0x07000012",
+      "index": 18,
+      "key": "Shadowy Figure",
+      "name": "Suspect",
+      "model": "V2IP_501A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 186012,
+      "fighterXml": {
+        "ID": 60,
+        "coreID": 81,
+        "name": "SHADOWYFIGURE",
+        "dispname": "Shadowy Figure"
+      }
+    },
+    {
+      "handle": "0x07000013",
+      "index": 19,
+      "key": "Chiang",
+      "name": "Chiang",
+      "model": "V2IP_006A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 186428,
+      "fighterXml": {
+        "ID": 13,
+        "coreID": 66,
+        "name": "CHIANG",
+        "dispname": "Chiang (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000014",
+      "index": 20,
+      "key": "Memphis Bleek",
+      "name": "Memphis Bleek",
+      "model": "V2IP_103A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182476,
+      "fighterXml": {
+        "ID": 43,
+        "coreID": 25,
+        "name": "BEEK",
+        "dispname": "MemphisBleek (STF)"
+      }
+    },
+    {
+      "handle": "0x07000015",
+      "index": 21,
+      "key": "Lil Kim",
+      "name": "Lil' Kim",
+      "model": "V2IP_404A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182268,
+      "fighterXml": {
+        "ID": 64,
+        "coreID": 44,
+        "name": "LIL KIM",
+        "dispname": "Lil Kim (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000016",
+      "index": 22,
+      "key": "Snowman",
+      "name": "Snowman",
+      "model": "V2IP_002A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 185492,
+      "fighterXml": {
+        "ID": 71,
+        "coreID": 65,
+        "name": "SNOWMAN",
+        "dispname": "Snowman (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000017",
+      "index": 23,
+      "key": "Lil Flip",
+      "name": "Lil' Flip",
+      "model": "V2IP_307A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 184972,
+      "fighterXml": {
+        "ID": 24,
+        "coreID": 34,
+        "name": "LIL FLIP",
+        "dispname": "Lil Flip (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000018",
+      "index": 24,
+      "key": "Jervis",
+      "name": "Jervis",
+      "model": "V2IP_202A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182372,
+      "fighterXml": {
+        "ID": 61,
+        "coreID": 68,
+        "name": "JERVIS",
+        "dispname": "Jervis (STF)"
+      }
+    },
+    {
+      "handle": "0x07000019",
+      "index": 25,
+      "key": "Bonecrusher",
+      "name": "Bonecrusher",
+      "model": "V2IP_111A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182788,
+      "fighterXml": {
+        "ID": 31,
+        "coreID": 18,
+        "name": "BONECRUSHER",
+        "dispname": "Bonecrusher (WRE)"
+      }
+    },
+    {
+      "handle": "0x0700001A",
+      "index": 26,
+      "key": "Ghostface Killlah",
+      "name": "Ghostface Killah",
+      "model": "V2IP_108A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179460,
+      "fighterXml": {
+        "ID": 45,
+        "coreID": 21,
+        "name": "GHOSTFACE",
+        "dispname": "Ghostface Killah (WRE)"
+      }
+    },
+    {
+      "handle": "0x0700001B",
+      "index": 27,
+      "key": "Fam Lay",
+      "name": "Fam-Lay",
+      "model": "V2IP_120A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179668,
+      "fighterXml": {
+        "ID": 30,
+        "coreID": 37,
+        "name": "FAM LAY",
+        "dispname": "Fam Lay (STF)"
+      }
+    },
+    {
+      "handle": "0x0700001C",
+      "index": 28,
+      "key": "Shawnna",
+      "name": "Shawnna",
+      "model": "V2IP_406A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179564,
+      "fighterXml": {
+        "ID": 65,
+        "coreID": 47,
+        "name": "SHAWNNA",
+        "dispname": "Shawnna (KIC)"
+      }
+    },
+    {
+      "handle": "0x0700001D",
+      "index": 29,
+      "key": "Sticky 2",
+      "name": "Sticky Fingaz",
+      "model": "V2IP_114B",
+      "cost": 100,
+      "listed": 0,
+      "sodRecordOffset": 180916,
+      "fighterXml": {
+        "ID": 80,
+        "coreID": 9,
+        "name": "STICKY2",
+        "dispname": "Sticky2 (STF)"
+      }
+    },
+    {
+      "handle": "0x0700001E",
+      "index": 30,
+      "key": "Scarface",
+      "name": "Scarface",
+      "model": "V2IP_116A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182996,
+      "fighterXml": {
+        "ID": 51,
+        "coreID": 22,
+        "name": "SCARFACE",
+        "dispname": "Scarface (STF)"
+      }
+    },
+    {
+      "handle": "0x0700001F",
+      "index": 31,
+      "key": "Freeway",
+      "name": "Freeway",
+      "model": "V2IP_301A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 180708,
+      "fighterXml": {
+        "ID": 44,
+        "coreID": 27,
+        "name": "FREEWAY",
+        "dispname": "Freeway (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000020",
+      "index": 32,
+      "key": "Baby Chris",
+      "name": "Baby Chris",
+      "model": "V2IP_122A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 180084,
+      "fighterXml": {
+        "ID": 33,
+        "coreID": 40,
+        "name": "BABY CHRIS",
+        "dispname": "Chris (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000021",
+      "index": 33,
+      "key": "Stingray",
+      "name": "Stingray",
+      "model": "V2IP_016A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 184036,
+      "fighterXml": {
+        "ID": 72,
+        "coreID": 59,
+        "name": "STINGRAY",
+        "dispname": "Stingray (STF)"
+      }
+    },
+    {
+      "handle": "0x07000022",
+      "index": 34,
+      "key": "Sean Paul",
+      "name": "Sean Paul",
+      "model": "V2IP_125A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183308,
+      "fighterXml": {
+        "ID": 12,
+        "coreID": 20,
+        "name": "SEAN PAUL",
+        "dispname": "Sean Paul (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000023",
+      "index": 35,
+      "key": "Warren G",
+      "name": "Warren G",
+      "model": "V2IP_306A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 185076,
+      "fighterXml": {
+        "ID": 36,
+        "coreID": 41,
+        "name": "WarrenG",
+        "dispname": "WarrenG (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000024",
+      "index": 36,
+      "key": "Ludacris",
+      "name": "Ludacris",
+      "model": "V2IP_123A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 178732,
+      "fighterXml": {
+        "ID": 54,
+        "coreID": 4,
+        "name": "LUDACRIS",
+        "dispname": "Ludacris (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000025",
+      "index": 37,
+      "key": "Doc",
+      "name": "Doc",
+      "model": "V2IP_109A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 182580,
+      "fighterXml": {
+        "ID": 55,
+        "coreID": 10,
+        "name": "DOC",
+        "dispname": "Doc (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000026",
+      "index": 38,
+      "key": "Slick Rick",
+      "name": "Slick Rick",
+      "model": "V2IP_130A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 184452,
+      "fighterXml": {
+        "ID": 32,
+        "coreID": 29,
+        "name": "KURUPT",
+        "dispname": "Slick Rick (SUB)"
+      }
+    },
+    {
+      "handle": "0x07000027",
+      "index": 39,
+      "key": "D-Mob 2",
+      "name": "D-Mob",
+      "model": "V2IP_014B",
+      "cost": 100,
+      "listed": 0,
+      "sodRecordOffset": 178836,
+      "fighterXml": {
+        "ID": 83,
+        "coreID": 52,
+        "name": "D-MOB2",
+        "dispname": "D-mob2 (SUB)"
+      }
+    },
+    {
+      "handle": "0x07000028",
+      "index": 40,
+      "key": "D-Mob 3",
+      "name": "D-Mob",
+      "model": "V2IP_014C",
+      "cost": 100,
+      "listed": 0,
+      "sodRecordOffset": 184660,
+      "fighterXml": {
+        "ID": 84,
+        "coreID": 53,
+        "name": "D-MOB3",
+        "dispname": "D-mob3 (SUB)"
+      }
+    },
+    {
+      "handle": "0x07000029",
+      "index": 41,
+      "key": "Rollins",
+      "name": "Rollins",
+      "model": "V2IP_131A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 184348,
+      "fighterXml": {
+        "ID": 75,
+        "coreID": 72,
+        "name": "ROLINS",
+        "dispname": "ROLINS (STF)"
+      }
+    },
+    {
+      "handle": "0x0700002A",
+      "index": 42,
+      "key": "Flava Flav",
+      "name": "Flava Flav",
+      "model": "V2IP_110A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 184244,
+      "fighterXml": {
+        "ID": 21,
+        "coreID": 26,
+        "name": "FLAVA FLAV",
+        "dispname": "FlavaFlav (MAR)"
+      }
+    },
+    {
+      "handle": "0x0700002B",
+      "index": 43,
+      "key": "Xzibit",
+      "name": "Xzibit",
+      "model": "V2IP_115A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179772,
+      "fighterXml": {
+        "ID": 35,
+        "coreID": 13,
+        "name": "XZIBIT",
+        "dispname": "Xzibit (KIC)"
+      }
+    },
+    {
+      "handle": "0x0700002C",
+      "index": 44,
+      "key": "Pockets",
+      "name": "Pockets",
+      "model": "V2IP_001A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 184764,
+      "fighterXml": {
+        "ID": 76,
+        "coreID": 64,
+        "name": "POCKETS",
+        "dispname": "Pockets (MAR)"
+      }
+    },
+    {
+      "handle": "0x0700002D",
+      "index": 45,
+      "key": "Prodigy",
+      "name": "Prodigy",
+      "model": "V2IP_119A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183828,
+      "fighterXml": {
+        "ID": 77,
+        "coreID": 32,
+        "name": "PRODIGY",
+        "dispname": "Prodigy (STF)"
+      }
+    },
+    {
+      "handle": "0x0700002E",
+      "index": 46,
+      "key": "Mack 10",
+      "name": "Mack 10",
+      "model": "V2IP_117A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183932,
+      "fighterXml": {
+        "ID": 34,
+        "coreID": 30,
+        "name": "MACK 10",
+        "dispname": "Mack10 (STF)"
+      }
+    },
+    {
+      "handle": "0x0700002F",
+      "index": 47,
+      "key": "Joe Budden",
+      "name": "Joe Budden",
+      "model": "V2IP_302A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 179044,
+      "fighterXml": {
+        "ID": 50,
+        "coreID": 31,
+        "name": "JOE BUDDEN",
+        "dispname": "JoeBudden (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000030",
+      "index": 48,
+      "key": "Blaze",
+      "name": "Blaze",
+      "model": "V2IP_113A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 186324,
+      "fighterXml": {
+        "ID": 56,
+        "coreID": 5,
+        "name": "BLAZE",
+        "dispname": "Blaze1 (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000031",
+      "index": 49,
+      "key": "Bless",
+      "name": "Bless",
+      "model": "V2IP_101A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 185908,
+      "fighterXml": {
+        "ID": 26,
+        "coreID": 39,
+        "name": "BLESS",
+        "dispname": "Bless (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000032",
+      "index": 50,
+      "key": "D-Mob",
+      "name": "D-Mob",
+      "model": "V2IP_014A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 185284,
+      "fighterXml": {
+        "ID": 59,
+        "coreID": 51,
+        "name": "D-MOB",
+        "dispname": "D-mob1 (SUB)"
+      }
+    },
+    {
+      "handle": "0x07000033",
+      "index": 51,
+      "key": "Cindy",
+      "name": "Cindy J",
+      "model": "V2IP_403A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 186116,
+      "fighterXml": {
+        "ID": 67,
+        "coreID": 48,
+        "name": "CINDY",
+        "dispname": "Cindy Johnson (STF)"
+      }
+    },
+    {
+      "handle": "0x07000034",
+      "index": 52,
+      "key": "Crack",
+      "name": "Crack",
+      "model": "V2IP_106A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 185596,
+      "fighterXml": {
+        "ID": 17,
+        "coreID": 17,
+        "name": "CRACK",
+        "dispname": "Crack (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000035",
+      "index": 53,
+      "key": "Bubba Sparxxx",
+      "name": "Bubba Sparxxx",
+      "model": "V2IP_107A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 183724,
+      "fighterXml": {
+        "ID": 23,
+        "coreID": 28,
+        "name": "BUBBA SPARXX",
+        "dispname": "Bubba Sparxxx (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000036",
+      "index": 54,
+      "key": "Dan G",
+      "name": "Dan G",
+      "model": "V2IP_004A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 185388,
+      "fighterXml": {
+        "ID": 19,
+        "coreID": 57,
+        "name": "DAN G",
+        "dispname": "Dan-G (STF)"
+      }
+    },
+    {
+      "handle": "0x07000037",
+      "index": 55,
+      "key": "Havoc",
+      "name": "Havoc",
+      "model": "V2IP_118A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182060,
+      "fighterXml": {
+        "ID": 28,
+        "coreID": 33,
+        "name": "HAVOC",
+        "dispname": "Havoc (MAR)"
+      }
+    },
+    {
+      "handle": "0x07000038",
+      "index": 56,
+      "key": "House",
+      "name": "House",
+      "model": "V2IP_003A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 181852,
+      "fighterXml": {
+        "ID": 0,
+        "coreID": 63,
+        "name": "HOUSE",
+        "dispname": "House (STF)"
+      }
+    },
+    {
+      "handle": "0x07000039",
+      "index": 57,
+      "key": "Ice-T",
+      "name": "Ice-T",
+      "model": "V2IP_132A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 184140,
+      "fighterXml": {
+        "ID": 8,
+        "coreID": 15,
+        "name": "ICE-T",
+        "dispname": "Ice-T (SUB)"
+      }
+    },
+    {
+      "handle": "0x0700003A",
+      "index": 58,
+      "key": "Jacob",
+      "name": "Jacob",
+      "model": "V2IP_129A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 181748,
+      "fighterXml": {
+        "ID": 73,
+        "coreID": 43,
+        "name": "JACOB",
+        "dispname": "Jacob (WRE)"
+      }
+    },
+    {
+      "handle": "0x0700003B",
+      "index": 59,
+      "key": "Magic",
+      "name": "Magic",
+      "model": "V2IP_128A",
+      "cost": 100,
+      "listed": 1,
+      "sodRecordOffset": 184556,
+      "fighterXml": {
+        "ID": 22,
+        "coreID": 11,
+        "name": "MAGIC",
+        "dispname": "Magic (SUB)"
+      }
+    },
+    {
+      "handle": "0x0700003C",
+      "index": 60,
+      "key": "Manny",
+      "name": "Manny",
+      "model": "V2IP_008A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 181956,
+      "fighterXml": {
+        "ID": 74,
+        "coreID": 54,
+        "name": "MANNY",
+        "dispname": "Manny (STF)"
+      }
+    },
+    {
+      "handle": "0x0700003D",
+      "index": 61,
+      "key": "Banner",
+      "name": "Banner",
+      "model": "V2IP_124A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 185700,
+      "fighterXml": {
+        "ID": 25,
+        "coreID": 16,
+        "name": "BANNER",
+        "dispname": "DavidBanner (STF)"
+      }
+    },
+    {
+      "handle": "0x0700003E",
+      "index": 62,
+      "key": "Baxter",
+      "name": "Baxter",
+      "model": "V2IP_015A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 179356,
+      "fighterXml": {
+        "ID": 18,
+        "coreID": 58,
+        "name": "BAXTER",
+        "dispname": "Baxter (STF)"
+      }
+    },
+    {
+      "handle": "0x0700003F",
+      "index": 63,
+      "key": "Lauren",
+      "name": "Lauren",
+      "model": "V2IP_405A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 186220,
+      "fighterXml": {
+        "ID": 70,
+        "coreID": 84,
+        "name": "LAUREN",
+        "dispname": "Lauren"
+      }
+    },
+    {
+      "handle": "0x07000040",
+      "index": 64,
+      "key": "Blaze 2",
+      "name": "Blaze",
+      "model": "V2IP_113B",
+      "cost": 100,
+      "listed": 0,
+      "sodRecordOffset": 181228,
+      "fighterXml": {
+        "ID": 81,
+        "coreID": 6,
+        "name": "BLAZE2",
+        "dispname": "Blaze2 (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000041",
+      "index": 65,
+      "key": "Blaze 3",
+      "name": "Blaze",
+      "model": "V2IP_113C",
+      "cost": 100,
+      "listed": 0,
+      "sodRecordOffset": 181332,
+      "fighterXml": {
+        "ID": 82,
+        "coreID": 7,
+        "name": "BLAZE3",
+        "dispname": "Blaze3 (WRE)"
+      }
+    },
+    {
+      "handle": "0x07000042",
+      "index": 66,
+      "key": "E3 Hero",
+      "name": "Hero",
+      "model": "V2IP_999A",
+      "cost": 25,
+      "listed": 0,
+      "sodRecordOffset": 182164,
+      "fighterXml": {
+        "ID": 141,
+        "coreID": 141,
+        "name": "CP_HERO",
+        "dispname": "CP_HERO"
+      }
+    },
+    {
+      "handle": "0x07000043",
+      "index": 67,
+      "key": "Skull",
+      "name": "Skull",
+      "model": "V2IP_018A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 180812,
+      "fighterXml": {
+        "ID": 6,
+        "coreID": 71,
+        "name": "SKULL",
+        "dispname": "Skull (SUB)"
+      }
+    },
+    {
+      "handle": "0x07000044",
+      "index": 68,
+      "key": "Trejo",
+      "name": "Trejo",
+      "model": "V2IP_112A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 178940,
+      "fighterXml": {
+        "ID": 7,
+        "coreID": 23,
+        "name": "TREJO",
+        "dispname": "Trejo (STF)"
+      }
+    },
+    {
+      "handle": "0x07000045",
+      "index": 69,
+      "key": "Trick",
+      "name": "Trick",
+      "model": "V2IP_013A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 179252,
+      "fighterXml": {
+        "ID": 3,
+        "coreID": 74,
+        "name": "TRICK",
+        "dispname": "Trick (STF)"
+      }
+    },
+    {
+      "handle": "0x07000046",
+      "index": 70,
+      "key": "Elephant Man",
+      "name": "Elephant Man",
+      "model": "V2IP_127A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 181436,
+      "fighterXml": {
+        "ID": 11,
+        "coreID": 38,
+        "name": "ELEPHANTMAN",
+        "dispname": "Elephant Man (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000047",
+      "index": 71,
+      "key": "Kimora Lee",
+      "name": "Kimora",
+      "model": "V2IP_407A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 180604,
+      "fighterXml": {
+        "ID": 38,
+        "coreID": 46,
+        "name": "---41",
+        "dispname": "Kimora (STF)"
+      }
+    },
+    {
+      "handle": "0x07000048",
+      "index": 72,
+      "key": "Santos",
+      "name": "Santos",
+      "model": "V2IP_204A",
+      "cost": 25,
+      "listed": 1,
+      "sodRecordOffset": 180500,
+      "fighterXml": {
+        "ID": 41,
+        "coreID": 73,
+        "name": "---49",
+        "dispname": "Santos (KIC)"
+      }
+    },
+    {
+      "handle": "0x07000049",
+      "index": 73,
+      "key": "Shaniqua",
+      "name": "Shaniqua",
+      "model": "V2IP_402A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 181644,
+      "fighterXml": {
+        "ID": 68,
+        "coreID": 49,
+        "name": "SHANIQUA",
+        "dispname": "Shaniqua (WRE)"
+      }
+    },
+    {
+      "handle": "0x0700004A",
+      "index": 74,
+      "key": "Carmen Electra",
+      "name": "Carmen Electra",
+      "model": "V2IP_401A",
+      "cost": 50,
+      "listed": 1,
+      "sodRecordOffset": 182684,
+      "fighterXml": {
+        "ID": 69,
+        "coreID": 45,
+        "name": "CARMEN ELECTRA",
+        "dispname": "Carmen Electra (MAR)"
+      }
+    }
+  ],
+  "venues": [
+    {
+      "handle": "0x17000000",
+      "index": 0,
+      "key": "Carribean Club",
+      "name": "Babylon",
+      "file": "V2BG_21A",
+      "cost": 75,
+      "coreID": 24,
+      "feID": 12,
+      "sodRecordOffset": 4728,
+      "venueXml": {
+        "ID": 25,
+        "name": "ARENA_BG21A",
+        "dispname": "21A Babylon  (CaribbeanClub)"
+      }
+    },
+    {
+      "handle": "0x17000001",
+      "index": 1,
+      "key": "Junkyard (After Hours)",
+      "name": "Hunt's Point After Hours",
+      "file": "V2BG_01B",
+      "cost": 75,
+      "coreID": 1,
+      "feID": 15,
+      "sodRecordOffset": 5400,
+      "venueXml": {
+        "ID": 1,
+        "name": "ARENA_BG01B",
+        "dispname": "01B Hunt's Point Scrapyard AfterHours  (Junkyard AH)"
+      }
+    },
+    {
+      "handle": "0x17000002",
+      "index": 2,
+      "key": "Subway",
+      "name": "125th Street Station",
+      "file": "V2BG_04A",
+      "cost": 150,
+      "coreID": 4,
+      "feID": 11,
+      "sodRecordOffset": 5908,
+      "venueXml": {
+        "ID": 4,
+        "name": "ARENA_BG04A",
+        "dispname": "04A 125th Street Station  (Subway)"
+      }
+    },
+    {
+      "handle": "0x17000003",
+      "index": 3,
+      "key": "Club DTP (Intense)",
+      "name": "Club DTP",
+      "file": "V2BG_22A",
+      "cost": 75,
+      "coreID": 25,
+      "feID": 27,
+      "sodRecordOffset": 5484,
+      "venueXml": {
+        "ID": 26,
+        "name": "ARENA_BG22A",
+        "dispname": "22A 7th Heaven (Club DTP)"
+      }
+    },
+    {
+      "handle": "0x17000004",
+      "index": 4,
+      "key": "Fight Club",
+      "name": "The Foundation",
+      "file": "V2BG_02A",
+      "cost": 50,
+      "coreID": 2,
+      "feID": 1,
+      "sodRecordOffset": 5148,
+      "venueXml": {
+        "ID": 2,
+        "name": "ARENA_BG02A",
+        "dispname": "02A The Foundation  (FightClub)"
+      }
+    },
+    {
+      "handle": "0x17000005",
+      "index": 5,
+      "key": "Warehouse Inferno",
+      "name": "Red Hook Tire Co.",
+      "file": "V2BG_07A",
+      "cost": 250,
+      "coreID": 7,
+      "feID": 24,
+      "sodRecordOffset": 5736,
+      "venueXml": {
+        "ID": 7,
+        "name": "ARENA_BG07A",
+        "dispname": "07A Red Hook Tire Co.  (Inferno)"
+      }
+    },
+    {
+      "handle": "0x17000006",
+      "index": 6,
+      "key": "Lefrak (Remix)",
+      "name": "The Heights",
+      "file": "V2BG_06A",
+      "cost": 75,
+      "coreID": 6,
+      "feID": 18,
+      "sodRecordOffset": 4476,
+      "venueXml": {
+        "ID": 6,
+        "name": "ARENA_BG06A",
+        "dispname": "06A The Heights  (Lefrak)"
+      }
+    },
+    {
+      "handle": "0x17000007",
+      "index": 7,
+      "key": "Club DTP",
+      "name": "7th Heaven",
+      "file": "V2BG_22B",
+      "cost": 75,
+      "coreID": 27,
+      "feID": 16,
+      "sodRecordOffset": 4980,
+      "venueXml": {
+        "ID": 27,
+        "name": "ARENA_BG22B",
+        "dispname": "22B 7th Heaven Intense (Club DTP Int)"
+      }
+    },
+    {
+      "handle": "0x17000008",
+      "index": 8,
+      "key": "Blaze's Gym",
+      "name": "Stapleton Athletics",
+      "file": "V2BG_11A",
+      "cost": 50,
+      "coreID": 13,
+      "feID": 0,
+      "sodRecordOffset": 5820,
+      "venueXml": {
+        "ID": 13,
+        "name": "ARENA_BG11A",
+        "dispname": "11A Stapleton Athletics  (Blaze's Gym)"
+      }
+    },
+    {
+      "handle": "0x17000009",
+      "index": 9,
+      "key": "Old School Club",
+      "name": "The Terrordome",
+      "file": "V2BG_19A",
+      "cost": 75,
+      "coreID": 21,
+      "feID": 6,
+      "sodRecordOffset": 4896,
+      "venueXml": {
+        "ID": 22,
+        "name": "ARENA_BG19A",
+        "dispname": "19A The Terror Dome  (OldSchoolClub)"
+      }
+    },
+    {
+      "handle": "0x1700000A",
+      "index": 10,
+      "key": "Crow's Office",
+      "name": "Crow's Office",
+      "file": "V2BG_15A",
+      "cost": 250,
+      "coreID": 17,
+      "feID": 26,
+      "sodRecordOffset": 6076,
+      "venueXml": {
+        "ID": 18,
+        "name": "ARENA_BG15A",
+        "dispname": "15A Crow's Office"
+      }
+    },
+    {
+      "handle": "0x1700000B",
+      "index": 11,
+      "key": "Crow's Cage",
+      "name": "Club Murder",
+      "file": "V2BG_14A",
+      "cost": 100,
+      "coreID": 16,
+      "feID": 10,
+      "sodRecordOffset": 5232,
+      "venueXml": {
+        "ID": 17,
+        "name": "ARENA_BG14A",
+        "dispname": "14A Club Murder  (Crow's Cage)"
+      }
+    },
+    {
+      "handle": "0x1700000C",
+      "index": 12,
+      "key": "Crow's Club",
+      "name": "Red Room",
+      "file": "V2BG_23A",
+      "cost": 50,
+      "coreID": 26,
+      "feID": 9,
+      "sodRecordOffset": 5568,
+      "venueXml": {
+        "ID": 28,
+        "name": "ARENA_BG23A",
+        "dispname": "23A Red Room  (Crow's Club)"
+      }
+    },
+    {
+      "handle": "0x1700000D",
+      "index": 13,
+      "key": "Construction Site",
+      "name": "The Pit",
+      "file": "V2BG_13A",
+      "cost": 75,
+      "coreID": 15,
+      "feID": 19,
+      "sodRecordOffset": 5064,
+      "venueXml": {
+        "ID": 16,
+        "name": "ARENA_BG13A",
+        "dispname": "13A The Pit  (ConstructionSite)"
+      }
+    },
+    {
+      "handle": "0x1700000E",
+      "index": 14,
+      "key": "DMob Club",
+      "name": "Club 357",
+      "file": "V2BG_09A",
+      "cost": 50,
+      "coreID": 9,
+      "feID": 4,
+      "sodRecordOffset": 4644,
+      "venueXml": {
+        "ID": 9,
+        "name": "ARENA_BG09A",
+        "dispname": "09A Club 357  (DMob's Club)"
+      }
+    },
+    {
+      "handle": "0x1700000F",
+      "index": 15,
+      "key": "Parkade",
+      "name": "Gun Hill Garage",
+      "file": "V2BG_17A",
+      "cost": 100,
+      "coreID": 19,
+      "feID": 17,
+      "sodRecordOffset": 5652,
+      "venueXml": {
+        "ID": 20,
+        "name": "ARENA_BG17A",
+        "dispname": "17A Gun Hill Garage  (Parkade)"
+      }
+    },
+    {
+      "handle": "0x17000010",
+      "index": 16,
+      "key": "The Limit CLub",
+      "name": "The Limit",
+      "file": "V2BG_20A",
+      "cost": 75,
+      "coreID": 22,
+      "feID": 2,
+      "sodRecordOffset": 6160,
+      "venueXml": {
+        "ID": 23,
+        "name": "ARENA_BG20A",
+        "dispname": "20A The Limit"
+      }
+    },
+    {
+      "handle": "0x17000011",
+      "index": 17,
+      "key": "DMob Club (Intense)",
+      "name": "Club 357 High Stakes",
+      "file": "V2BG_09B",
+      "cost": 75,
+      "coreID": 10,
+      "feID": 5,
+      "sodRecordOffset": 6412,
+      "venueXml": {
+        "ID": 10,
+        "name": "ARENA_BG09B",
+        "dispname": "09B Club 357 Intense (DMob's Club Int)"
+      }
+    },
+    {
+      "handle": "0x17000012",
+      "index": 18,
+      "key": "Junkyard",
+      "name": "Hunt's Point Scrapyard",
+      "file": "V2BG_01A",
+      "cost": 75,
+      "coreID": 0,
+      "feID": 14,
+      "sodRecordOffset": 5992,
+      "venueXml": {
+        "ID": 0,
+        "name": "ARENA_BG01A",
+        "dispname": "01A Hunt's Point Scrapyard  (Junkyard R)"
+      }
+    },
+    {
+      "handle": "0x17000013",
+      "index": 19,
+      "key": "Chopshop",
+      "name": "The Chopshop",
+      "file": "V2BG_12A",
+      "cost": 75,
+      "coreID": 14,
+      "feID": 13,
+      "sodRecordOffset": 4560,
+      "venueXml": {
+        "ID": 14,
+        "name": "ARENA_BG12A",
+        "dispname": "12A Chopshop"
+      }
+    },
+    {
+      "handle": "0x17000014",
+      "index": 20,
+      "key": "Power Plant",
+      "name": "Syn Energy Power Plant",
+      "file": "V2BG_03A",
+      "cost": 75,
+      "coreID": 3,
+      "feID": 7,
+      "sodRecordOffset": 5316,
+      "venueXml": {
+        "ID": 3,
+        "name": "ARENA_BG03A",
+        "dispname": "03A Syn Energy Power Plant"
+      }
+    },
+    {
+      "handle": "0x17000015",
+      "index": 21,
+      "key": "Gauntlet (Another Lighting)",
+      "name": "The Gauntlet Intense",
+      "file": "V2BG_10B",
+      "cost": 75,
+      "coreID": 12,
+      "feID": 22,
+      "sodRecordOffset": 6328,
+      "venueXml": {
+        "ID": 12,
+        "name": "ARENA_BG10B",
+        "dispname": "10B Gauntlet Round Two"
+      }
+    },
+    {
+      "handle": "0x17000016",
+      "index": 22,
+      "key": "Dragon House (Remix)",
+      "name": "Dragon House",
+      "file": "V2BG_05A",
+      "cost": 75,
+      "coreID": 5,
+      "feID": 8,
+      "sodRecordOffset": 6244,
+      "venueXml": {
+        "ID": 5,
+        "name": "ARENA_BG05A",
+        "dispname": "05A The Dragon House"
+      }
+    },
+    {
+      "handle": "0x17000017",
+      "index": 23,
+      "key": "Gauntlet",
+      "name": "The Gauntlet",
+      "file": "V2BG_10A",
+      "cost": 75,
+      "coreID": 11,
+      "feID": 21,
+      "sodRecordOffset": 4812,
+      "venueXml": {
+        "ID": 11,
+        "name": "ARENA_BG10A",
+        "dispname": "10A Gauntlet"
+      }
+    }
+  ],
+  "venueXmlArenasNotInSod": [
+    {
+      "ID": 8,
+      "name": "ARENA_BG08A",
+      "dispname": "08A CUT",
+      "file": "V2BG_08A"
+    },
+    {
+      "ID": 15,
+      "name": "ARENA_BG12B",
+      "dispname": "12B Chopshop Another",
+      "file": "V2BG_12B"
+    },
+    {
+      "ID": 19,
+      "name": "ARENA_BG16A",
+      "dispname": "16A Crow's Alley(Cinema Only)",
+      "file": "V2BG_16A"
+    },
+    {
+      "ID": 21,
+      "name": "ARENA_BG18A",
+      "dispname": "18A CUT",
+      "file": "V2BG_18A"
+    },
+    {
+      "ID": 24,
+      "name": "ARENA_BG20B",
+      "dispname": "20B CUT",
+      "file": "V2BG_20B"
+    },
+    {
+      "ID": 29,
+      "name": "ARENA_BG00A",
+      "dispname": "00A Viewer",
+      "file": "V2BG_00A"
+    }
+  ]
+}
