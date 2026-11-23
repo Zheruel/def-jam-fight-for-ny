@@ -15,12 +15,8 @@ try {
   browser = await chromium.launch({ headless: true, args: ["--autoplay-policy=no-user-gesture-required"], ...(process.platform === "darwin" && { channel: "chrome" }) });
   const page = await browser.newPage({ viewport: { width: 1024, height: 824 } });
   const errors = [], cues = [];
-  // Fixture only: a HUD card image the page asks for and the checkout may not have yet gets a blank one.
-  const blank = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAEklEQVR4nGNgGAWjYBSMAggAAAQQAAFVN1rQAAAAAElFTkSuQmCC", "base64");
-  await page.route("**/port/hud/screens/*.png", async route => {
-    const response = await route.fetch();
-    return response.status() === 404 ? route.fulfill({ body: blank, contentType: "image/png" }) : route.fulfill({ response });
-  });
+  // Any missing production file fails the check: nothing is substituted.
+  page.on("response", response => { if (response.status() >= 400) errors.push(response.status() + " " + response.url()); });
   page.on("pageerror", error => errors.push(error.message));
   page.on("request", request => { if (/\/port\/audio\/cues\//.test(request.url())) cues.push(request.url().split("/").pop()); });
   // Log every audio cue the page starts with the tick it was on: the cue's offset and length inside its bank file.
