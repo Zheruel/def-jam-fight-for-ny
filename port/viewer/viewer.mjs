@@ -119,7 +119,7 @@ async function display(leave) {
   const battle = document.body.hasAttribute("data-battle");
   const stepMs = 1000/60;
   let fight, controls, camera, hud, rematch, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
-  let scenery, lighting, combatAudio, environment, trainAudio;
+  let scenery, lighting, combatAudio, environment, trainAudio, vibration;
   const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
   const params=new URLSearchParams(location.search);
@@ -190,7 +190,7 @@ async function display(leave) {
 
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   let lineup, pause, pauseOwner = 0, lastPauseBroadcast = -Infinity;
-  const menuHeld = [], healthShown = [];
+  const menuHeld = [];
   function handlePadMenus(inputs) {
     let changed = false;
     inputs.forEach(({buttons, x, z}, seat) => {
@@ -242,6 +242,7 @@ async function display(leave) {
       try {
         while (carry >= stepMs) {
           fight.tick(query.teamOrder ? query.teamOrder.map(seat => inputs[seat]) : inputs);
+          if (pause?.vibration) vibration.tick(fight.memory);
           combatAudio?.tick(fight);
           if(environment) { environment.update(fight.memory,1,fight.states); const effects=environment.effects(); combatAudio?.environment?.(effects); trainAudio?.effects(effects); }
           camera.step();
@@ -349,11 +350,6 @@ async function display(leave) {
         body.draw(live?.damage??0);
       });
       if (matchState) {
-        matchState.actors.forEach((actor, slot) => {
-          const loss = healthShown[slot] - actor.health;
-          if (loss > 0 && pause?.vibration) controls.impact(query.teamOrder?.[slot] ?? slot, Math.min(1, loss / 30));
-          healthShown[slot] = actor.health;
-        });
         hud({...matchState,rematch,pause});
       }
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
@@ -482,7 +478,9 @@ async function display(leave) {
     // Explicit CPU seats only (?cpu=N, the last N seats): the retail AI plays them and no controller or guest can.
     selected.forEach((f,i)=>{ f.cpu = (query.teamOrder?.[i] ?? i) >= count - query.cpu; });
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count,cpu:query.cpu});
+    const {matchVibration} = await import("../battle/vibration.mjs");
     fight = await loadFoundationFight(selected,arena,mode,query.rule);
+    vibration = matchVibration(fight.actors, (slot, level) => controls.vibration(query.teamOrder?.[slot] ?? slot, level));
     if(voicePlayer)fight.setVoicePlayer(voicePlayer);
     camera = battleCamera(fight.kernel, arena.file);
     const cpuNote = query.cpu ? " · "+query.cpu+(query.cpu>1?" CPU opponents":" CPU opponent") : "";
@@ -496,7 +494,7 @@ async function display(leave) {
       onQuit:returnToMatchSelection,
     });
     pause.redraw = draw;
-    pause.syncAudio = () => { audio.setActive(!pause.open); pauseButton.textContent = pause.open ? "Resume" : "Pause"; };
+    pause.syncAudio = () => { if (pause.open) vibration.stop(); audio.setActive(!pause.open); pauseButton.textContent = pause.open ? "Resume" : "Pause"; };
     pauseButton.onclick = () => {
       if (paused || controls.isGuest() || fight.outcome().over) return;
       if (pause.open) pause.close(); else { pauseOwner=0; pause.show(); pause.syncAudio(); }
@@ -539,7 +537,7 @@ async function display(leave) {
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
       if (pause.open) pause.close();
-      healthShown.length=0; rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      vibration.stop(); rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = hint;
     };
     // Once the result hold is over the retail REMATCH? card takes left/right (or A/D) and Enter: YES restarts the match.
@@ -567,6 +565,7 @@ async function display(leave) {
       scheduled = 0;
       resize.disconnect();
       request?.abort(); skinRequest?.abort();
+      vibration?.stop();
       controls?.use({audio:null});
       cleanups.forEach(cleanup => cleanup());
       scene?.dispose();

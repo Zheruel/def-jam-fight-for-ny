@@ -12,7 +12,19 @@ const guestOnly = new Set(["Enter","Backspace"]);
 // Standard Gamepad order to PS2 pad bits, as read by the retail Battle update.
 const gamepadBits=[0x4000,0x2000,0x8000,0x1000,0x0400,0x0800,0x0100,0x0200,1,8,2,4,0x10,0x40,0x80,0x20];
 const IDLE={buttons:0,x:0,z:0};
-const readDevices=()=>Array.from(navigator.getGamepads?.() ?? []).filter(p => p?.connected);
+const readDevices=()=>Array.from(navigator.getGamepads?.() ?? []).map(p => p?.connected ? p : null);
+
+const guestDevice = () => readDevices().find(Boolean);
+function vibrate(device, level) {
+  const actuator = device?.vibrationActuator;
+  if (!actuator?.playEffect) return;
+  // 0x1ea2e8 reads VibLvl0..3. 0x1eaa58 writes the second float to the
+  // small (on/off) DualShock motor and the first to the variable large motor.
+  const strong = [0, 0.4, 0.8, 1][level];
+  actuator.playEffect("dual-rumble", {
+    duration:level ? 160 : 0, strongMagnitude:strong, weakMagnitude:level === 3 ? 1 : 0,
+  }).catch(() => {});
+}
 
 // One room per page, shared by the match selector and the match: a host that opens it from the selector keeps the same
 // connections, seats and controller channels into the match (its picture and sound are switched with replaceTrack).
@@ -47,7 +59,7 @@ function createSession() {
   }
   function send() {
     if (!guest || !room) return;
-    const p = pads[1] ?? read(guestPad, readDevices()[0]);
+    const p = pads[1] ?? read(guestPad, guestDevice());
     const axes = [p.x,p.z,p.rx??0,p.rz??0];
     const packet=[p.buttons,...axes].join(",");
     if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes});
@@ -88,7 +100,7 @@ function createSession() {
       const seat = Number(new URLSearchParams(location.search).get("seat"));
       room = await transport.joinMatch({...options,code:button("code").value,video:button("remote"),
         ...(Number.isInteger(seat) && seat >= 2 && seat <= 4 ? {slot:seat-1} : {}),
-        onState,onPlaybackBlocked:()=>button("remote").controls = true});
+        onState,onVibration:level => vibrate(guestDevice(), level),onPlaybackBlocked:()=>button("remote").controls = true});
       lastPacket="";
       const scan=()=>{if(guest){send();poll=requestAnimationFrame(scan);}};
       poll=requestAnimationFrame(scan);
@@ -104,7 +116,8 @@ function createSession() {
           listeners.forEach(listener=>listener(slot,remote[slot]));
         },
         // A seat whose guest left goes back to the local controls instead of holding the last remote state.
-        onPeer({slot,state}){ if(state==="open") { delete remote[slot]; listeners.forEach(listener=>listener(slot,null)); } },
+        onPeer({slot,state}){ if(state==="open") { delete remote[slot]; listeners.forEach(listener=>listener(slot,null)); }
+          else remote[slot] ??= IDLE; },
         onSlots(list){ slots=list; showSeats(); redraw(); }});
       slots = room.slots();
       showSeats();
@@ -184,12 +197,10 @@ function createSession() {
     },
     pad: slot => remote[slot],
     inputs() { devices = readDevices(); return Array.from({length:seats},(_,slot)=>input(slot)); },
-    impact(slot,strength) {
-      if (slot >= people() || remote[slot]) return;
-      const actuator = devices[slot]?.vibrationActuator;
-      if (actuator?.playEffect) actuator.playEffect("dual-rumble", {
-        duration:80, strongMagnitude:strength, weakMagnitude:strength/2,
-      }).catch(()=>{});
+    vibration(slot,level) {
+      if (slot >= people() || guest) return;
+      if (remote[slot]) room?.setVibration(slot, level);
+      else vibrate(devices[slot], level);
     },
     isGuest:()=>guest, connection:()=>state,
     setInput(slot,value) { pads[slot]=value; if (guest) send(); },

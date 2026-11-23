@@ -48,7 +48,7 @@ function openRoom(role, {
   code, media, video, signalingUrl, iceServers = DEFAULT_ICE_SERVERS, players, slot: wantedSlot,
   connectSignaling = (url) => new WebSocket(websocketUrl(url)), roomTimeout = 10_000,
   onInput = () => {}, onState = () => {}, onPeer = () => {}, onSlots = () => {}, onPlayers = () => {},
-  onPlaybackBlocked = () => {}, onClose = () => {},
+  onVibration = () => {}, onPlaybackBlocked = () => {}, onClose = () => {},
 }) {
   const socket = connectSignaling(signalingUrl);
   // The host holds one connection per seated guest, keyed by the room round that seated it; a guest holds one.
@@ -150,6 +150,20 @@ function openRoom(role, {
     channel.send(encodeInput(input, activePeer.sequence));
   }
 
+  // Each seat receives the PS2 motor level on its controller channel. Use a
+  // separate sequence from pad input so a late packet cannot restart a stopped motor.
+  function setVibration(slot, level) {
+    if (!Number.isInteger(level) || level < 0 || level > 3) return;
+    const peer = [...peers.values()].find(entry => entry.slot === slot);
+    const channel = peer?.channel;
+    if (channel?.readyState !== 'open' || channel.bufferedAmount >= 1024) return;
+    const command = new DataView(new ArrayBuffer(5));
+    peer.motorSequence = (peer.motorSequence + 1) >>> 0;
+    command.setUint32(0, peer.motorSequence);
+    command.setUint8(4, level);
+    channel.send(command.buffer);
+  }
+
   function setInput(next) {
     if (closed) return;
     const newInput = controllerState(next);
@@ -224,7 +238,17 @@ function openRoom(role, {
         failPeer(activePeer, new Error('The controller connection ended.'));
       }, CHANNEL_CLOSE_GRACE);
     });
-    if (role !== 'host') return;
+    if (role === 'guest') {
+      channel.addEventListener('message', ({data}) => {
+        if (!live(activePeer) || !(data instanceof ArrayBuffer) || data.byteLength !== 5) return;
+        const command = new DataView(data), sequence = command.getUint32(0), level = command.getUint8(4);
+        const gap = (sequence - activePeer.motorSequence) >>> 0;
+        if (!gap || gap >= 0x80000000 || level > 3) return;
+        activePeer.motorSequence = sequence;
+        onVibration(level);
+      });
+      return;
+    }
     channel.addEventListener('message', (event) => {
       if (!live(activePeer)) return;
       const data = decodeInput(event.data);
@@ -244,7 +268,7 @@ function openRoom(role, {
     if (role === 'guest') for (const entry of [...peers.values()]) resetPeer(entry);
     const connection = new RTCPeerConnection({ iceServers });
     const activePeer = {
-      round, slot, connection, input: NEUTRAL, sequence: role === 'guest' ? 0 : null,
+      round, slot, connection, motorSequence: 0, input: NEUTRAL, sequence: role === 'guest' ? 0 : null,
       remoteIce: [], localIce: [], announced: false, state: 'connecting',
     };
     peers.set(round, activePeer);
@@ -327,7 +351,7 @@ function openRoom(role, {
         clearTimeout(roomDeadline);
         resolveRoom(role === 'host'
           ? { code: roomCode, players: seats, close: closePage,
-            setPlayers: (count) => send({ type: 'players', players: count }), slots: slotList, replaceTracks }
+            setPlayers: (count) => send({ type: 'players', players: count }), slots: slotList, replaceTracks, setVibration }
           : { code: roomCode, slot: message.slot ?? 1, players: seats, close: closePage, setInput });
         return;
       case 'players':

@@ -82,7 +82,9 @@ const hostSide = async (tab, { entry, signalingUrl, colors, tones }) => tab.eval
 const guestSide = (tab, { entry, signalingUrl, code, slot }) => tab.evaluate(async ({ entry, signalingUrl, code, slot }) => {
   const { joinMatch } = await import(entry);
   try {
-    window.guest = await joinMatch({ code, signalingUrl, slot, video: document.querySelector('video') });
+    window.vibration = [];
+    window.guest = await joinMatch({ code, signalingUrl, slot, video: document.querySelector('video'),
+      onVibration: level => window.vibration.push(level) });
     return { slot: window.guest.slot, players: window.guest.players };
   } catch (error) {
     return { error: error.message };
@@ -156,6 +158,15 @@ async function run(t, usePeerJS) {
     const { pixel, hertz } = await observe(guests[slot]);
     COLORS[slot].forEach((channel, index) => assert.ok(Math.abs(pixel[index] - channel) < 40, `slot ${slot} picture ${pixel}`));
     assert.ok(Math.abs(hertz - TONES[slot]) < 40, `slot ${slot} tone ${hertz}`);
+  }
+
+  // The host can send an impact before a guest has pressed any buttons.
+  await host.evaluate(() => {
+    for (let slot = 1; slot <= 3; slot++) window.room.setVibration(slot, slot);
+  });
+  for (const slot of [1, 2, 3]) {
+    await waitFor(guests[slot], () => window.vibration.length > 0);
+    assert.deepEqual(await guests[slot].evaluate(() => window.vibration), [slot]);
   }
 
   // One independent input per seat, tagged with the right slot.

@@ -155,6 +155,11 @@ try {
       navigator.getGamepads = () => window.__poll;
     });
     await ffa.waitForFunction(() => { const p = __pads(); return p[3][0] !== 0 && Math.abs(p[2][1] - 0.8) < 1e-6; });
+    await ffa.evaluate(() => { window.__poll[0] = null; });
+    await ffa.waitForFunction(() => {
+      const p = __pads();
+      return p[0][0] === 0 && Math.abs(p[2][1] - 0.8) < 1e-6 && p[3][0] === 0x4000;
+    });
     await ffa.evaluate(() => { navigator.getGamepads = () => []; });
     await ffa.waitForFunction(() => __pads().every(([buttons, x]) => buttons === 0 && x === 0));
   }
@@ -171,6 +176,25 @@ try {
     guests.push(guest);
   }
   await ffa.waitForFunction(() => document.querySelector("#seats").textContent === "P1 host · P2 connected · P3 connected · P4 connected", undefined, { timeout: 30000 });
+  if (!pub) {
+    for (const guest of guests) await guest.evaluate(() => {
+      window.motorCalls = [];
+      const pad = {connected:true, buttons:[], axes:[], vibrationActuator:{
+        async playEffect(type, params) { window.motorCalls.push({type, ...params}); }
+      }};
+      navigator.getGamepads = () => [null, pad];
+    });
+    await ffa.evaluate(async () => {
+      const {roomSession} = await import("/port/battle/controls.mjs");
+      for (let seat=1; seat<=3; seat++) roomSession().vibration(seat, seat);
+    });
+    for (let i=0; i<guests.length; i++) {
+      await guests[i].waitForFunction(() => window.motorCalls.length > 0);
+      assert.deepEqual(await guests[i].evaluate(() => window.motorCalls), [{
+        type:"dual-rumble", duration:160, strongMagnitude:[0.4,0.8,1][i], weakMagnitude:i===2 ? 1 : 0,
+      }]);
+    }
+  }
   const overflow = await open(invite);
   await overflow.waitForFunction(() => /full/i.test(document.querySelector("#network").textContent), undefined, { timeout: 30000 });
   await overflow.context().close();

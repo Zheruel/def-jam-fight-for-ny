@@ -38,4 +38,4 @@ python3 port/geometry/venues.py private/ps2/reference.iso --check
 The lineup exporter checks the SHA-256 of `ASSETS/GAMECORE.XML` before reading its start-position table. The formation names, slot order and coordinate pairs come directly from that table. A missing formation remains unavailable.
 
 
-The pause panel uses the original pause.ssh artwork and row coordinates from the executable. A host or guest can pause with Start, change the music, effects and announcer levels, resume, or confirm Quit. Local gamepad vibration currently follows health loss with an 80 ms pulse. The PS2 motor envelopes and remote vibration still need comparison.
+The pause panel uses the original pause.ssh artwork and row coordinates from the executable. A host or guest can pause with Start, change the music, effects and announcer levels, resume, or confirm Quit. When vibration is enabled, the affected player's local or online controller follows the original animation's class-58 tags. They select the four PS2 motor levels at their recorded frames. The browser renews active effects and stops them on a zero tag, clip change or pause.
