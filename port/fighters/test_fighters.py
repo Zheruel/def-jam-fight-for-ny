@@ -9,6 +9,8 @@ from retail import (Disc, Elf, POSITION_ZERO, PARENTS, decode_model, decode_pack
                     find_parts, matrix_inverse, model_from_disc, roster, vif_codes)
 from pathlib import Path
 
+from animbank import read_bank, clip_names
+
 RETAIL_ISO = Path(__file__).resolve().parents[2] / "private" / "ps2" / "reference.iso"
 
 
@@ -165,6 +167,21 @@ class RetailDiscTests(unittest.TestCase):
             self.assertEqual(bones, rig, name)
             self.assertTrue(4000 < len(model["positions"]) // 3 < 8000, name)
             self.assertTrue(model["indices"] and max(model["indices"]) < len(model["positions"]) // 3, name)
+
+    def test_animation_banks_resolve_clip_objects_and_channels(self):
+        base = read_bank(self.disc, "/MOTION/BASE00.VIV", "base00")
+        self.assertEqual(len(base.names), 709)
+        self.assertEqual((base.names[11], base.names[16]), ("A112", "A117"))   # Blaze and Doc idle
+        idle = base.clip("A112")
+        self.assertEqual((idle["skeletonChannels"], len(idle["bones"]), idle["bones"][:4]), (67, 50, [3, 6, 9, 12]))
+        self.assertEqual(sorted(idle["objects"]), list("dfhst"))
+        self.assertEqual(base.clip("B101")["source"], "AA101")
+        punch = read_bank(self.disc, "/MOTION/WRES_ALL.VIV", "wres005")
+        self.assertEqual(punch.clip(punch.names[0])["source"], "N0103AA1")
+
+    def test_clip_name_list_is_validated(self):
+        with self.assertRaisesRegex(ValueError, "name list"):
+            clip_names(b"\x01\x00\x00\x00\x01\x00\x00\x00A101")
 
 
 if __name__ == "__main__":
