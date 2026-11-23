@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import { readFileSync, writeFileSync } from "node:fs";
+import { gzipSync, gunzipSync } from "node:zlib";
+import { decodePoseBank } from "../port/motion/pose-bank.mjs";
+import { createFoundationFight } from "../port/battle/fight.mjs";
+
+const packed = path => Uint8Array.from(gunzipSync(readFileSync(path))).buffer;
+const files = ["V2IP_113A","V2IP_109A"];
+const fighters = files.map(model => {
+  const bytes = packed(`port/render/fighters/${model}.skin.gz`);
+  const length = new DataView(bytes).getUint32(4,true);
+  const body = JSON.parse(new TextDecoder().decode(new Uint8Array(bytes,8,length)));
+  return { model, body, bank:decodePoseBank(model,packed(`port/motion/poses/${model}.poses.gz`)) };
+});
+
+const fixture = "verification/native-fight-inputs.json";
+if (process.argv[2] === "--extract") {
+  const trace = JSON.parse(readFileSync(process.argv[3]));
+  const samples = trace.samples.slice(1).map(({actors}) => actors.map(a =>
+    [a.inputWords[0],a.state,a.action,...a.position]));
+  writeFileSync(fixture,JSON.stringify(samples)+"\n");
+}
+const frames = JSON.parse(readFileSync(fixture));
+let wasm = packed("port/kernel/battle.wasm.gz");
+let seed = packed("port/kernel/foundation-start.gz");
+const makeSeed = process.argv[2] === "--seed";
+let original;
+if (makeSeed) {
+  original = readFileSync(process.argv[3]);
+  assert.equal(original.length,32*1024*1024);
+  wasm = readFileSync(process.argv[4]);
+  const full = Buffer.alloc(4100*8192);
+  for (let page=0;page<8192;page++) {
+    full.writeUInt32LE(page,page*4100);
+    original.copy(full,page*4100+4,page*4096,(page+1)*4096);
+  }
+  seed = full.buffer;
+}
+const fight = await createFoundationFight(fighters,wasm,seed);
+let largestPositionError = 0;
+for (const [index,actors] of frames.entries()) {
+  fight.tick(actors.map(([pad],slot) => ({buttons:pad & 0xfff0,x:pad & 0x10000 ? (slot ? -1 : 1) : 0,z:0})));
+  const actual = fight.diagnostics();
+  actors.forEach(([,state,action,...position],slot) => {
+    assert.equal(actual.actors[slot].action,action,`tick ${index+1}, actor ${slot} action`);
+    assert.equal(actual.actors[slot].state,state,`tick ${index+1}, actor ${slot} state`);
+    largestPositionError = Math.max(largestPositionError,Math.hypot(...position.map((v,i)=>v-actual.actors[slot].position[i])));
+  });
+}
+console.log(`${frames.length} retail ticks, both actors match all actions and states. Maximum position difference ${largestPositionError.toFixed(3)} game units.`);
+if (makeSeed) {
+  const pages = fight.observedPages;
+  assert.ok(pages.some(Boolean),"Rebuild the kernel with --track");
+  for (const a of [0x4bbd48,0x3ccdb8,0x4bbfb0,0x4bc030]) pages[a>>>12]=1;
+  for (let a=0x4bc000;a<0x4c2000;a+=4096) pages[a>>>12]=1;
+  const compact = [];
+  for (let page=0;page<0x1fe0;page++) if (pages[page]) {
+    const tag = Buffer.alloc(4);
+    tag.writeUInt32LE(page);
+    compact.push(tag,original.subarray(page*4096,(page+1)*4096));
+  }
+  writeFileSync(process.argv[5],gzipSync(Buffer.concat(compact)));
+}

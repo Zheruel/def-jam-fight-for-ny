@@ -1,0 +1,7 @@
+[general]
+input = "private/ps2-battle/extract/SLUS_210.04"
+output = "private/native-kernel/generated"
+output_worker_threads = 2
+low_memory_mode = true
+single_file_output = false
+entry_points = ["0x002dbdd0","0x002dc238","0x002fe638","0x002e9370","0x00304f20","0x00312428","0x00310e40"]

@@ -9,7 +9,7 @@ export async function exposeReferenceMemory(page) {
   });
 }
 
-export function startRetailTrace(memorySnapshots = false) {
+export function startRetailTrace({memorySnapshots = false, poses = false} = {}) {
   const vm = window.traceVM;
   const signature = [0x8c830000, 0x3c02ff7f, 0x3442ffff, 0x03e00008];
   const heap = new Uint32Array(vm.HEAPU8.buffer);
@@ -48,7 +48,18 @@ export function startRetailTrace(memorySnapshots = false) {
         motionData[key] = { duration: f(a+0xa0), end: f(a+0xa4), tick: f(0x4bbf94),
           words: Array.from({length:34}, (_,j) => u(a+0x2bc+j*4)) };
       }
+      let pose;
+      if (poses) {
+        const character = u(0x471230 + i*4);
+        const posePtr = u(character+0x17c);
+        if (posePtr % 16 || !posePtr || posePtr + 94*48 > 0x2000000) throw new Error("Invalid live fighter pose");
+        pose = new Uint8Array(vm.HEAPU8.buffer,base+posePtr,94*48).toBase64();
+      }
       actors.push({
+        pose, rootOffset: [f(a+0xac), f(a+0xb0), f(a+0xb4)], rootYaw: f(a+0xbc),
+        renderedPosition: [f(a+0xc4), f(a+0xc8), f(a+0xcc)], renderedYaw: f(a+0xd4),
+        inputWords: Array.from({length:7}, (_,j) => u(a+0x9e0+j*4)),
+        rate: f(a+0xa8), end: f(a+0xa4), remaining: f(a+0xa0),
         state: u(a+0x30), previous: u(a+0x34), facing: f(a+0x54), flags: view.getUint16(base+a+0x91a,true),
         slot: u(a+0x28), modelIndex: u(a+0x2c), position: [f(a+0x44),f(a+0x48),f(a+0x4c)],
         action: u(a+0x80), bank: u(a+0x84), local: u(a+0x88), motion: u(a+0x8c),

@@ -44,3 +44,31 @@ test("expanded motion settings match all 34 live actor words for each observed c
     assert.deepEqual([...motionSettings(bytes,bank,motion,end,tick)],words,key);
   }
 });
+
+import { advanceClip, takeBlend } from "./clock.mjs";
+
+test("retail startup, movement and reaction frames advance at their distinct clip rates", () => {
+  for (const [key, frame,expected] of [["0/11",16,17],["0/66",0,Math.fround(1.3)],["0/328",0,Math.fround(1.1)]]) {
+    const {words, end} = settings.observed[key];
+    const actor = {frame, end, rate: 1, stopLoop: 0};
+    advanceClip(actor, Uint32Array.from(words), 1, () => {});
+    assert.equal(actor.frame, expected);
+    assert.equal(actor.remaining, Math.fround(end-expected));
+  }
+});
+
+test("end crossings, timed events and blend counters follow retail execution order", () => {
+  const actor = { frame: 9, end: 10, rate: 2, stopLoop: 0, blendRemaining: 3, blendTotal: 4 };
+  const words = Uint32Array.from(settings.observed["0/11"].words);
+  words[33] = 1;
+  words.set([8,9,3,9,10,5,9,10,25,11,12,22]);
+  const events = [];
+  advanceClip(actor, words, 1, n => events.push(n));
+  assert.deepEqual(events,[3,5]);
+  assert.deepEqual([actor.frame, actor.remaining, actor.crossedEnd],[1,9,true]);
+  actor.stopLoop = 1;
+  actor.frame = 9;
+  advanceClip(actor,words,1,()=>{});
+  assert.equal(actor.frame,10);
+  assert.deepEqual(Array.from({length:4}, () => takeBlend(actor)),[0.25,0.5,0.75,1]);
+});

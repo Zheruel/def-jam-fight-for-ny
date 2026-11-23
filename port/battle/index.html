@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Blaze vs. Doc · Native Battle</title>
+  <style>
+    :root { color-scheme:dark; font:1rem system-ui,sans-serif; background:#141719; color:#eeefe9 }
+    body { margin:0; display:grid; height:100dvh; grid-template-rows:auto 1fr auto }
+    header,footer { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; padding:.65rem 1rem }
+    h1,p { margin:0 } h1 {font-size:1.05rem} output,p {color:#c9c9c3; font-size:.88rem}
+    main { min-height:0; position:relative } canvas,video { display:block; width:100%;height:100%; object-fit:contain }
+    [hidden] {display:none!important} button,input {font:inherit}
+    label {font-size:.85rem} meter {width:5rem} input {width:8ch;text-transform:uppercase}
+  </style>
+</head>
+<body data-battle>
+<header><h1>Blaze vs. Doc · The Foundation</h1>
+  <label>Blaze <meter id="health0"></meter></label><label>Doc <meter id="health1"></meter></label>
+  <button id="restart">Restart</button><p id="status" role="status">Loading native Battle…</p>
+</header>
+<main><canvas tabindex="0" aria-label="Native Battle"></canvas><video id="remote" muted autoplay playsinline hidden></video></main>
+<footer><button id="host">Host match</button><input id="code" aria-label="Room code" placeholder="Room code" maxlength="8">
+  <button id="join">Join</button><button id="leave" hidden>Leave</button><output id="network"></output></footer>
+<div hidden><select id="venue"></select><select id="player1"></select><select id="player2"></select><input id="cutaway" type="checkbox" checked></div>
+<script type="module" src="../viewer/viewer.mjs"></script>
+</body></html>

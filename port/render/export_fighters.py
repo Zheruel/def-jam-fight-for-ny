@@ -64,7 +64,7 @@ def pack(disc, name):
         payload.extend(img)
     meta = dict(model=name, vertices=count, indices=len(elements), batches=batches,
                 textures=images, bounds=mesh["boundingBox"],
-                bones=[dict(name=b["name"],parent=b["parent"],inverseBind=b["inverseBind"]) for b in mesh["bones"]])
+                bones=[dict(name=b["name"],parent=b["parent"],inverseBind=b["inverseBind"],bindWorld=b["bindWorld"]) for b in mesh["bones"]])
     header = json.dumps(meta, separators=(",",":")).encode()
     header += b" " * (-len(header)%4)
     return gzip.compress(b"DJF1"+struct.pack("<I",len(header))+header+payload,compresslevel=6,mtime=0)

@@ -21,7 +21,7 @@ Open [the local player](http://127.0.0.1:8174). A fresh checkout fetches game co
 
 ## Native port
 
-The source port translates PS2 game routines into browser code and decodes the original stage assets. The first comparison match is Blaze versus Doc at The Foundation. The currently playable release uses Play! while the native match loop is in development. [Native code and verification](port/README.md) · [Native textured venue viewer](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html)
+The native build runs Blaze versus Doc at The Foundation using the original Battle routines translated to WebAssembly. It supports a limited set of moves and two-player rooms. In a 460-tick comparison, both fighters matched every retail action and state. The first headless Chrome combat benchmark averaged 60.0 rendered FPS at 960 × 491. The complete roster and venues are viewable, and the main player provides the wider retail Battle mode. [Play the native match](https://zheruel.github.io/def-jam-fight-for-ny/port/battle/index.html) · [Browse fighters and venues](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html) · [Native verification and limitations](port/README.md)
 
 ## Playable reference
 

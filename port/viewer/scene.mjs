@@ -8,13 +8,7 @@ export function loadFighter(model, signal) {
 }
 
 async function loadMesh(model, url, signal, skinned) {
-  const response = await fetch(url, { signal });
-  if (!response.ok) throw new Error(`Unable to load ${model}`);
-  let buffer = await response.arrayBuffer();
-  if (new DataView(buffer).getUint16(0) === 0x1f8b) {
-    const unpack = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
-    buffer = await new Response(unpack).arrayBuffer();
-  }
+  const buffer = await fetchPacked(url, signal);
   const header = new DataView(buffer);
   if (header.getUint32(0) !== (skinned ? 0x444a4631 : 0x444a5331)) throw new Error("Unknown native mesh format");
   const size = header.getUint32(4, true);
@@ -41,6 +35,15 @@ async function loadMesh(model, url, signal, skinned) {
     for (const image of images.values()) image.close();
     throw error;
   }
+}
+
+export async function fetchPacked(url, signal) {
+  const response = await fetch(url, {signal});
+  if (!response.ok) throw new Error("Unable to load " + new URL(url).pathname);
+  const buffer = await response.arrayBuffer();
+  if (new DataView(buffer).getUint16(0) !== 0x1f8b) return buffer;
+  const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Response(stream).arrayBuffer();
 }
 
 export function uploadScene(gl, program, { mesh, vertices, indices, images, skinned }) {

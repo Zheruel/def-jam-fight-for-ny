@@ -176,6 +176,7 @@ async function playBattle(controls) {
   report.secondsFromFighterSelectionToFight = (performance.now() - venueStart) / 1000;
 
   if (controls.beginTrace) await controls.beginTrace();
+  if (controls.poseCapture) await waitVblanks(140);
   if (controls.measurePerformance) {
     report.steadyCombat = [];
     console.log('Starting steady combat measurement');
@@ -430,7 +431,7 @@ async function main() {
       throw new Error(`Timed out waiting for ${name}. Last screen text: ${image.text}`);
     }
 
-    await playBattle({ beginTrace: values.trace ? () => host.evaluate(startRetailTrace, Boolean(process.env.DEFJAM_REFERENCE_SNAPSHOT)) : null, measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
+    await playBattle({ poseCapture: Boolean(process.env.DEFJAM_REFERENCE_POSES), beginTrace: values.trace ? () => host.evaluate(startRetailTrace, {memorySnapshots: Boolean(process.env.DEFJAM_REFERENCE_SNAPSHOT), poses: Boolean(process.env.DEFJAM_REFERENCE_POSES)}) : null, measurePerformance: values.performance, input, sample, capture, waitScreen, waitVblanks, diagnostics, retailMenus: values['retail-menus'],
       rtc: () => rtcStats(guest), report });
     if (values.trace) {
       if (process.env.DEFJAM_REFERENCE_SNAPSHOT) {

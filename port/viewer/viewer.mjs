@@ -1,3 +1,4 @@
+import { loadPoseBank, capturedIdles, poseIndex } from "../motion/pose-bank.mjs";
 import { createBattleLineup } from "../battle/setup.mjs";
 import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
 import inventory from "../../ps2/content/inventory.json" with { type: "json" };
@@ -84,6 +85,8 @@ async function display() {
   gl.enable(gl.DEPTH_TEST);
   gl.clearColor(0.10, 0.115, 0.12, 1);
 
+  const battle = document.body.hasAttribute("data-battle");
+  let fight, controls, paused = false, previousFrame, carry = 0, renderedFrames = 0;
   let scene, request, skinRequest, selected = [];
   const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
   const pose = gl.createBuffer();
@@ -116,6 +119,44 @@ async function display() {
   const cutaway = document.querySelector("#cutaway");
   let yaw = 0.28, pitch = 0.32, zoom = 1;
 
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  let lineup;
+  function updateLineup() {
+    if (selected.length === 2) lineup = createBattleLineup(venue.selectedOptions[0].dataset.handle,
+      "SINGLE",selected.map(s => s.handle));
+  }
+  let scheduled = 0, started = performance.now();
+  function frame(now) {
+    scheduled = 0;
+    if (document.hidden) { previousFrame = undefined; return; }
+    if (fight && !paused && !controls.isGuest()) {
+      const elapsed = previousFrame === undefined ? 0 : Math.min(100,now-previousFrame);
+      carry += elapsed;
+      try {
+        while (carry >= 1000/60) {
+          fight.tick(controls.inputs());
+          carry -= 1000/60;
+        }
+      } catch (error) {
+        paused = true;
+        status.textContent = error.message + " Restart to return to the match.";
+      }
+      if (renderedFrames % 6 === 0) {
+        const { actors } = fight.diagnostics();
+        actors.forEach((a,i) => {
+          const meter = document.getElementById("health"+i);
+          meter.max = a.maxHealth;
+          meter.value = a.health;
+        });
+      }
+    }
+    previousFrame = now;
+    if (!controls?.isGuest()) { draw(); renderedFrames++; }
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { previousFrame = undefined; cancelAnimationFrame(scheduled); scheduled = 0; }
+    else draw();
+  });
   function draw() {
     if (!scene) return;
     const { min, max } = scene.bounds;
@@ -145,16 +186,29 @@ async function display() {
     gl.uniform1i(skinned, 0);
     scene.draw();
     if (selected.length) {
-      const lineup = createBattleLineup(venue.selectedOptions[0].dataset.handle, "SINGLE", selected.map(s => s.handle));
+
       gl.uniform1i(skinned, 1);
       gl.uniform1f(ceiling, 1e8);
-      selected.forEach(({body}, i) => {
+      selected.forEach(({body, bank, model}, i) => {
+        const clip = bank?.clips[capturedIdles[model]];
+        const time = clip ? 1 + Math.floor((performance.now()-started)*0.06) % clip.end : 0;
+        const index = clip ? poseIndex(clip,time) : 0;
+        gl.bindBuffer(gl.UNIFORM_BUFFER, pose);
+        const live = fight?.states[i];
+        gl.bufferSubData(gl.UNIFORM_BUFFER,0,live?.skin ?? (clip ? clip.poses[index] : bind));
         const [x,z] = lineup.participants[i].position;
         const target = lineup.participants[1-i].position;
-        gl.uniform3f(origin, x, 0, z);
-        gl.uniform1f(heading, Math.atan2(target[0]-x, target[1]-z));
+        if (live) {
+          gl.uniform3fv(origin,live.position);
+          gl.uniform1f(heading,live.yaw*Math.PI/180);
+        } else {
+          gl.uniform3f(origin,x,0,z);
+          gl.uniform1f(heading,Math.atan2(target[0]-x,target[1]-z));
+        }
         body.draw();
       });
+      const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
+      if (animate && !document.hidden && !scheduled) scheduled = requestAnimationFrame(frame);
     }
   }
   function move(dx, dy, magnification = 1) {
@@ -174,7 +228,7 @@ async function display() {
   const keys = { ArrowLeft: [-0.12, 0], ArrowRight: [0.12, 0], ArrowUp: [0, 0.12],
     ArrowDown: [0, -0.12], "+": [0, 0, 1.15], "=": [0, 0, 1.15], "-": [0, 0, 1 / 1.15] };
   canvas.addEventListener("keydown", event => {
-    if (!Object.hasOwn(keys, event.key)) return;
+    if (battle || !Object.hasOwn(keys, event.key)) return;
     event.preventDefault();
     move(...keys[event.key]);
   });
@@ -190,6 +244,7 @@ async function display() {
       const next = uploadScene(gl, program, data);
       scene?.dispose();
       scene = next;
+      updateLineup();
       zoom = 1;
       draw();
       status.textContent = "Drag to rotate · Scroll to zoom";
@@ -203,22 +258,40 @@ async function display() {
     const controller = skinRequest = new AbortController();
     const next = [];
     try {
-      for (const select of selectors) {
+      for (const [i,select] of selectors.entries()) {
+        if (selected[i]?.handle === select.value) { next.push(selected[i]); continue; }
         const fighter = inventory.fighters.find(f => f.handle === select.value);
         const data = await loadFighter(fighter.model, controller.signal);
-        next.push({handle: fighter.handle, body: uploadScene(gl, program, data)});
+        const draw = {handle: fighter.handle, model: fighter.model, body: uploadScene(gl, program, data)};
+        next.push(draw);
+        draw.bank = await loadPoseBank(fighter.model,controller.signal);
       }
-      selected.forEach(s => s.body.dispose());
+      selected.filter(s=>!next.includes(s)).forEach(s => s.body.dispose());
       selected = next;
+      updateLineup();
       draw();
       canvas.dataset.fighters = selected.map(s => s.handle).join(",");
     } catch (error) {
-      next.forEach(s => s.body.dispose());
+      next.filter(s=>!selected.includes(s)).forEach(s => s.body.dispose());
       if (!controller.signal.aborted) status.textContent = error.message;
     }
   }
   selectors.forEach(s => s.addEventListener("change", chooseFighters));
   venue.addEventListener("change", select);
   await Promise.all([select(), chooseFighters()]);
+  if (battle && selected.length === 2 && scene) {
+    const { loadFoundationFight } = await import("../battle/fight.mjs");
+    const { battleControls } = await import("../battle/controls.mjs");
+    controls = battleControls(() => { previousFrame=undefined; draw(); });
+    fight = await loadFoundationFight(selected);
+    status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
+    document.getElementById("restart").onclick = () => {
+      controls.release(); fight.restart(); paused=false; previousFrame=undefined; carry=0; draw();
+      status.textContent = "D to advance · J to punch · Left arrow to advance Doc · K to kick";
+    };
+    window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
+      ...fight.diagnostics(), renderedFrames, paused, network:controls.connection() }) });
+    draw();
+  }
 }
 display().catch(error => { status.textContent = error.message; });

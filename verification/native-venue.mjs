@@ -9,7 +9,7 @@ await once(server, "listening");
 let browser;
 try {
   browser = await chromium.launch({ ...(process.platform === "darwin" && { channel: "chrome" }), headless: true });
-  const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+  const page = await browser.newPage({ reducedMotion:"reduce", viewport: { width: 800, height: 600 } });
   const requests = [];
   const errors = [];
   page.on("request", r => requests.push(new URL(r.url()).pathname));
