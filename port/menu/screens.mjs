@@ -61,15 +61,12 @@ function barColour(value) {
 }
 
 function title(ctx, text, hints) {
-  outlined(ctx, text, 30, 22, 30, { fill: "#d9cfa0", stroke: "#15130f", width: 5 });
-  ctx.save();
-  ctx.font = `15px ${FONT}`; ctx.textBaseline = "top";
-  hints.forEach(([key, label], i) => {
-    const y = 20 + i * 24, x = 500;
-    ctx.fillStyle = "#9fb7e6"; ctx.fillText(key, x, y);
-    outlined(ctx, label, x + 22, y, 15, { width: 2.5 });
-  });
-  ctx.restore();
+  const heading = have("header/" + text.toLowerCase().replaceAll(" ", "-") + ".png");
+  if (heading) ctx.drawImage(heading, 0, 0);
+  for (const [row, label] of hints.entries()) {
+    const icon = have("header/" + label.toLowerCase() + ".png");
+    if (icon) ctx.drawImage(icon, 507, 17 + row * 24);
+  }
 }
 
 export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
@@ -79,7 +76,7 @@ export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
   ctx.fillStyle = "#3a4742"; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
   if (left) ctx.drawImage(left, 0, 0);
   if (right) ctx.drawImage(right, 512, 0);
-  title(ctx, selection.state.seats.length > 2 ? "CHOOSE FIGHTERS" : "CHOOSE FIGHTER", [["\u2715", "SELECT"], ["\u25b3", "BACK"]]);
+  title(ctx, "CHOOSE FIGHTER", ["SELECT", "BACK"]);
 
   outlined(ctx, `C  CPU OPPONENTS: ${selection.state.cpu || "OFF"}`, 30, 454, 13, { width: 2.5 });
   const thumbs = have("thumbs.png");
@@ -153,7 +150,7 @@ export function drawTeams(ctx, {state}) {
   const tile = (tag, x, y) => { const pic = have(`team-${tag}.png`); if (pic) ctx.drawImage(pic, x, y); };
   ctx.clearRect(0, 0, SIZE.width, SIZE.height);
   tile(2, 0, 0); tile(1, 512, 0);
-  title(ctx, "CHOOSE TEAMS", [["✕", "SELECT"], ["△", "BACK"]]);
+  title(ctx, "CHOOSE TEAMS", ["SELECT", "BACK"]);
   tile(18, 115, 96); tile(17, 371, 96);
   for (const [slot, x] of TEAM_COLUMNS.entries()) {
     const selected = state.teamOrder[slot] ?? (slot === state.teamOrder.length ? state.teamCursor : undefined);
@@ -195,7 +192,7 @@ export function drawType(ctx, { mode, size, enabled }) {
   const [x,y,w,h] = typeLayout.cards[mode];
   image("highlight.png", Math.round(x+w/2-55), Math.round(y+h/2-64));
   image(`${mode}.png`, ...typeLayout.details[mode]);
-  title(ctx, "CHOOSE MATCH TYPE", [["✕", "SELECT"], ["△", "BACK"]]);
+  title(ctx, "CHOOSE MATCH TYPE", ["SELECT", "BACK"]);
   if (size) {
     image("size-paper.png", 66, 125);
     image("size-highlight.png", size === "ffa3" ? 92 : 206, 202);
@@ -262,7 +259,7 @@ export function drawVenue(ctx, selection, { time = 0, camera } = {}) {
   const dark = ctx.createLinearGradient(0, 0, 0, SIZE.height);
   dark.addColorStop(0, "rgba(0,0,0,.82)"); dark.addColorStop(0.16, "rgba(0,0,0,0)"); dark.addColorStop(0.9, "rgba(0,0,0,0)"); dark.addColorStop(1, "rgba(0,0,0,.8)");
   ctx.fillStyle = dark; ctx.fillRect(0, 0, SIZE.width, SIZE.height);
-  title(ctx, "CHOOSE VENUE", [["\u25b3", "BACK"]]);
+  title(ctx, "CHOOSE VENUE", ["BACK"]);
 
   // two polaroids behind, the front one holding the photograph and the venue's name; the description on taped notepaper
   const [back, middle, frame, tape] = ["polaroid-a.png", "polaroid-b.png", "polaroid-c.png", "tape.png"].map(have);

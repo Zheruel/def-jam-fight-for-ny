@@ -3,6 +3,7 @@ import roster from "./art/roster.json" with { type: "json" };
 import venues from "./art/venues.json" with { type: "json" };
 
 export const menuFiles = [
+  ...["choose-match-type", "choose-fighter", "choose-teams", "choose-venue", "select", "back"].map(name => "port/menu/art/header/" + name + ".png"),
   "port/menu/match-types.mjs",
   ...["layout.json", "wall.webp", "lock.png", "highlight.png", "size-paper.png", "size-highlight.png",
     "1v1.png", "team.png", "ffa.png", "window.png", "subway.png", "demolition.png", "inferno.png", "cage.png", "ringout.png"

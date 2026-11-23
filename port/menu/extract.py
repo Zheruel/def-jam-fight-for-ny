@@ -139,6 +139,8 @@ def export(iso, output: Path):
                            "stats": c["stats"] if c else None, "styles": c["styles"] if c else []})
         (output / "roster.json").write_text(json.dumps(roster, indent=1) + "\n")
         thumbs(output, roster)
+        from header_art import export as export_header
+        export_header(source, output / "header")
         export_team(source, output)
         from match_type_art import export as export_match_type
         export_match_type(source, output / "match-type")

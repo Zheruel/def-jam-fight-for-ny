@@ -17,7 +17,9 @@ try {
   const errors = [], fetched = [];
   page.on("response", response => { if (response.status() >= 400) errors.push(response.status() + " " + response.url()); else if (/\/cars\//.test(response.url())) fetched.push(response.url().split("/").pop()); });
   page.on("pageerror", error => errors.push(error.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/port/battle/index.html?venue=V2BG_17A`);
+  const url = new URL(process.argv[2] ?? `http://127.0.0.1:${server.address().port}/`);
+  url.searchParams.set("venue", "V2BG_17A");
+  await page.goto(url.href);
   await page.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, null, { timeout: 90000 });
   const shot = await page.locator("canvas").first().screenshot();
   if (process.env.NATIVE_SCREENSHOT) writeFileSync(`${process.env.NATIVE_SCREENSHOT}/gunhill-cars.png`, shot);
