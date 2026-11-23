@@ -80,8 +80,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
     duration(slot,bank,index) { return animation ? animation.duration(slot,bank,index) : clip(slot,bank,index).end; },
     rootYaw(slot) { return states[slot].root[3]; },
     damage(slot,level) { states[slot].damage = level; },
-    timeScale(kind,frames) { outcome?.timeScale(kind,frames); },
-    gameSpeed(scale) { outcome?.gameSpeed(scale); },
+    cameraShake(kind,frames) { outcome.cameraShake(kind,frames); },
     rotateBone(slot,id,address) {
       const euler = readVector(address);
       // The sampler's pose array is edited in place, as retail 0x132ab8 does; recorded captures can only keep the request.
@@ -180,6 +179,7 @@ export async function createFoundationFight(fighters,source,seed,arena,rules,ani
       if(finished) pads.forEach((p,i) => fighters[i].cpu && neutralPad(memory,p));
     }
     kernel.tick();
+    outcome.applyCameraEffects();
     states.forEach((state,slot) => {
       state.actorPosition = readVector(actors[slot]+0x44);
       animation?.finish(state,slot);

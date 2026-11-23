@@ -41,3 +41,21 @@ for (const row of rows) {
 const mean = total/(2*rows.length);
 console.log(`Compared camera eye and target across ${rows.length} captured frames. Mean error ${mean.toFixed(3)}, maximum ${max.toFixed(3)} game units.`);
 assert.ok(mean<0.8 && max<5.5);
+
+// Starting from identical RAM, the knockout impulse moves the final view-projection
+// matrix for the 60-frame shake and its decay, then returns to the unshaken camera.
+function stationaryCamera(shake) {
+  for(let i=0;i<seed.length;i+=4100) bytes.set(seed.subarray(i+4,i+4100),seed.readUInt32LE(i)*4096);
+  camera.reset();
+  if (shake) kernel.callWithDelta(0x1b05c8,0x4732a4,60,6);
+  const samples=[];
+  for (let i=0;i<160;i++) {
+    camera.step();
+    if (i===0 || i===59 || i===159) samples.push(Array.from(camera.matrix()));
+  }
+  return samples;
+}
+const calm = stationaryCamera(false), knockout = stationaryCamera(true);
+assert.notDeepEqual(knockout[0],calm[0]);
+assert.notDeepEqual(knockout[1],calm[1]);
+assert.deepEqual(knockout[2],calm[2]);

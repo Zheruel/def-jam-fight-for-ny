@@ -149,6 +149,9 @@ for(const [victim,seed,options] of [[1,17],[0,17],[1,9],[1,17,{spent:false,limit
   assert.equal(word(ACTOR[winner]+0x932)&0x100,0x100,"winner flag");
   assert.equal(word(ACTOR[victim]+0x932)&0x200,0x200,"loser flag");
   assert.ok(outcome.effects.some(e=>e.kind===6&&e.frames===60),"referee raised its 60 frame finish effect");
+  assert.equal(word(0x4732a4+0x80),6,"knockout selects the original finishing camera shake");
+  assert.equal(scalar(0x4732a4+0x7c),60,"full shake duration before the renderer advances it");
+  assert.equal(Math.abs(scalar(0x4732a4+0x70)),1,"knockout shake uses the retail amplitude");
   assert.ok(outcome.clock.minutes*60+outcome.clock.seconds>0,"retail clock ran");
   assert.deepEqual(r.frozen[1],[0,0],"pads were released after the finish");
   const lines=resultLines(outcome,r.actors.map(a=>a.name));

@@ -16,7 +16,7 @@ export function createOutcome(kernel, actors) {
   const { memory } = kernel;
   const word = address => memory.getUint32(address, true);
   const half = address => memory.getUint16(address, true);
-  let overFor = 0, effects = [], speed = 1;
+  let overFor = 0, effects = [], appliedEffects = 0;
 
   // The input loop only needs to know whether the referee stopped the fight.
   function advance() {
@@ -82,17 +82,22 @@ export function createOutcome(kernel, actors) {
       // Retail match clock (G+0x1a8 minutes, G+0x1ac seconds); it advances while the referee runs.
       clock, displayClock,
       ticksSinceOver: overFor,
-      speed, effects,
+      effects,
     };
   }
 
   return {
     advance, read,
-    // Host side of retail 0x1325b8(kind, frames): the slow-motion/time-scale request the referee raises at the finish.
-    timeScale(kind, frames) { effects = [...effects, { kind, frames }]; },
-    // Host side of retail 0x131b30(scale), which 0x2e75e8 sets every frame through 0x193da0: the global game speed.
-    gameSpeed(scale) { speed = scale; },
-    reset() { overFor = 0; effects = []; speed = 1; },
+    // 0x1325b8 passes the effect to the active camera. Finish the guest CPU
+    // call before invoking its camera routine, which shares the same registers.
+    cameraShake(kind, frames) { effects.push({kind, frames}); },
+    applyCameraEffects() {
+      while (appliedEffects < effects.length) {
+        const {kind, frames} = effects[appliedEffects++];
+        kernel.callWithDelta(0x1b05c8, 0x4732a4, frames, kind);
+      }
+    },
+    reset() { overFor = 0; effects = []; appliedEffects = 0; },
   };
 }
 

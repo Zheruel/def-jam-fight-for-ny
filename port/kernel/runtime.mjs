@@ -49,8 +49,9 @@ export async function instantiateBattle(source, engine) {
         // EAGL submits the final eye/target/up to its renderer here.
         case 0x132778: return engine.presentCamera?.(memory);
         case 0x133070: return engine.damage?.(arg(4),arg(5));
-        case 0x1325b8: return engine.timeScale?.(arg(4),float(12));
-        case 0x131b30: return engine.gameSpeed?.(float(12));
+        case 0x1325b8: return engine.cameraShake?.(arg(4),float(12));
+        // The subway ambience player consumes this phase through scenery/train.mjs.
+        case 0x131b30: return;
         case 0x132a28: return engine.writeBone(arg(5),arg(6),arg(4),memory);
         case 0x132b48:
         case 0x132bb8: {
@@ -71,8 +72,8 @@ export async function instantiateBattle(source, engine) {
   memory = new DataView(core.memory.buffer,core.battle_data(),0x2000000);
   registers = new DataView(core.memory.buffer,core.battle_context());
   return { memory, observedPages: new Uint8Array(core.memory.buffer,core.battle_pages(),8192), call: core.battle_call,
-    callWithDelta(target, object, seconds) {
+    callWithDelta(target, object, seconds, argument = 0) {
       registers.setFloat32(512 + 12 * 4, seconds, true);
-      return core.battle_call(target,object,0,0,0);
+      return core.battle_call(target,object,argument,0,0);
     }, tick: () => core.battle_call(0x2dbdd0,0,0,0,0) };
 }
