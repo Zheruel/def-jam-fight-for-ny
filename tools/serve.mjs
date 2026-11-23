@@ -26,7 +26,7 @@ export function gameServer(directory = root) {
     catch { return fail(400); }
     if (name === '/') name = '/web/index.html';
     if (name === '/disc/reference.iso') name = '/private/reference.iso';
-    else if (!/^\/(web\/|runtime\/vendor\/|netplay\/client\.mjs$)/.test(name)) return fail(404);
+    else if (!/^\/(web\/|runtime\/dolphin\/|netplay\/client\.mjs$)/.test(name)) return fail(404);
     if (name.split('/').some(part => part.startsWith('.')) || /[\\\0]/.test(name)) return fail(404);
     let file;
     try {

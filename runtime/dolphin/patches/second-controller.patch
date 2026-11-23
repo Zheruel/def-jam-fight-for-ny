@@ -1,0 +1,108 @@
+--- a/upstream/dolphin_web_core.cpp
++++ b/upstream/dolphin_web_core.cpp
+@@ -38,6 +38,7 @@
+ #include "Core/HW/EXI/EXI_Device.h"
+ #include "Core/HW/GCKeyboard.h"
+ #include "Core/HW/GCPad.h"
++#include "Core/HW/SI/SI_Device.h"
+ #include "Core/HW/SystemTimers.h"
+ #include "Core/Host.h"
+ #include "Core/PowerPC/PowerPC.h"
+@@ -617,6 +618,7 @@
+   Config::SetBase(Config::MAIN_OSD_MESSAGES, false);
+   Config::SetBase(Config::MAIN_SLOT_A, ExpansionInterface::EXIDeviceType::MemoryCardFolder);
+   Config::SetBase(Config::MAIN_SLOT_B, ExpansionInterface::EXIDeviceType::None);
++  Config::SetBase(Config::GetInfoForSIDevice(1), SerialInterface::SIDEVICE_GC_CONTROLLER);
+   Config::SetBase(Config::MAIN_AUDIO_BACKEND, std::string("Web Audio"));
+   Config::SetBase(Config::MAIN_AUDIO_MUTED, false);
+   Config::SetBase(Config::GFX_HACK_SKIP_XFB_COPY_TO_RAM, s_video_backend == "OGL");
+--- a/upstream/dolphin_web_discio.cpp
++++ b/upstream/dolphin_web_discio.cpp
+@@ -131,6 +131,8 @@
+ 
+ std::mutex s_input_state_mutex;
+ InputStateSnapshot s_input_state;
++InputStateSnapshot s_second_input_state;
++std::atomic<std::uint32_t> s_second_input_readback{0};
+ std::mutex s_pad_poll_mutex;
+ PadPollSnapshot s_pad_poll;
+ bool s_using_xfb_frame = false;
+@@ -822,9 +824,10 @@
+   s_input_update_count.fetch_add(1, std::memory_order_relaxed);
+ }
+ 
+-void SetInputState(std::uint32_t mask, int stick_x, int stick_y, int c_stick_x, int c_stick_y,
+-                   int trigger_left, int trigger_right, int analog_a, int analog_b,
+-                   std::uint32_t generation)
++static void WritePadState(InputStateSnapshot& state, std::uint32_t mask, int stick_x,
++                          int stick_y, int c_stick_x, int c_stick_y, int trigger_left,
++                          int trigger_right, int analog_a, int analog_b,
++                          std::uint32_t generation)
+ {
+   InputStateSnapshot next;
+   next.mask = mask;
+@@ -839,9 +842,35 @@
+   next.analog_b = ClampPadByte(analog_b);
+   {
+     const std::lock_guard<std::mutex> lock(s_input_state_mutex);
+-    s_input_state = next;
++    state = next;
+   }
+   s_input_update_count.fetch_add(1, std::memory_order_relaxed);
++}
++
++void SetInputState(std::uint32_t mask, int stick_x, int stick_y, int c_stick_x, int c_stick_y,
++                   int trigger_left, int trigger_right, int analog_a, int analog_b,
++                   std::uint32_t generation)
++{
++  WritePadState(s_input_state, mask, stick_x, stick_y, c_stick_x, c_stick_y, trigger_left,
++                trigger_right, analog_a, analog_b, generation);
++}
++
++#ifdef __EMSCRIPTEN__
++EMSCRIPTEN_KEEPALIVE
++#endif
++void SetSecondInputState(std::uint32_t mask, int stick_x, int stick_y, int c_stick_x, int c_stick_y,
++                         int trigger_left, int trigger_right, int analog_a, int analog_b)
++{
++  WritePadState(s_second_input_state, mask, stick_x, stick_y, c_stick_x, c_stick_y, trigger_left,
++                trigger_right, analog_a, analog_b, 0);
++}
++
++#ifdef __EMSCRIPTEN__
++EMSCRIPTEN_KEEPALIVE
++#endif
++std::uint32_t GetSecondInputReadback()
++{
++  return s_second_input_readback.load(std::memory_order_relaxed);
+ }
+ 
+ int SetPresentationScale(float scale)
+@@ -1087,13 +1116,13 @@
+ 
+ int DolphinWeb_GetPadStatus(int pad_num, GCPadStatus* status)
+ {
+-  if (!status || pad_num != 0)
++  if (!status || (pad_num != 0 && pad_num != 1))
+     return 0;
+ 
+   InputStateSnapshot input;
+   {
+     const std::lock_guard<std::mutex> lock(s_input_state_mutex);
+-    input = s_input_state;
++    input = pad_num == 0 ? s_input_state : s_second_input_state;
+   }
+ 
+   *status = {};
+@@ -1165,6 +1194,11 @@
+   else if ((mask & INPUT_C_STICK_DOWN) && !(mask & INPUT_C_STICK_UP))
+     status->substickY = 0x20;
+ 
++  if (pad_num == 1)
++  {
++    s_second_input_readback.store(mask, std::memory_order_relaxed);
++  }
++  else
+   {
+     const std::lock_guard<std::mutex> lock(s_pad_poll_mutex);
+     ++s_pad_poll.poll_count;
