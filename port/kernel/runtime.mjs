@@ -15,6 +15,9 @@ export async function instantiateBattle(source, engine) {
     },
     battle_service(site, target) {
       switch (target) {
+        // Flush the GS command buffers before freeing a stage model. WebGL
+        // owns those buffers and keeps resources alive through queued draws.
+        case 0x10ab28: return;
         case 0x35e458: return registers.setFloat64(32,float(12),true);
         case 0x3608a8: return;
         // The host owns this audio context on a single JS thread. Both native

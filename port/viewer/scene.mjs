@@ -100,6 +100,10 @@ export function uploadScene(gl, program, { mesh, vertices, indices, images, skin
     return {
       bounds: mesh.bounds,
       bones: mesh.bones,
+      drawSilhouette() {
+        gl.bindVertexArray(vao);
+        gl.drawElements(gl.TRIANGLES,mesh.indices,indexType,0);
+      },
       draw(level=0) {
         gl.bindVertexArray(vao);
         for (const { shape, first, count } of mesh.batches) {

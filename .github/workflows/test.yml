@@ -17,6 +17,7 @@ jobs:
       - run: npm run test:native-animation
       - run: node verification/native-roster.mjs --endurance
       - run: node verification/native-camera.mjs
+      - run: node verification/native-shadow.mjs
       - run: node verification/native-signature.mjs
       - run: node verification/native-outcome.mjs
       - run: node verification/native-combat.mjs

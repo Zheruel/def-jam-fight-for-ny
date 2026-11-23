@@ -18,7 +18,7 @@ The verification suite compares 460 ticks of a Blaze–Doc fight to PS2 referenc
 
 The camera runs the retail Battle framing routine and uses each stage’s field of view, pitch, offset and height. Replaying captured fighter coordinates across 436 PS2 frames produced a mean eye and target error of 0.55 game units and a maximum of 5.32. The renderer uses the original 640 × 448 picture area and caps the drawing buffer at twice the original dimensions. On 120 and 144 Hz displays, it submits one scene for each new 60 Hz simulation tick.
 
-The crowd and fighters use the venue’s irradiance probes. The probe weights follow the retail routine. The shader coefficient order, the first light set and fighter brightness are calibrated against one Foundation frame. [Scene coverage and image comparisons](scenery/README.md)
+Fighters cast shadows from each venue’s original shadow lights. The light blend and horizontal projection follow retail routines 0x16a4a8 and 0x116ac8. Both flattened model matrices agree with the Foundation capture within 0.001. The flat receiver height and blended colour have been checked visually at Foundation. The crowd and fighters use the venue’s irradiance probes. The probe weights follow the retail routine. The shader coefficient order, the first light set and fighter brightness are calibrated against one Foundation frame. [Scene coverage and image comparisons](scenery/README.md)
 
 ## Verify
 

@@ -22,6 +22,25 @@ def translated_body(path):
     return re.sub(pattern,sqrt_source,body)
 
 
+def join_split_delay_slot(bodies):
+    # The retail routine spans two translation units. The tool put the boundary
+    # between JAL and its SQ delay slot. The store must see the caller's t3,
+    # then the return address must resume at the instruction following the SQ.
+    caller, tail = 0x313330, 0x313430
+    if caller not in bodies:
+        return
+    slot = '    WRITE128(ADD32(GPR_U32(ctx, 29), 288), GPR_VEC(ctx, 11));'
+    target = '    ctx->pc = 0x2E2C80u;'
+    branch = '    switch (ctx->pc) {'
+    resume = '    // 0x313434:'
+    if (bodies[caller].count(target) != 1 or bodies[tail].count(slot) != 1
+            or bodies[tail].count(branch) != 1 or bodies[tail].count(resume) != 1):
+        raise ValueError('Unrecognized retail translation around 0x31342c')
+    bodies[caller] = bodies[caller].replace(target, slot + '\n' + target)
+    bodies[tail] = bodies[tail].replace(branch, branch +
+        '\n        case 0x313434u: goto label_313434;').replace(resume, 'label_313434:\n' + resume)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("generated",type=Path)
@@ -38,6 +57,8 @@ def main():
             definitions.append((address,item))
     if not definitions:
         raise ValueError("No Battle functions")
+    bodies = {base: translated_body(path) for base, path in definitions}
+    join_split_delay_slot(bodies)
     entry = ['#include "abi.hpp"']
     for base, path in definitions:
         entry += [f'void {path.stem}(uint8_t*,R5900Context*,PS2Runtime*);']
@@ -45,7 +66,7 @@ def main():
               '  switch (target) {']
     for base,path in definitions:
         landings = {base}
-        for address in re.findall(r"case 0x([0-9a-f]+)u: goto label_",path.read_text()):
+        for address in re.findall(r"case 0x([0-9a-f]+)u: goto label_",bodies[base]):
             landings.add(int(address,16))
         entry.extend(f'    case {pc:#x}:' for pc in sorted(landings))
         entry.append(f'      {path.stem}(data,&registers,&runtime); break;')
@@ -55,7 +76,7 @@ def main():
                            ("presentation",[(a,p) for a,p in definitions if a in presentation])):
         for i in range(0,len(members),40):
             file = args.out / f"{group}-{i//40}.cpp"
-            file.write_text('#include "abi.hpp"\n' + '\n'.join(translated_body(p) for _,p in members[i:i+40]))
+            file.write_text('#include "abi.hpp"\n' + '\n'.join(bodies[a] for a,_ in members[i:i+40]))
             chunks.append(file)
     main_file = args.out / "entry.cpp"
     main_file.write_text("\n".join(entry))

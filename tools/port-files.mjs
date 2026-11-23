@@ -16,7 +16,7 @@ export const portFiles = [
     if (props.length) files.push(folder + "props.scene.gz");
     return files;
   }),
-  "port/render/damage.mjs","port/render/damage/tiles.json",
+  "port/render/shadow.mjs","port/render/damage.mjs","port/render/damage/tiles.json",
   ...new Set(Object.values(damage).flatMap(levels=>Object.values(levels).map(tile=>"port/render/damage/"+tile.file))),
   ...inventory.fighters.map(({ model }) => `port/render/fighters/${model}.skin.gz`),
   ...inventory.venues.map(({ file }) => `port/geometry/venues/${file}.scene.gz`),

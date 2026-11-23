@@ -1,3 +1,4 @@
+import { shadowProjection } from "../render/shadow.mjs";
 import { irradianceGLSL, loadLighting, sampleIrradiance } from "../scenery/irradiance.mjs";
 import { loadPoseBank, capturedIdles, poseIndex } from "../motion/pose-bank.mjs";
 import { createBattleLineup } from "../battle/setup.mjs";
@@ -16,6 +17,8 @@ in vec4 weights;
 layout(std140) uniform Skeleton { mat4 jointMatrix[128]; };
 uniform bool skinned;
 uniform vec3 origin;
+uniform bool shadowPass;
+uniform mat4 shadowMatrix;
 uniform float heading;
 in vec2 uv;
 out vec2 texcoord;
@@ -40,6 +43,10 @@ void main() {
     mat2 turn = mat2(cos(heading), -sin(heading), sin(heading), cos(heading));
     p.xz = turn * p.xz;
     p += origin;
+    if(shadowPass) {
+      gl_Position=viewProjection*shadowMatrix*vec4(p,1.0);
+      return;
+    }
     vec3 n = mat3(pose) * normal;
     n.xz = turn * n.xz;
     worldNormal = n;
@@ -63,9 +70,12 @@ in vec3 vertexColor;
 in vec3 worldNormal;
 uniform bool skinned;
 uniform bool lightFighters;
+uniform bool shadowPass;
+uniform vec4 shadowColour;
 ${irradianceGLSL}
 out vec4 color;
 void main() {
+  if(shadowPass) {color=shadowColour;return;}
   if (height > ceiling) discard;
   vec4 texel = texture(diffuse, texcoord);
   if (texel.a < 0.01) discard;
@@ -89,7 +99,7 @@ function createProgram(gl) {
 }
 
 async function display() {
-  const gl = canvas.getContext("webgl2", { alpha: false });
+  const gl = canvas.getContext("webgl2", {alpha:false,stencil:document.body.hasAttribute("data-battle")});
   if (!gl) throw new Error("WebGL 2 is required to inspect this mesh");
   const program = createProgram(gl);
   gl.useProgram(program);
@@ -136,6 +146,9 @@ async function display() {
   const uniform = key => gl.getUniformLocation(program, key);
   const right = uniform("right"), up = uniform("up"), forward = uniform("forward"), scale = uniform("scale");
   const skinned = uniform("skinned"), origin = uniform("origin"), heading = uniform("heading");
+  const shadowPass=uniform("shadowPass"), shadowMatrix=uniform("shadowMatrix"), shadowColour=uniform("shadowColour");
+  const lightPosition=new Float32Array(3), projected=new Float32Array(16);
+  const hasStencil=gl.getContextAttributes().stencil;
   const lightFighters = uniform("lightFighters"), lightCoefficients = uniform("irradianceCoefficients[0]");
   const focus = uniform("center"), ceiling = uniform("ceiling");
   const perspective = uniform("matchView"), viewProjection=uniform("viewProjection");
@@ -203,7 +216,7 @@ async function display() {
     const viewHeight = camera ? Math.round(height * 448 / 480) : height;
     gl.viewport(0, Math.floor((height-viewHeight)/2), width, viewHeight);
     if (camera) gl.clearColor(0,0,0,1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
     const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
     gl.uniform3f(right, cy, 0, -sy);
     gl.uniform3f(up, -sy * sp, cp, -cy * sp);
@@ -243,6 +256,25 @@ async function display() {
         } else {
           gl.uniform3f(origin,x,0,z);
           gl.uniform1f(heading,Math.atan2(target[0]-x,target[1]-z));
+        }
+        if(live && hasStencil && lighting?.shadowLights.length) {
+          gl.uniform1i(shadowPass,1);
+          gl.uniformMatrix4fv(shadowMatrix,false,shadowProjection(lighting,live.position,projected,lightPosition));
+          const [r,g,b,a]=lighting.shadow.colour;
+          gl.uniform4f(shadowColour,r/128,g/128,b/128,a/128);
+          // Each covered pixel receives the shadow blend once, regardless of how
+          // many triangles flatten onto it. Scenery already occupies the depth buffer.
+          gl.enable(gl.STENCIL_TEST);
+          gl.stencilFunc(gl.NOTEQUAL,1,0xff);
+          gl.stencilOp(gl.KEEP,gl.KEEP,gl.REPLACE);
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+          gl.depthMask(false);
+          body.drawSilhouette();
+          gl.depthMask(true);
+          gl.disable(gl.BLEND);
+          gl.disable(gl.STENCIL_TEST);
+          gl.uniform1i(shadowPass,0);
         }
         body.draw(live?.damage??0);
       });
