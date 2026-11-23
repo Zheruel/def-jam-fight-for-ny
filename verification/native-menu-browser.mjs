@@ -101,6 +101,12 @@ try {
     if (process.env.NATIVE_SCREENSHOT) writeFileSync(`${process.env.NATIVE_SCREENSHOT}/4-${mode}.png`, await tab.screenshot());
     const seats = MODES[mode].fighters;
     for (let seat = 0; seat < seats; seat++) await tab.keyboard.press("Enter");
+    if (mode === "team") {
+      // Put player three alongside player one. Player two and four form the other team.
+      await tab.keyboard.press("Enter");
+      await tab.keyboard.press("ArrowRight");
+      for (let i = 0; i < 3; i++) await tab.keyboard.press("Enter");
+    }
     await tab.waitForTimeout(300);
     await tab.keyboard.press("Enter");
     await tab.waitForFunction(() => window.nativeBattle?.diagnostics().ticks > 30, undefined, { timeout: 120000 }).catch(async error => {
@@ -111,7 +117,9 @@ try {
     const names = await tab.evaluate(() => nativeBattle.diagnostics().actors.map(a => a.name));
     assert.equal(names.length, seats);
     assert.equal(new Set(names).size, seats, "distinct fighters");
-    assert.deepEqual(Array.from({ length: seats }, (_, i) => params.get("p" + (i + 1))).map(h => inventory.fighters.find(f => f.handle === h).name), names);
+    const order = mode === "team" ? [1, 3, 2, 4] : Array.from({length:seats}, (_, i) => i + 1);
+    if (mode === "team") assert.equal(params.get("teams"), "1324");
+    assert.deepEqual(order.map(seat => inventory.fighters.find(f => f.handle === params.get("p" + seat)).name), names);
     assert.ok(Object.hasOwn(lineups[params.get("venue")], MODES[mode].formation), "the venue has the mode's formation");
     multi[mode] = { fighters: names, venue: params.get("venue") };
     await tab.close();

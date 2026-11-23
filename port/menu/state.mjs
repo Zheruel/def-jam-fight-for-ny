@@ -20,6 +20,7 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
   const found = spots.findIndex(s => s.variants.some(v => v.file === venue));
   const columns = seats > 3 ? 3 : seats > 2 ? 4 : COLUMNS;   // faces per row of the paper box: 5, 4 or 3 on the two, three and four card screens
   const state = {
+    teamOrder: [], teamCursor: 0,
     columns, mode, cpu: Math.max(0, Math.min(seats - 1, cpuSeats)), screen: "fighters", roster, spots, variant: Math.max(0, found < 0 ? 0 : spots[found].variants.findIndex(v => v.file === venue)),
     seats: Array.from({ length: seats }, (_, i) => ({ cursor: Math.max(0, roster.findIndex(f => f.handle === picks[i])), ready: false })),
     venue: Math.max(0, found),
@@ -66,7 +67,7 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
       if (state.screen === "fighters") {
         const s = state.seats[seat];
         if (!s) return false;
-        if (action === "confirm") { s.ready = true; if (state.seats.every(x => x.ready)) state.screen = "venue"; return true; }
+        if (action === "confirm") { s.ready = true; if (state.seats.every(x => x.ready)) state.screen = mode === "team" ? "teams" : "venue"; return true; }
         if (action === "back") { if (s.ready) { s.ready = false; return true; } return false; }
         if (s.ready) return false;
         if (action === "left") moveFighter(seat, -1, 0);
@@ -76,7 +77,30 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
         else return false;
         return true;
       }
+      if (state.screen === "teams") {
+        const order = state.teamOrder;
+        if (action === "back") {
+          if (order.length) state.teamCursor = order.pop();
+          else { state.screen = "fighters"; state.seats[0].ready = false; }
+          return true;
+        }
+        if (action === "confirm") {
+          order.push(state.teamCursor);
+          if (order.length === seats) state.screen = "venue";
+          else state.teamCursor = state.seats.findIndex((_, i) => !order.includes(i));
+          return true;
+        }
+        if (action !== "left" && action !== "right") return false;
+        const direction = action === "left" ? -1 : 1;
+        do { state.teamCursor = (state.teamCursor + direction + seats) % seats; }
+        while (order.includes(state.teamCursor));
+        return true;
+      }
       if (state.screen === "venue") {
+        if (action === "back" && mode === "team") {
+          state.screen = "teams"; state.teamCursor = state.teamOrder.pop();
+          return true;
+        }
         if (action === "confirm") { state.screen = "done"; return true; }
         if (action === "back") { state.screen = "fighters"; state.seats.at(seat >= 0 ? Math.min(seat, state.seats.length - 1) : 0).ready = false; return true; }
         if (action === "next" || action === "previous") {
@@ -93,9 +117,15 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
     },
     // A pointer picked a face or a pin directly.
     pickFighter(seat, index) { const s = state.seats[seat]; if (s && !s.ready && !taken(seat, index)) { s.cursor = index; return true; } return false; },
+    pickTeammate(index) {
+      if (state.screen !== "teams" || !state.seats[index] || state.teamOrder.includes(index)) return false;
+      state.teamCursor = index;
+      return api.press(0, "confirm");
+    },
     pickVenue(index) { if (state.spots[index]) { state.venue = index; state.variant = 0; return true; } return false; },
     result() {
       return {
+        ...(mode === "team" && {teamOrder: state.teamOrder.slice()}),
         mode: state.mode, cpu: state.cpu, handles: state.seats.map(s => roster[s.cursor].handle), venue: state.spots[state.venue].variants[state.variant].file,
       };
     },
@@ -110,11 +140,12 @@ export function createSelection({ roster, venues, seats = 2, cpuSeats = 0, mode 
 }
 
 // Query string of a finished selection, matching port/battle/modes.mjs.
-export function selectionQuery({ mode, handles, venue, cpu = 0 }) {
+export function selectionQuery({ mode, handles, venue, cpu = 0, teamOrder }) {
   const params = new URLSearchParams();
   if (mode !== "1v1") params.set("mode", mode);
   handles.forEach((handle, i) => params.set("p" + (i + 1), handle));
   params.set("venue", venue);
+  if (teamOrder?.length === 4 && teamOrder.some((seat, i) => seat !== i)) params.set("teams", teamOrder.map(i => i + 1).join(""));
   if (cpu > 0) params.set("cpu", String(cpu));
   return params;
 }

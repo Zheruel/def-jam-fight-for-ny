@@ -2,7 +2,7 @@
 // battle page's own frame. Resolves with the finished selection ({ mode, handles, venue }); keyboard, gamepads and pointer
 // all drive it. The match-type step only appears when more than one type is offered (Free For All is local-only for now).
 import { createSelection, ROWS } from "./state.mjs";
-import { SIZE, drawFighters, drawVenue, drawType, typeRect, thumbRect, seatAt, stickerAt, pinAt } from "./screens.mjs";
+import { SIZE, drawFighters, drawVenue, drawTeams, teamThumbX, drawType, typeRect, thumbRect, seatAt, stickerAt, pinAt } from "./screens.mjs";
 import { onArrive } from "./art.mjs";
 import { MODES, venueSupports } from "../battle/modes.mjs";
 
@@ -39,9 +39,13 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
 
   let tick = 0, camera = null, frame = 0, stopped = false;
   const readyAt = new Map();
-  const draw = () => {
+  const frameMs = 1000 / 60;
+  let nextPaint = 0;
+  const draw = now => {
     frame = 0;
     if (stopped) return;
+    if (now + 0.1 < nextPaint) { frame = requestAnimationFrame(draw); return; }
+    nextPaint = now - nextPaint > frameMs ? now + frameMs : nextPaint + frameMs;
     tick++;
     ctx.setTransform(2, 0, 0, 2, 0, 0);
     if (!selection) drawType(ctx, pick, { time: performance.now() });
@@ -52,9 +56,10 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
         camera ??= { x: pin[0], y: pin[1] };
         camera.x += (pin[0] - camera.x) * 0.18; camera.y += (pin[1] - camera.y) * 0.18;
         drawVenue(ctx, selection, { time: performance.now(), camera });
-      } else drawFighters(ctx, selection, { time: performance.now(), tick });
+      } else if (screen() === "teams") drawTeams(ctx, selection);
+      else drawFighters(ctx, selection, { time: performance.now(), tick });
     }
-    if (screen() !== "done") frame = requestAnimationFrame(draw);   // animation (cursor pulse, map scroll) keeps it running
+    if (screen() !== "done" && screen() !== "teams") frame = requestAnimationFrame(draw);
   };
   const redraw = () => { if (!frame && !stopped) frame = requestAnimationFrame(draw); };
   onArrive(redraw);
@@ -123,6 +128,9 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
           }
         }
         if (y > 120 && y < 300) send(seat, "confirm");   // the portrait locks the fighter in
+      } else if (screen() === "teams") {
+        const seat = selection.state.seats.findIndex((_, i) => x >= teamThumbX(i) && x < teamThumbX(i) + 64);
+        if (y >= 339 && y <= 403 && selection.pickTeammate(seat)) redraw();
       } else if (screen() === "venue") {
         const index = pinAt(selection, x, y, camera);
         if (index >= 0) {

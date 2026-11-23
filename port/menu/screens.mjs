@@ -143,6 +143,42 @@ export function drawFighters(ctx, selection, { time = 0, tick = 0 } = {}) {
   });
 }
 
+// Original chsTeam4 panels. The four large slots are ordered by team. The small
+// portraits stay in controller order while the player fills the team slots.
+const TEAM_COLUMNS = [83, 199, 325, 441];
+export const teamThumbX = seat => 179 + seat * 72;
+
+export function drawTeams(ctx, {state}) {
+  const tile = (tag, x, y) => { const pic = have(`team-${tag}.png`); if (pic) ctx.drawImage(pic, x, y); };
+  ctx.clearRect(0, 0, SIZE.width, SIZE.height);
+  tile(2, 0, 0); tile(1, 512, 0);
+  title(ctx, "CHOOSE TEAMS", [["✕", "SELECT"], ["△", "BACK"]]);
+  tile(18, 115, 96); tile(17, 371, 96);
+  for (const [slot, x] of TEAM_COLUMNS.entries()) {
+    const selected = state.teamOrder[slot] ?? (slot === state.teamOrder.length ? state.teamCursor : undefined);
+    if (selected === undefined) { outlined(ctx, "?", x + 52, 228, 49, {align:"center"}); continue; }
+    const fighter = state.roster[state.seats[selected].cursor];
+    const [head, chest] = fighterPictures(fighter.id).slice(0, 2).map(have);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(x, 171, 105, 194); ctx.clip();
+    if (head) ctx.drawImage(head, x - 30, 171, 165, 165);
+    if (chest) ctx.drawImage(chest, x - 30, 336, 165, 52);
+    ctx.restore();
+    if (slot === state.teamOrder.length) tile(22, x - 2, 168);
+  }
+  tile(25, 291, 231);
+  outlined(ctx, "TEAM 1", 71, 392, 18); outlined(ctx, "TEAM 2", 505, 392, 18);
+  tile(31, 154, 318); tile(30, 410, 318);
+  const thumbs = have("thumbs.png");
+  state.seats.forEach(({cursor}, i) => {
+    const x = teamThumbX(i);
+    if (thumbs) ctx.drawImage(thumbs, cursor % 8 * 40, Math.floor(cursor / 8) * 40, 40, 40, x + 4, 344, 54, 51);
+    if (state.teamOrder.includes(i)) {
+      ctx.fillStyle = "rgba(41,32,21,.68)"; ctx.fillRect(x + 4, 344, 54, 51);
+    } else if (i === state.teamCursor) tile(33, x, 339);
+  });
+}
+
 // -- match type screen --------------------------------------------------------------------------------------------------
 const TYPE_ART = { "1v1": ["type-1v1.png", "ONE ON ONE"], team: ["type-team.png", "TAG TEAM"], ffa3: ["type-ffa.png", "FREE FOR ALL 3"],
   ffa: ["type-ffa.png", "FREE FOR ALL"] };

@@ -107,6 +107,12 @@ def write(path: Path, data: bytes):
     path.write_bytes(data)
 
 
+def export_team(source, output):
+    pictures = source.pictures("screens/battle/chsTeam4.big")
+    for tag in (1, 2, 17, 18, 22, 25, 30, 31, 33):
+        write(output / f"team-{tag}.png", pictures[str(tag)])
+
+
 def export(iso, output: Path):
     source = Source(iso)
     try:
@@ -133,6 +139,7 @@ def export(iso, output: Path):
                            "stats": c["stats"] if c else None, "styles": c["styles"] if c else []})
         (output / "roster.json").write_text(json.dumps(roster, indent=1) + "\n")
         thumbs(output, roster)
+        export_team(source, output)
 
         # -- selector chrome (chooseF2) -------------------------------------------------------------------------
         f2 = source.pictures("screens/battle/chooseF2.big")

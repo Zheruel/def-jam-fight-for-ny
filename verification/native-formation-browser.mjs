@@ -17,6 +17,8 @@ try {
   await once(server,"listening");
   const url=new URL(process.argv[3] ?? "http://127.0.0.1:"+server.address().port+"/");
   url.searchParams.set("mode",mode);
+  const teamOrder = [1, 3, 2, 4];
+  if (mode === "team") url.searchParams.set("teams", teamOrder.join(""));
   browser=await chromium.launch({headless:true,...(process.platform==="darwin" && {channel:"chrome"})});
   const errors=[];
   async function open(url) {
@@ -47,7 +49,7 @@ try {
     guests.push(page);
   }
   for(const [index,guest] of guests.entries()) {
-    const slot=index+1;
+    const slot = mode === "team" ? teamOrder.indexOf(index + 2) : index + 1;
     await host.locator("#restart").click();
     const before=await positions();
     atSpawn(before);

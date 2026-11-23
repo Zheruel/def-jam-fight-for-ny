@@ -87,6 +87,17 @@ test("a three fighter and a tag team selection keep distinct seats and their own
     assert.equal(s.state.columns, seats === 3 ? 4 : 3);
     assert.equal(new Set(s.state.seats.map(x => x.cursor)).size, seats);
     s.state.seats.forEach((_, i) => s.press(i, "confirm"));
+    if (mode === "team") {
+      assert.equal(s.state.screen, "teams");
+      s.pickTeammate(0); s.press(0, "right"); s.press(0, "confirm");
+      s.press(0, "back"); assert.deepEqual(s.state.teamOrder, [0]);
+      assert.equal(s.state.teamCursor, 2);
+      s.press(0, "confirm"); s.press(0, "confirm"); s.press(0, "confirm");
+      assert.equal(s.state.screen, "venue");
+      s.press(0,"back"); s.press(0,"confirm");
+      const parsed = parseBattleQuery(selectionQuery(s.result()), {fighters:inventory.fighters,venues:inventory.venues,ffa:true});
+      assert.deepEqual(parsed.teamOrder, [0,2,1,3]);
+    }
     s.press(0, "confirm");
     const q = selectionQuery(s.result());
     assert.equal(q.get("mode"), mode);

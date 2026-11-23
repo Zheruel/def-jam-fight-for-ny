@@ -194,7 +194,8 @@ async function display() {
       carry += elapsed;
       try {
         while (carry >= stepMs) {
-          fight.tick(controls.inputs());
+          const inputs = controls.inputs();
+          fight.tick(query.teamOrder ? query.teamOrder.map(seat => inputs[seat]) : inputs);
           combatAudio?.tick(fight);
           if(environment) { environment.update(fight.memory,1,fight.states); const effects=environment.effects(); combatAudio?.environment?.(effects); trainAudio?.effects(effects); }
           camera.step();
@@ -353,7 +354,8 @@ async function display() {
     const controller = skinRequest = new AbortController();
     const next = [];
     try {
-      for (const [i,select] of selectors.entries()) {
+      const actorSelectors = query?.teamOrder ? query.teamOrder.map(seat => selectors[seat]) : selectors;
+      for (const [i,select] of actorSelectors.entries()) {
         if (selected[i]?.handle === select.value) { next.push(selected[i]); continue; }
         const fighter = inventory.fighters.find(f => f.handle === select.value);
         const data = await loadFighter(fighter.model, controller.signal);
@@ -424,7 +426,7 @@ async function display() {
     if(stage.manifest.subway) { const {createTrainAudio}=await import("../scenery/train.mjs"); trainAudio=createTrainAudio(audio,{fighters:selected.map(f=>f.record.fighterXml)}); }
     hud=await createHud(gl);
     // Explicit CPU seats only (?cpu=N, the last N seats): the retail AI plays them and no controller or guest can.
-    selected.forEach((f,i)=>{ f.cpu = i >= count - query.cpu; });
+    selected.forEach((f,i)=>{ f.cpu = (query.teamOrder?.[i] ?? i) >= count - query.cpu; });
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio,{seats:count,cpu:query.cpu});
     fight = await loadFoundationFight(selected,arena,MODES[mode].formation);
     if(voicePlayer)fight.setVoicePlayer(voicePlayer);
