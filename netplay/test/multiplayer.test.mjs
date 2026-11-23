@@ -246,7 +246,9 @@ async function mediaSwitch(t, usePeerJS) {
     drawing.drawImage(video, 0, 0, 8, 8);
     return drawing.getImageData(4, 4, 1, 1).data[2] > 150;
   }, undefined, { timeout: 12_000 });
-  const after = await observe(guest);
+  // The replaced audio track takes a moment longer than the picture to reach the guest's analyser.
+  let after = await observe(guest);
+  for (let attempt = 0; attempt < 20 && Math.abs(after.hertz - 1320) >= 60; attempt += 1) after = await observe(guest);
   [30, 60, 230].forEach((channel, index) => assert.ok(Math.abs(after.pixel[index] - channel) < 40, `match picture ${after.pixel}`));
   assert.ok(Math.abs(after.hertz - 1320) < 60, `match tone ${after.hertz}`);
 

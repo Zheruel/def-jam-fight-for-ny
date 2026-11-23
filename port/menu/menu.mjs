@@ -45,6 +45,8 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     selection = createSelection({ roster, venues, seats: MODES[mode].fighters, mode, picks, venue, venueOk: v => venueSupports(v.file, mode) });
     session?.use({ canvas, seats: selection.state.seats.length, cpu: 0 });
   }
+  // A match type with fewer seats than a guest's slot would leave that guest without one: the type wall stays.
+  const begin = mode => { if (!session || session.fits(MODES[mode].fighters)) start(mode); };
   // A seat a guest holds answers only to that guest.
   const remote = seat => Boolean(session?.occupied(seat));
   // The CPU takes the last seats; an online room refuses a count that would take a seat a guest holds.
@@ -64,7 +66,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     return false;
   };
   Object.defineProperty(window, "nativeMenu", { configurable: true, get: () => ({
-    screen: screen(), cpu: selection?.state.cpu ?? 0,
+    screen: screen(), type: pick.state.mode, size: pick.state.size, cpu: selection?.state.cpu ?? 0,
     seats: selection?.state.seats.map((s, i) => ({ handle: roster[s.cursor].handle, ready: s.ready, remote: remote(i) })) ?? [],
   }) });
   const screen = () => selection ? selection.state.screen : "type";
@@ -102,7 +104,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
       let used = false;
       if (!selection) {
         const mode = pick.press(action);
-        if (mode) start(mode);
+        if (mode) begin(mode);
         used = true;
       } else if (action === "back" && screen() === "fighters" && !selection.state.seats.some(s => s.ready) && types.length > 1) {
         // back to the match type, unless a guest holds a seat the other types may not have
@@ -121,7 +123,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
         if (!action) continue;
         handled = true;
         if (selection && seat >= seatCount()) continue;
-        if (remote(seat)) continue;
+        if (screen() === "fighters" && remote(seat)) continue;   // only the fighter screen has seats of its own
         send(seat, action);
         if (screen() === "venue" || !selection) break;   // one cursor there: either player's keys work
       }
@@ -145,7 +147,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
       const [x, y] = point(event);
       if (!selection) {
         const mode = pick.point(x, y);
-        if (mode) start(mode);
+        if (mode) begin(mode);
         redraw();
       } else if (screen() === "fighters") {
         const sticker = stickerAt(selection, x, y);
@@ -178,7 +180,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     let padLoop = 0;
     const padFrame = () => {
       [...(navigator.getGamepads?.() ?? [])].forEach((pad, seat) => {
-        if (!pad || seat >= Math.max(1, seatCount()) || remote(seat)) return;
+        if (!pad || seat >= Math.max(1, seatCount()) || (screen() === "fighters" && remote(seat))) return;
         const now = new Set(Object.keys(PAD).filter(b => pad.buttons[b]?.pressed));
         const [ax = 0, ay = 0] = pad.axes;
         if (ax < -0.6) now.add("14"); if (ax > 0.6) now.add("15"); if (ay < -0.6) now.add("12"); if (ay > 0.6) now.add("13");

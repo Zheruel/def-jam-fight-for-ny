@@ -22,6 +22,8 @@ let browser;
 async function chooseType(page,type) {
   for(let i=0;i<["1v1","team","ffa"].indexOf(type==="ffa3" ? "ffa" : type);i++) await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Enter");
+  // The retail "Pick Your Rules" popup, when the menu shows it, is confirmed as it is.
+  if(await page.evaluate(()=>window.nativeMenu?.popup==="rules")) await page.keyboard.press("Enter");
   if(type.startsWith("ffa")) {
     if(type==="ffa3") await page.keyboard.press("ArrowLeft");
     await page.keyboard.press("Enter");

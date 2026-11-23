@@ -145,6 +145,8 @@ function createSession() {
     window.addEventListener("blur",() => { keys.clear(); send(); });
   }
 
+  // Diagnostics for headless checks: the room's code and how many picture captures it still runs.
+  window.nativeRoom = () => ({ code: room?.code ?? null, captures: room?.liveCaptures?.() ?? null, slots: slots.map(s => s.state), guest });
   return {
     bind, refresh,
     // Declare what the page shows and plays: how many seats (and how many of the last ones are CPU), the sound bus and the
@@ -164,6 +166,8 @@ function createSession() {
     // Whether a guest holds the seat (a person, not the host's keyboard), and whether the host may take back seats for the CPU.
     occupied(seat) { return seat >= 1 && slots.some(s => s.slot === seat && s.state !== "open"); },
     hosted: () => Boolean(room) && !guest,
+    // Whether a match of `count` seats leaves every seated guest a seat.
+    fits: count => !room || guest || slots.every(s => s.state === "open" || s.slot < count),
     // The CPU takes the last `count` seats: refused while a guest holds one of them or when no seat would stay open to a guest.
     setCpu(count) {
       if (!room || guest) { cpu = count; refresh(); return true; }

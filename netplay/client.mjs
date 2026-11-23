@@ -425,7 +425,9 @@ export async function hostMatch({ canvas, audioStream, frameRate = 60, seatMedia
         captures.delete(previous);
       }
     }
-    return { ...room, setMedia };
+    // Captures that are still running (one per canvas the room currently shows): a diagnostic that none are left behind.
+    const liveCaptures = () => [...captures.values()].flat().filter((track) => track.readyState === 'live').length;
+    return { ...room, setMedia, liveCaptures };
   } catch (error) {
     stopCapture();
     throw error;
