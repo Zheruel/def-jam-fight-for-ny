@@ -7,8 +7,8 @@ import { gameServer } from '../tools/serve.mjs';
 
 test('local disc supports HEAD and bounded random reads, other private data stays private', async t => {
   const root = await mkdtemp(join(tmpdir(), 'def-jam-'));
-  await mkdir(join(root, 'private'));
-  await writeFile(join(root, 'private/reference.iso'), 'GNWE69');
+  await mkdir(join(root, 'private/ps2'), { recursive: true });
+  await writeFile(join(root, 'private/ps2/reference.iso'), 'ABCDEF');
   const server = gameServer(root);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => {
@@ -20,7 +20,7 @@ test('local disc supports HEAD and bounded random reads, other private data stay
   const head = await get(route, { method: 'HEAD' });
   assert.equal(head.headers.get('content-length'), '6');
   assert.equal(head.headers.get('cross-origin-embedder-policy'), 'require-corp');
-  for (const [range, data] of [['1-3', 'NWE'], ['4-', '69'], ['-3', 'E69']]) {
+  for (const [range, data] of [['1-3', 'BCD'], ['4-', 'EF'], ['-3', 'DEF']]) {
     const r = await get(route, { headers: { Range: 'bytes=' + range } });
     assert.equal(r.status, 206);
     assert.equal(await r.text(), data);

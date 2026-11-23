@@ -1,0 +1,154 @@
+diff --git a/Source/Js_DiscImageDeviceStream.cpp b/Source/Js_DiscImageDeviceStream.cpp
+index 71d60516..451da189 100644
+--- a/Source/Js_DiscImageDeviceStream.cpp
++++ b/Source/Js_DiscImageDeviceStream.cpp
+@@ -1,6 +1,7 @@
+ #include "Js_DiscImageDeviceStream.h"
++#include <algorithm>
++#include <cstring>
+ #include <stdexcept>
+-#include <cassert>
+ #include <emscripten.h>
+ #include <unistd.h>
+ 
+@@ -15,12 +16,8 @@ void CJsDiscImageDeviceStream::Seek(int64 position, Framework::STREAM_SEEK_DIREC
+ 		m_position += position;
+ 		break;
+ 	case Framework::STREAM_SEEK_END:
+-	{
+-		uint32 positionLo = MAIN_THREAD_EM_ASM_INT({return Module.discImageDevice.getFileSize()});
+-		uint32 positionHi = MAIN_THREAD_EM_ASM_INT({return Module.discImageDevice.getFileSize() / 4294967296});
+-		m_position = static_cast<uint64>(positionLo) | (static_cast<uint64>(positionHi) << 32);
+-	}
+-	break;
++		m_position = GetLength() + position;
++		break;
+ 	}
+ }
+ 
+@@ -29,28 +26,62 @@ uint64 CJsDiscImageDeviceStream::Tell()
+ 	return m_position;
+ }
+ 
+-uint64 CJsDiscImageDeviceStream::Read(void* buffer, uint64 size)
++uint64 CJsDiscImageDeviceStream::GetLength()
+ {
+-	if(size == 0) return 0;
+-
+-	assert(size <= std::numeric_limits<uint32>::max());
++	if(!m_length)
++	{
++		m_length = static_cast<uint64>(MAIN_THREAD_EM_ASM_DOUBLE({return Module.discImageDevice.getFileSize()}));
++	}
++	return *m_length;
++}
+ 
+-	uint32 positionLow = static_cast<uint32>(m_position);
+-	uint32 positionHigh = static_cast<uint32>(m_position >> 32);
++const uint8* CJsDiscImageDeviceStream::GetBlock(uint64 start, uint32 length)
++{
++	CACHE_BLOCK* oldest = &m_cache.front();
++	for(auto& block : m_cache)
++	{
++		if(block.data && block.start == start)
++		{
++			block.lastUsed = ++m_access;
++			return block.data.get();
++		}
++		if(block.lastUsed < oldest->lastUsed) oldest = &block;
++	}
+ 
++	if(!oldest->data) oldest->data = std::make_unique<uint8[]>(BLOCK_SIZE);
++	// A single main-thread request serves up to 256 subsequent DVD sectors.
+ 	MAIN_THREAD_EM_ASM({
+-		let posLow = $1 >>> 0;
+-		let posHigh = $2 >>> 0;
+-		let position = posLow + (posHigh * 4294967296);
+-		Module.discImageDevice.read($0, position, $3);
++		let offset = ($1 >>> 0) + ($2 >>> 0) * 4294967296;
++		Module.discImageDevice.read($0, offset, $3);
+ 	},
+-	                   buffer, positionLow, positionHigh, static_cast<uint32>(size));
++	                   oldest->data.get(), static_cast<uint32>(start), static_cast<uint32>(start >> 32), length);
+ 	while(!MAIN_THREAD_EM_ASM_INT({return Module.discImageDevice.isDone()}))
+ 	{
+ 		usleep(100);
+ 	}
+-	m_position += size;
+-	return size;
++	oldest->start = start;
++	oldest->lastUsed = ++m_access;
++	return oldest->data.get();
++}
++
++uint64 CJsDiscImageDeviceStream::Read(void* buffer, uint64 size)
++{
++	if(size == 0) return 0;
++	const auto imageLength = GetLength();
++	const auto available = m_position < imageLength ? std::min(size, imageLength - m_position) : 0;
++	auto output = static_cast<uint8*>(buffer);
++	for(uint64 remaining = available; remaining != 0;)
++	{
++		const uint64 blockStart = m_position - (m_position % BLOCK_SIZE);
++		const auto blockLength = static_cast<uint32>(std::min<uint64>(BLOCK_SIZE, imageLength - blockStart));
++		const auto offset = static_cast<uint32>(m_position - blockStart);
++		const auto count = static_cast<uint32>(std::min<uint64>(remaining, blockLength - offset));
++		std::memcpy(output, GetBlock(blockStart, blockLength) + offset, count);
++		output += count;
++		m_position += count;
++		remaining -= count;
++	}
++	return available;
+ }
+ 
+ uint64 CJsDiscImageDeviceStream::Write(const void*, uint64)
+@@ -60,7 +91,7 @@ uint64 CJsDiscImageDeviceStream::Write(const void*, uint64)
+ 
+ bool CJsDiscImageDeviceStream::IsEOF()
+ {
+-	throw std::runtime_error("Not supported.");
++	return m_position >= GetLength();
+ }
+ 
+ void CJsDiscImageDeviceStream::Flush()
+diff --git a/Source/Js_DiscImageDeviceStream.h b/Source/Js_DiscImageDeviceStream.h
+index 07026720..55a12ed0 100644
+--- a/Source/Js_DiscImageDeviceStream.h
++++ b/Source/Js_DiscImageDeviceStream.h
+@@ -1,5 +1,8 @@
+ #pragma once
+ 
++#include <array>
++#include <memory>
++#include <optional>
+ #include "Stream.h"
+ 
+ class CJsDiscImageDeviceStream : public Framework::CStream
+@@ -9,11 +12,27 @@ public:
+ 
+ 	void Seek(int64, Framework::STREAM_SEEK_DIRECTION) override;
+ 	uint64 Tell() override;
++	uint64 GetLength() override;
+ 	uint64 Read(void*, uint64) override;
+ 	uint64 Write(const void*, uint64) override;
+ 	bool IsEOF() override;
+ 	void Flush() override;
+ 
+ private:
++	static constexpr uint32 BLOCK_SIZE = 512 * 1024;
++	static constexpr size_t CACHE_SIZE = 8;
++
++	struct CACHE_BLOCK
++	{
++		std::unique_ptr<uint8[]> data;
++		uint64 start = 0;
++		uint64 lastUsed = 0;
++	};
++
++	const uint8* GetBlock(uint64 start, uint32 length);
++
+ 	uint64 m_position = 0;
++	std::optional<uint64> m_length;
++	std::array<CACHE_BLOCK, CACHE_SIZE> m_cache;
++	uint64 m_access = 0;
+ };

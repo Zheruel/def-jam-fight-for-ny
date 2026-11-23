@@ -1,0 +1,1 @@
+Run emulator and browser verification in the background. Use headless Chromium, file paths, and scripted controller input. Write captures to private/. Keep macOS dialogs and native emulator windows off the user's desktop.

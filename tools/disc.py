@@ -1,64 +1,64 @@
-"""Verify the retail US GameCube disc and index its filesystem and PowerPC DOL."""
+"""Verify and index the SLUS-21004 retail PS2 DVD for port and fidelity work."""
 import argparse
 import hashlib
 import json
 import struct
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
-SIZE = 1459978240
-SHA1 = "eab72bb2d1b08aa6807b5c86a2ac4f67ebbbaff4"
+SIZE = 4694573056
+SHA1 = "5eda39dfd703804c8734b91bd23039f642317837"
+SECTOR = 2048
 
 
-def index_disc(stream, size):
-    def read(offset, length):
-        if offset < 0 or offset + length > size:
-            raise ValueError("Disc extent exceeds image")
-        stream.seek(offset)
-        data = stream.read(length)
-        if len(data) != length:
-            raise ValueError("Truncated image")
-        return data
+def directory(stream, offset, size):
+    stream.seek(offset)
+    data = stream.read(size)
+    pos = 0
+    while pos < len(data):
+        length = data[pos]
+        if not length:
+            pos += SECTOR - pos % SECTOR
+            continue
+        entry = data[pos:pos + length]
+        if len(entry) < 34:
+            raise ValueError("Invalid ISO9660 directory record")
+        pos += length
+        raw = entry[33:33 + entry[32]]
+        if raw in (b"\0", b"\1"):
+            continue
+        name = raw.decode("ascii").split(";")[0]
+        if name in (".", "..") or any(c in name for c in "/\\"):
+            raise ValueError("Invalid file name")
+        yield name, int.from_bytes(entry[2:6], "little") * SECTOR, int.from_bytes(entry[10:14], "little"), bool(entry[25] & 2)
 
-    head = read(0, 0x430)
-    if head[:8] != b"GNWE69\0\0" or head[0x1c:0x20] != bytes.fromhex("c2339f3d"):
-        raise ValueError("Expected Def Jam USA GameCube disc GNWE69 revision 0")
-    dol, fst, fst_size = struct.unpack_from(">3I", head, 0x420)
-    table = read(fst, fst_size)
-    kind, _, count = struct.unpack_from(">3I", table)
-    if kind != 1 << 24 or not 0 < count <= len(table) // 12:
-        raise ValueError("Invalid root entry")
-    names = table[count * 12:]
-    stack = [(0, count, PurePosixPath())]
-    files = []
-    for i in range(1, count):
-        while i == stack[-1][1]:
-            stack.pop()
-        name, offset, length = struct.unpack_from(">3I", table, i * 12)
-        start = name & 0xffffff
-        end = names.index(0, start)
-        part = names[start:end].decode("ascii")
-        if part in ("", ".", "..") or "/" in part or "\\" in part:
-            raise ValueError("Invalid filename")
-        path = stack[-1][2] / part
-        if name >> 24 == 1 and offset == stack[-1][0] and i < length <= stack[-1][1]:
-            stack.append((i, length, path))
-        elif name >> 24 == 0 and offset + length <= size:
-            files.append(dict(path=str(path), offset=offset, bytes=length))
-        else:
-            raise ValueError(f"Invalid filesystem extent at entry {i}")
-    header = read(dol, 0x100)
-    sections = []
-    for n in range(18):
-        offset, = struct.unpack_from(">I", header, n * 4)
-        address, = struct.unpack_from(">I", header, 0x48 + n * 4)
-        length, = struct.unpack_from(">I", header, 0x90 + n * 4)
-        if length:
-            if dol + offset + length > size:
-                raise ValueError("Invalid DOL section")
-            sections.append(dict(kind="text" if n < 7 else "data", offset=dol + offset,
-                                 address=address, bytes=length))
-    entry, = struct.unpack_from(">I", header, 0xe0)
-    return dict(game_id="GNWE69", dol_offset=dol, entry=entry, sections=sections, files=files)
+
+def catalog(stream):
+    stream.seek(16 * SECTOR)
+    pvd = stream.read(SECTOR)
+    if pvd[:7] != b"\1CD001\1":
+        raise ValueError("Expected an ISO9660 DVD")
+    stack = [("", int.from_bytes(pvd[158:162], "little") * SECTOR, int.from_bytes(pvd[166:170], "little"))]
+    seen = set()
+    files = {}
+    while stack:
+        prefix, offset, length = stack.pop()
+        if offset in seen:
+            raise ValueError("Repeated directory extent")
+        seen.add(offset)
+        for name, start, size, folder in directory(stream, offset, length):
+            path = prefix + name
+            if folder:
+                stack.append((path + "/", start, size))
+            else:
+                files[path] = dict(offset=start, bytes=size)
+    entry = files["SLUS_210.04"]
+    stream.seek(entry["offset"])
+    elf = stream.read(entry["bytes"])
+    if elf[:6] != b"\x7fELF\x01\x01" or struct.unpack_from("<H", elf, 18)[0] != 8:
+        raise ValueError("Expected a little-endian MIPS ELF executable")
+    return dict(serial="SLUS-21004", sha1=SHA1, files=files,
+                elf_entry=hex(struct.unpack_from("<I", elf, 24)[0]),
+                elf_sha256=hashlib.sha256(elf).hexdigest())
 
 
 def main():
@@ -67,14 +67,12 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     with args.iso.open("rb") as stream:
-        size = args.iso.stat().st_size
-        if size != SIZE or hashlib.file_digest(stream, "sha1").hexdigest() != SHA1:
-            parser.exit(1, "Image does not match the Redump USA reference.\n")
-        catalog = index_disc(stream, size)
-    catalog.update(sha1=SHA1, bytes=size)
+        if args.iso.stat().st_size != SIZE or hashlib.file_digest(stream, "sha1").hexdigest() != SHA1:
+            parser.exit(1, "Image does not match the Redump USA PS2 reference.\n")
+        result = catalog(stream)
     if args.output:
-        args.output.write_text(json.dumps(catalog, indent=2) + "\n")
-    print(f"Verified GNWE69 | {len(catalog['files'])} files | PowerPC entry 0x{catalog['entry']:08x}")
+        args.output.write_text(json.dumps(result, indent=2) + "\n")
+    print(f"Verified SLUS-21004 | {len(result['files'])} files | EE entry {result['elf_entry']}")
 
 
 if __name__ == "__main__":

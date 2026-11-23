@@ -25,8 +25,8 @@ export function gameServer(directory = root) {
     try { name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
     catch { return fail(400); }
     if (name === '/') name = '/web/index.html';
-    if (name === '/disc/reference.iso') name = '/private/reference.iso';
-    else if (!/^\/(web\/|runtime\/dolphin\/|netplay\/client\.mjs$)/.test(name)) return fail(404);
+    if (name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
+    else if (!/^\/(web\/|runtime\/play-build\/|netplay\/client\.mjs$)/.test(name)) return fail(404);
     if (name.split('/').some(part => part.startsWith('.')) || /[\\\0]/.test(name)) return fail(404);
     let file;
     try {

@@ -2,7 +2,7 @@ import { CONTROL_KEYS, NEUTRAL_INPUT, readControls } from "./controls.mjs";
 import { isDiscInstalled, makeRuntime } from "./runtime.mjs";
 
 const get = (id) => document.getElementById(id);
-const canvas = get("game");
+const canvas = get("outputCanvas");
 const remote = get("remote");
 const screen = get("screen");
 const startPanel = get("start-panel");
@@ -12,7 +12,7 @@ const chooseDisc = get("choose-disc");
 const installed = get("play-installed");
 const discInput = get("disc-input");
 const status = get("status");
-const pauseButton = get("pause");
+
 const audioButton = get("audio");
 const streamButton = get("play-stream");
 const hostButton = get("host-match");
@@ -24,7 +24,7 @@ const netStatus = get("net-status");
 
 let playing = false;
 let loading = false;
-let paused = false;
+
 let muted = false;
 let installedAvailable = false;
 let match;
@@ -37,7 +37,7 @@ const manualPads = new Map();
 const runtime = makeRuntime({
   canvas,
   onStatus(message) {
-    if (loading) status.textContent = message;
+    status.textContent = message;
   }
 });
 window.defJam = Object.freeze({
@@ -53,6 +53,7 @@ window.defJam = Object.freeze({
     }
   },
   diagnostics: runtime.diagnostics,
+  getInputReadback: runtime.getInputReadback,
   getSecondInputReadback: runtime.getSecondInputReadback
 });
 
@@ -71,16 +72,16 @@ function showStart(title, message) {
 async function startGame(boot) {
   if (loading || playing || role === "guest") return;
   loading = true;
-  showStart("Starting game", "Loading the GameCube emulator and disc.");
-  status.textContent = "Starting Dolphin";
+  showStart("Starting game", "Loading the PlayStation 2 emulator and disc.");
+  status.textContent = "Starting Play!";
   void runtime.prepareAudio().catch(() => {});
   try {
     const disc = await boot();
     playing = true;
     startPanel.hidden = true;
-    status.textContent = "GameCube · " + disc.gameId;
-    pauseButton.disabled = false;
-    audioButton.disabled = false;
+    status.textContent = "PlayStation 2 · " + disc.gameId;
+
+    audioButton.disabled = !runtime.getAudioStream();
     hostButton.disabled = !runtime.diagnostics().secondController;
     netStatus.textContent = hostButton.disabled
       ? "Guests can join with a code. Hosting needs a two-controller build."
@@ -114,7 +115,7 @@ async function startAudio() {
 isDiscInstalled().then((available) => {
   installedAvailable = available;
   if (available && !loading && !playing && !role) {
-    status.textContent = "Ready · GameCube";
+    status.textContent = "Ready · PlayStation 2";
     showStart("Ready to play", "Def Jam: Fight for NY is installed on this machine.");
   }
 }).catch(() => {});
@@ -142,19 +143,6 @@ screen.addEventListener("drop", (event) => {
   if (file) void window.defJam.boot(file);
 });
 
-pauseButton.addEventListener("click", async () => {
-  pauseButton.disabled = true;
-  try {
-    await runtime.setPaused(!paused);
-    paused = !paused;
-    pauseButton.textContent = paused ? "Resume" : "Pause";
-    canvas.focus();
-  } catch (error) {
-    status.textContent = error.message;
-  } finally {
-    pauseButton.disabled = false;
-  }
-});
 audioButton.addEventListener("click", () => void startAudio().catch((error) => {
   status.textContent = error.message;
 }));
@@ -259,8 +247,8 @@ function leaveRoom() {
   joinForm.hidden = false;
   hostButton.hidden = false;
   audioButton.disabled = !playing;
-  if (!playing) showStart(installedAvailable ? "Ready to play" : "Load a disc", "Choose a GameCube disc image to start.");
-  status.textContent = playing ? "GameCube · " + runtime.diagnostics().discId : "Waiting for a disc";
+  if (!playing) showStart(installedAvailable ? "Ready to play" : "Load a disc", "Choose a PlayStation 2 disc image to start.");
+  status.textContent = playing ? "PlayStation 2 · " + runtime.diagnostics().discId : "Waiting for a disc";
   netStatus.textContent = playing ? "Room closed" : "Load the disc to host. Guests can join with a code.";
 }
 

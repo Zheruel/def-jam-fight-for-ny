@@ -1,145 +1,75 @@
-import { AudioController } from "/runtime/dolphin/src/audio.js";
-import { UpstreamWorkerAdapter } from "/runtime/dolphin/src/upstream-worker-adapter.js";
-import { toDolphinInput } from "./controls.mjs";
+import { fileDisc, localDisc, verifyTitle } from './disc.mjs';
 
-const GAME_IDS = new Set(["GNWE69", "GNWP69"]);
-const INSTALLED_DISC_URL = "/disc/reference.iso";
-const IMAGE_EXTENSIONS = /\.(iso|gcm|rvz|ciso|gcz|wia)$/i;
+const runtimeUrl = '/runtime/play-build/Play.js';
+export const isDiscInstalled = async () => (await fetch('/disc/reference.iso', { method: 'HEAD' })).ok;
 
 export function makeRuntime({ canvas, onStatus }) {
-  const settings = new URLSearchParams(location.search);
-  const hardware = settings.get("video") !== "software" && Boolean(navigator.gpu);
-  const audio = new AudioController();
-  let host;
-  let mounted;
-  let booting = false;
-  let pollTimer;
-  let mediaAudio;
-  let secondController = false;
-  let lastSecondInput = "";
+  let vm;
+  let booted = false;
+  let totalFrames = 0;
+  let windowFrames = 0;
+  let timer;
+  let readCount = 0;
+  let readBytes = 0;
+  let failure = '';
+  async function start(source) {
+    await verifyTitle(source);
+    if (!crossOriginIsolated) throw new Error('Start the game using the included development server.');
+    if (vm) throw new Error('Reload the page to restart the emulator.');
+    onStatus('Initializing the PS2');
+    const { default: Play } = await import(runtimeUrl);
+    const module = await Play({
+      canvas,
+      mainScriptUrlOrBlob: new URL(runtimeUrl, location.href).href,
+      locateFile: name => new URL('/runtime/play-build/' + name, location.href).href,
+      onAbort: message => { failure = String(message); onStatus('Emulation stopped: ' + failure); }
+    });
+    vm = module;
+    module.FS.mkdir('/work');
+    let done = true;
+    module.discImageDevice = {
+      getFileSize: () => source.size,
+      isDone: () => done,
+      read(dst, offset, size) {
+        readCount++;
+        readBytes += size;
+        done = false;
+        source.read(offset, size).then(data => {
+          if (data.length !== size) throw new Error('Unexpected end of disc.');
+          module.HEAPU8.set(data, dst);
+        }).catch(error => {
+          failure = error.message;
 
-  audio.setSource((frames) => host?.mixAudio(frames));
-  audio.setTransportBridge((configuration) => host?.configureAudioWorklet(configuration));
-
-  async function boot(file) {
-    if (booting || mounted) throw new Error("A disc is already loading or running.");
-    if (!crossOriginIsolated || typeof SharedArrayBuffer !== "function") {
-      throw new Error("The emulator requires cross-origin isolation. Open the game from its local server.");
-    }
-    if (!canvas.transferControlToOffscreen) {
-      throw new Error("This browser cannot run the GameCube display. Open the game in desktop Chrome or Edge.");
-    }
-    if (!IMAGE_EXTENSIONS.test(file.name) || !file.size) {
-      throw new Error("Choose a GameCube disc image in ISO, GCM, RVZ, CISO, GCZ, or WIA format.");
-    }
-    booting = true;
-    try {
-      const firstBytes = new Uint8Array(await file.slice(0, 0x20).arrayBuffer());
-      if (firstBytes.length === 0x20 && new DataView(firstBytes.buffer).getUint32(0x1c) === 0xc2339f3d) {
-        const id = new TextDecoder("ascii").decode(firstBytes.subarray(0, 6));
-        if (!GAME_IDS.has(id)) throw new Error("Choose the GameCube edition of Def Jam: Fight for NY.");
+          onStatus('Disc read failed. Reload to retry. ' + failure);
+        }).finally(() => { done = !failure; });
       }
-      const fastSoftwareRaster = Number(settings.get("fastsw") ?? 1);
-      const jitWarmup = Number(settings.get("jitwarmup") ?? 700);
-      host ??= new UpstreamWorkerAdapter({
-        visibleCanvas: canvas,
-        transferCanvas: () => canvas.transferControlToOffscreen(),
-        videoBackend: hardware ? "WebGPU-Real" : "Software Renderer",
-        presenterBackend: settings.get("presenter") ?? "webgpu",
-        presentationPacing: hardware ? "smooth" : "tick",
-        cpuThread: settings.get("cpu") === "dual",
-        ppcWasmJit: settings.get("wasmjit") === "1",
-        ppcWasmJitWarmupFrames: Number.isInteger(jitWarmup) ? Math.max(0, jitWarmup) : 700,
-        fastSoftwareRaster,
-        onStatus
-      });
-
-      const disc = await host.mountGame(file);
-      if (!GAME_IDS.has(disc.gameId)) {
-        await host.request("setPaused", { paused: true });
-        throw new Error("Choose the GameCube edition of Def Jam: Fight for NY.");
-      }
-      if (!disc.fullCore || !disc.coreBoot?.accepted) {
-        throw new Error(disc.coreBoot?.skippedReason || disc.coreStatus || "Dolphin could not boot the disc.");
-      }
-      ({ secondController } = await host.request("controllerCapabilities"));
-      mounted = disc;
-      host.pollFrame();
-      pollTimer = setInterval(() => host.pollFrame(), 250);
-      return disc;
-    } finally {
-      booting = false;
-    }
-  }
-
-  async function bootInstalled() {
-    const response = await fetch(INSTALLED_DISC_URL, { cache: "no-store" });
-    if (!response.ok) throw new Error("No local disc is installed. Choose your disc image to play.");
-    const blob = await response.blob();
-    return boot(new File([blob], "reference.iso", { type: "application/octet-stream" }));
-  }
-
-  function setPad(port, input) {
-    if (!mounted) return;
-    const state = toDolphinInput(input);
-    if (port === 1) {
-      host.setInputState(state);
-    } else if (port === 2 && secondController) {
-      const next = Object.values(state).join(":");
-      if (next !== lastSecondInput) {
-        lastSecondInput = next;
-        host.post("setSecondInputState", state);
-      }
-    }
-  }
-
-  function diagnostics() {
-    return {
-      discId: mounted?.gameId ?? null,
-      secondController,
-      coreFrame: host?.coreFrame ?? 0,
-      presentedFrame: host?.presentedFrame ?? 0,
-      coreTicks: host?.coreTicks ?? 0,
-      ppcPc: host?.ppcPc ?? 0
     };
+    module.ccall('initVm', '', [], []);
+    module.bootDiscImage('reference.iso');
+    booted = true;
+    timer = setInterval(() => {
+      windowFrames = module.getFrames();
+      module.clearStats();
+      totalFrames += windowFrames;
+    }, 1000);
+    return { gameId: 'SLUS-21004' };
   }
-
+  const audio = () => vm?.getPlayAudioStream?.() ?? null;
   return {
-    boot,
-    bootInstalled,
-    setPad,
-    diagnostics,
-    async getSecondInputReadback() {
-      return (await host?.request("controllerCapabilities"))?.secondInputReadback ?? null;
-    },
-    prepareAudio: () => audio.ensureContext(),
+    boot: file => start(fileDisc(file)),
+    bootInstalled: async () => start(await localDisc()),
+    prepareAudio: async () => vm?.resumePlayAudio?.(),
+    getAudioStream: audio,
     async setMuted(muted) {
-      await audio.setMuted(muted);
-      host?.setAudioMuted(muted);
+      await vm?.resumePlayAudio?.();
+      vm?.setPlayAudioMuted?.(muted);
     },
-    setPaused: (paused) => host?.request("setPaused", { paused }),
-    getAudioStream() {
-      if (!audio.context || !audio.gain) return undefined;
-      if (!mediaAudio) {
-        mediaAudio = audio.context.createMediaStreamDestination();
-        audio.gain.connect(mediaAudio);
-      }
-      return mediaAudio.stream;
-    },
-    close() {
-      clearInterval(pollTimer);
-      if (mediaAudio) {
-        audio.gain.disconnect(mediaAudio);
-        mediaAudio.stream.getTracks().forEach((track) => track.stop());
-      }
-      audio.stopPump();
-      host?.worker?.terminate();
-      void audio.context?.close();
-    }
+    setPad(port, { buttons, axes }) { vm?._setPad?.(port - 1, buttons, ...axes); },
+    diagnostics: () => ({ discId: booted ? 'SLUS-21004' : null, coreFrame: totalFrames,
+      vblanks: vm?._getVblanks?.() ?? null, readCount, readBytes,
+      framesLastSecond: windowFrames, secondController: !!vm?._setPad, error: failure }),
+    getInputReadback: port => vm?._getPadReadback?.(port - 1) ?? null,
+    getSecondInputReadback: () => vm?._getPadReadback?.(1) ?? null,
+    close: () => clearInterval(timer)
   };
-}
-
-export async function isDiscInstalled() {
-  const response = await fetch(INSTALLED_DISC_URL, { method: "HEAD", cache: "no-store" });
-  return response.ok;
 }
