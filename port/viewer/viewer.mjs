@@ -9,6 +9,7 @@ import { REMATCH_DELAY } from "../hud/result.mjs";
 import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
 import inventory from "../../ps2/content/inventory.json" with { type: "json" };
 
+const canvas = document.querySelector("canvas");
 const status = document.querySelector("#status");
 
 const vertex = `#version 300 es
@@ -101,13 +102,7 @@ function createProgram(gl) {
   return program;
 }
 
-// One match (or the inspection view) from setup to dispose(). `leave` is where a finished or quit match goes next.
-async function display(leave) {
-  const canvas = document.querySelector("canvas");
-  // Everything this run adds to the page or the window goes through `lifetime`, so a hosted room can play another match
-  // in the same page without listeners, render loops or media tracks piling up.
-  const lifetime = new AbortController(), {signal} = lifetime, cleanups = [];
-  let disposed = false;
+async function display() {
   const gl = canvas.getContext("webgl2", {alpha:false,stencil:document.body.hasAttribute("data-battle")});
   if (!gl) throw new Error("WebGL 2 is required to inspect this mesh");
   const program = createProgram(gl);
@@ -134,7 +129,6 @@ async function display(leave) {
   }
   document.querySelectorAll("#player3,#player4").forEach((select,i)=>select.hidden = i+2 >= count);
   document.body.dataset.mode = mode;
-  for (const select of [...selectors, document.querySelector("#venue")]) select.replaceChildren();
   const pose = gl.createBuffer();
   const bind = new Float32Array(128 * 16);
   for (let i = 0; i < bind.length; i += 16) bind[i] = bind[i+5] = bind[i+10] = bind[i+15] = 1;
@@ -217,7 +211,6 @@ async function display(leave) {
   let scheduled = 0, started = performance.now();
   function frame(now) {
     scheduled = 0;
-    if (disposed) return;
     if (document.hidden) { previousFrame = undefined; return; }
     let advanced = false;
     if (fight && !paused && !controls.isGuest()) {
@@ -260,9 +253,9 @@ async function display(leave) {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { previousFrame = undefined; cancelAnimationFrame(scheduled); scheduled = 0; }
     else draw();
-  }, {signal});
+  });
   function draw() {
-    if (!scene || disposed) return;
+    if (!scene) return;
     const { min, max } = scene.bounds;
     const center = min.map((value, i) => (value + max[i]) / 2);
     const radius = Math.hypot(...max.map((value, i) => value - center[i]));
@@ -378,9 +371,8 @@ async function display(leave) {
     event.preventDefault();
     move(...keys[event.key]);
   });
-  cutaway.addEventListener("change", draw, {signal});
-  const resize = new ResizeObserver(draw);
-  resize.observe(canvas);
+  cutaway.addEventListener("change", draw);
+  new ResizeObserver(draw).observe(canvas);
   async function select() {
     request?.abort();
     const controller = request = new AbortController();
@@ -429,19 +421,19 @@ async function display(leave) {
     const destination=new URL(location.href);
     destination.searchParams.set("p"+(i+1),s.value);
     location.assign(destination);
-  },{signal}));
+  }));
   modeSelect?.addEventListener("change",()=>{
     const destination=new URL(location.href);
     destination.searchParams.set("mode",modeSelect.value);
     // Seats and the venue list differ by mode; the parser fills in what the new mode needs.
     location.assign(destination);
-  },{signal});
+  });
   venue.addEventListener("change", () => {
     if (!battle) return select();
     const destination=new URL(location.href);
     destination.searchParams.set("venue",venue.value);
     location.assign(destination);
-  }, {signal});
+  });
   await Promise.all([select(), chooseFighters()]);
   if (battle && selected.length === count && scene) {
     const { loadFoundationFight } = await import("../battle/fight.mjs");
@@ -457,7 +449,7 @@ async function display(leave) {
         fight?.setVoicePlayer(voicePlayer);
       })
         .catch(error=>console.error("Could not start fighter voices",error));
-      import("../audio/music.mjs").then(async ({createMusic}) => { if (disposed) return; music = createMusic(audio); await music.start(); })
+      import("../audio/music.mjs").then(async ({createMusic}) => { music = createMusic(audio); await music.start(); })
         .catch(error => console.error("Could not start battle music",error));
       try {
         const [{loadMatchAudio},{default:clips}] = await Promise.all([
@@ -485,8 +477,7 @@ async function display(leave) {
     const cpuNote = query.cpu ? " · "+query.cpu+(query.cpu>1?" CPU opponents":" CPU opponent") : "";
     const pauseButton = document.querySelector("#pause");
     pauseButton.hidden = false;
-    const returnToMatchSelection = () => leave ? leave() : location.assign(location.pathname);
-    cleanups.push(() => { music?.stop(); audio.dispose(); pauseButton.hidden = true; pauseButton.onclick = null; document.getElementById("restart").onclick = null; });
+    const returnToMatchSelection = () => location.assign(location.pathname);
     pause = pauseMenu({
       onChange:(kind,percent)=>audio.setVolume(kind,percent),
       onClose:()=>{ audio.setActive(true); pauseButton.textContent="Pause"; previousFrame=undefined; carry=0; },
@@ -531,7 +522,7 @@ async function display(leave) {
       if (pause.open) pause.press(action);
       else { pauseOwner=0; pause.show(); pause.syncAudio(); }
       draw();
-    }, {capture:true, signal});
+    }, true);
     const hint = (count>2 ? MODES[mode].label+" · WASD, arrows, gamepads and guests · Controls below" : "WASD and arrows to move · Controls below")+cpuNote;
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
@@ -546,50 +537,10 @@ async function display(leave) {
       if (!event.repeat && !controls.isGuest() && rematch.key(event)) {
         event.preventDefault(); event.stopImmediatePropagation(); draw();
       }
-    }, {capture:true, signal});
+    }, true);
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
       ...fight.diagnostics(), renderedFrames, paused:paused || pause.open, pause:pause.open ? {row:pause.row,levels:[...pause.levels],vibration:pause.vibration,confirming:pause.confirming} : null, network:controls.connection(), environment:environment?.state(), music:music?.tune }) });
     draw();
   }
-  return {
-    // Ends this run: no frame, listener, audio context, GPU context or media capture of it outlives the call. The page's
-    // canvas is replaced by a fresh one (a lost WebGL context cannot be reused), and a hosted room moves to silence.
-    dispose() {
-      if (disposed) return;
-      disposed = true;
-      lifetime.abort();
-      cancelAnimationFrame(scheduled);
-      scheduled = 0;
-      resize.disconnect();
-      request?.abort(); skinRequest?.abort();
-      controls?.use({audio:null});
-      cleanups.forEach(cleanup => cleanup());
-      scene?.dispose();
-      selected.forEach(s => s.body.dispose());
-      delete window.nativeBattle;
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
-      const fresh = canvas.cloneNode(false);
-      for (const name of fresh.getAttributeNames()) if (name.startsWith("data-")) fresh.removeAttribute(name);
-      fresh.removeAttribute("width"); fresh.removeAttribute("height");
-      canvas.replaceWith(fresh);
-    },
-  };
 }
-// A match that ends (Rematch: NO, or Quit in the pause menu) returns to the match selector. A hosted room keeps its
-// invite, seats and connections: this page disposes the match and shows the selector again, then starts the next match;
-// otherwise the page reloads to the selector as before.
-let running, leaving = false;
-async function start() {
-  leaving = false;
-  running = await display(async () => {
-    if (leaving) return;
-    leaving = true;
-    const { roomSession } = await import("../battle/controls.mjs");
-    if (!roomSession().hosted()) return location.assign(location.pathname);
-    running.dispose();
-    const { chooseMatch } = await import("../menu/launch.mjs");
-    await chooseMatch(new URLSearchParams(location.search));
-    await start();
-  });
-}
-start().catch(error => { status.textContent = error.message; });
+display().catch(error => { status.textContent = error.message; });
