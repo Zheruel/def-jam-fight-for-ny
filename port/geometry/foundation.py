@@ -37,7 +37,7 @@ def c_string(blob: bytes, offset: int) -> str:
     return blob[offset:blob.index(0, offset)].decode("ascii")
 
 
-def elf_model(blob: bytes) -> tuple[bytes, dict[int, int]]:
+def elf_links(blob: bytes, model: str) -> tuple[bytes, dict[int, int], dict[int, str]]:
     """Return ELF .data and its local R_MIPS_32 relocation targets."""
     if len(blob) < 52 or blob[:7] != b"\x7fELF\x01\x01\x01" or blob[16:20] != b"\x01\x00\x08\x00":
         raise ValueError("expected a little-endian ELF32/MIPS relocatable object")
@@ -64,18 +64,26 @@ def elf_model(blob: bytes) -> tuple[bytes, dict[int, int]]:
     data = contents(data_section)
     symbols = tuple(struct.iter_unpack("<IIIBBH", contents(symbols_section)))
     symbol_names = contents(sections[symbols_section[6]])
-    if not any(c_string(symbol_names, name) == MODEL and index == data_index
+    if not any(c_string(symbol_names, name) == model and index == data_index
                for name, _, _, _, _, index in symbols):
-        raise ValueError("Foundation model symbol not found")
+        raise ValueError(f"Missing model symbol {model}")
 
     local = {}
+    external = {}
     for at, info in struct.iter_unpack("<II", contents(relocs)):
         symbol, kind = divmod(info, 256)
         if kind != 2 or symbol >= len(symbols) or at % 4 or at + 4 > len(data):
             raise ValueError("invalid R_MIPS_32 model relocation")
-        _, value, _, _, _, index = symbols[symbol]
+        name, value, _, _, _, index = symbols[symbol]
         if index == data_index:
             local[at] = value + struct.unpack_from("<I", data, at)[0]
+        elif index == 0:
+            external[at] = c_string(symbol_names, name)
+    return data, local, external
+
+
+def elf_model(blob: bytes) -> tuple[bytes, dict[int, int]]:
+    data, local, _ = elf_links(blob, MODEL)
     return data, local
 
 

@@ -21,7 +21,7 @@ Open [the local player](http://127.0.0.1:8174). A fresh checkout fetches game co
 
 ## Native port
 
-The source port translates PS2 game routines into browser code and decodes the original stage assets. The first comparison match is Blaze versus Doc at The Foundation. The currently playable release uses Play! while the native match loop is in development. [Native code and verification](port/README.md) · [Native Foundation mesh viewer](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html)
+The source port translates PS2 game routines into browser code and decodes the original stage assets. The first comparison match is Blaze versus Doc at The Foundation. The currently playable release uses Play! while the native match loop is in development. [Native code and verification](port/README.md) · [Native textured venue viewer](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html)
 
 ## Playable reference
 

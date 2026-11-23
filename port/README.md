@@ -7,7 +7,7 @@ The first match used for comparison is Blaze versus Doc at The Foundation. The r
 - [Battle setup](battle/setup.mjs) resolves retail fighter and venue handles and places each slot at its venue-specific starting coordinates. [Retail coordinate export](battle/lineups.json)
 - [Fighter data](assets/combat.mjs) exposes the retail statistics, style masks and assigned Blazin’ moves by fighter handle.
 - [Combat routines](combat/combat.mjs) advance fighter momentum and apply an already-scaled hit delta. The differential test executes the corresponding instructions from the verified retail executable. [Combat tests](combat/combat.test.mjs)
-- [Foundation geometry](geometry/foundation.py) decodes the PS2 stage mesh. The [native venue viewer](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html) draws its triangles and vertex colors directly in WebGL. Texture mapping and retail lighting remain in development.
+- [Venue exporter](geometry/venues.py) follows the retail draw lists and decodes indexed SHPS textures for all 24 Battle base meshes. The [native venue viewer](https://zheruel.github.io/def-jam-fight-for-ny/port/viewer/index.html) loads one selected venue and draws its original triangles, UVs and vertex colors directly in WebGL. Animated props, crowds, environmental reflections and retail post-processing still need implementation.
 
 The native build has no playable match yet. Fighter animation, move dispatch, collision, the remaining combat rules and the complete match loop still need implementation and comparison to retail. Frame rate for native combat can be measured once those systems run together.
 
@@ -19,7 +19,7 @@ To verify all 24 retail venue entries against a local source disc, run these com
 
 ```sh
 python3 port/battle/extract_lineups.py private/ps2/reference.iso --check
-python3 port/geometry/foundation.py verify private/ps2/reference.iso
+python3 port/geometry/venues.py private/ps2/reference.iso --check
 ```
 
 The lineup exporter checks the SHA-256 of `ASSETS/GAMECORE.XML` before reading its start-position table. The formation names, slot order and coordinate pairs come directly from that table. A missing formation remains unavailable.

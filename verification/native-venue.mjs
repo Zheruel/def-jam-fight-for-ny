@@ -19,21 +19,26 @@ try {
     const original = WebGL2RenderingContext.prototype.drawElements;
     WebGL2RenderingContext.prototype.drawElements = function (...args) {
       original.apply(this, args);
-      const w = this.drawingBufferWidth, h = this.drawingBufferHeight;
-      const data = new Uint8Array(w * h * 4);
-      this.readPixels(0, 0, w, h, this.RGBA, this.UNSIGNED_BYTE, data);
-      const colors = new Set();
-      let checksum = 0, visible = 0;
-      for (let y = 0; y < h; y += 4) {
-        for (let x = 0; x < w; x += 4) {
-          const i = (y * w + x) * 4;
-          const rgb = data[i] << 16 | data[i + 1] << 8 | data[i + 2];
-          colors.add(rgb);
-          if (rgb !== (data[0] << 16 | data[1] << 8 | data[2])) visible++;
-          checksum = (Math.imul(31, checksum) + rgb) | 0;
+      if (window.sampleQueued) return;
+      window.sampleQueued = true;
+      queueMicrotask(() => {
+        window.sampleQueued = false;
+        const w = this.drawingBufferWidth, h = this.drawingBufferHeight;
+        const data = new Uint8Array(w * h * 4);
+        this.readPixels(0, 0, w, h, this.RGBA, this.UNSIGNED_BYTE, data);
+        const colors = new Set();
+        let checksum = 0, visible = 0;
+        for (let y = 0; y < h; y += 4) {
+          for (let x = 0; x < w; x += 4) {
+            const i = (y * w + x) * 4;
+            const rgb = data[i] << 16 | data[i + 1] << 8 | data[i + 2];
+            colors.add(rgb);
+            if (rgb !== (data[0] << 16 | data[1] << 8 | data[2])) visible++;
+            checksum = (Math.imul(31, checksum) + rgb) | 0;
+          }
         }
-      }
-      window.drawSample = { colors: colors.size, visible, checksum };
+        window.drawSample = { colors: colors.size, visible, checksum, error: this.getError() };
+      });
     };
   });
   const url = process.argv[2] ?? `http://127.0.0.1:${server.address().port}/port/viewer/index.html`;
@@ -54,11 +59,19 @@ try {
       channels: [...channels] };
   });
   assert.deepEqual(native, { stage: "V2BG_02A", moves: ["blazin_02", "blazin_04"], channels: [20, 30, 0, 10, 2] });
+  const models = await page.locator("#venue option").evaluateAll(options => options.map(option => option.value));
+  assert.equal(models.length, 24);
+  for (const model of models) {
+    await page.locator("#venue").selectOption(model);
+    await page.waitForFunction(id => document.querySelector("canvas").dataset.venue === id, model);
+    const sample = await page.evaluate(() => drawSample);
+    assert.ok(sample.visible > 0 && sample.colors > 1 && !sample.error, `Failed to draw ${model}`);
+  }
   assert.deepEqual(errors, []);
-  assert.ok(requests.some(url => url.endsWith("/geometry/foundation.json")));
+  assert.ok(requests.some(url => url.endsWith("/geometry/venues/V2BG_02A.scene.gz")));
   assert.ok(requests.every(url => !/\.wasm$|\/runtime\/|\/game-assets\/|\.iso$/.test(url)),
     "Native rendering must run independently of the PS2 player");
-  console.log(`Native Foundation render verified with ${initial.colors} sampled colors; camera rotation changed pixels.`);
+  console.log(`Verified all 24 native venues. Foundation rendered with ${initial.colors} sampled colors; camera rotation changed pixels.`);
 } finally {
   await browser?.close();
   await new Promise(resolve => server.close(resolve));
