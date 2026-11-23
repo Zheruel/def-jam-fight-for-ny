@@ -6,7 +6,7 @@ import inventory from "../ps2/content/inventory.json" with { type: "json" };
 
 // Runtime files shared by the local native port and the Pages deployment.
 export const portFiles = [
-  "port/scenery/scenery.mjs", "port/scenery/irradiance.mjs", "port/scenery/index.json",
+  "port/scenery/scenery.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/events.json", "port/scenery/index.json",
   "port/scenery/weapons/index.json",
   ...Object.values(weapons.models).map(({file}) => "port/scenery/weapons/" + file),
   "port/scenery/foundation/crowd.bin.gz", "port/scenery/crowd/icrowd01.crowd.gz",

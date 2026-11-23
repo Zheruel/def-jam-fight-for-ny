@@ -99,7 +99,7 @@ async function display() {
   const battle = document.body.hasAttribute("data-battle");
   const stepMs = 1000/60;
   let fight, controls, camera, hud, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
-  let scenery, lighting, combatAudio;
+  let scenery, lighting, combatAudio, environment;
   const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
   const selectors = [document.querySelector("#player1"),document.querySelector("#player2")];
@@ -160,6 +160,7 @@ async function display() {
         while (carry >= stepMs) {
           fight.tick(controls.inputs());
           combatAudio?.tick(fight);
+          if(environment) { environment.update(fight.memory); const effects=environment.effects(); combatAudio?.environment?.(effects); }
           camera.step();
           carry -= stepMs;
           advanced = true;
@@ -219,7 +220,7 @@ async function display() {
     scene.draw();
     const matchState = fight?.diagnostics();
     if(scenery && projection) {
-      scenery.render({viewProjection:projection,tick:matchState?.ticks??0});
+      scenery.render({viewProjection:projection,tick:matchState?.ticks??0,...environment?.state()});
       gl.useProgram(program);
     }
     if (selected.length) {
@@ -347,13 +348,16 @@ async function display() {
     const [stage, lights] = await Promise.all([loadScenery(arena.file),loadLighting(arena.file)]);
     lighting = lights.settings[0]?.sets[0];
     scenery = await createSceneryRenderer(gl,stage,{lighting});
+    const [{createEnvironment},events] = await Promise.all([import("../scenery/environment.mjs"),
+      fetch(new URL("../scenery/events.json",import.meta.url)).then(r=>r.json())]);
+    environment = createEnvironment(stage.manifest,events.names);
     hud=await createHud(gl);
     controls = battleControls(() => { previousFrame=undefined; draw(); },audio);
     fight = await loadFoundationFight(selected,arena);
     camera = battleCamera(fight.kernel, arena.file);
     status.textContent = "WASD and arrows to move · Controls below";
     document.getElementById("restart").onclick = () => {
-      controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = "WASD and arrows to move · Controls below";
     };
     // Enter starts the rematch once the result banner has offered it.
@@ -362,7 +366,7 @@ async function display() {
       if (event.key === "Enter" && result.result && result.ticksSinceOver >= 120) document.getElementById("restart").click();
     });
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
-      ...fight.diagnostics(), renderedFrames, paused, network:controls.connection() }) });
+      ...fight.diagnostics(), renderedFrames, paused, network:controls.connection(), environment:environment?.state() }) });
     draw();
   }
 }
