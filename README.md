@@ -15,7 +15,7 @@ Open [the local player](http://127.0.0.1:8174). Choose the ISO, or place it at `
 
 Click **Host a match** after boot. The other player opens the same server and enters the room code. On the retail participant screen each player presses Start before choosing their fighter. The guest only needs the URL and room code.
 
-For remote players, run the Node server behind HTTPS with same-origin WebSocket upgrades on `/netplay`. Both players need the same reachable origin. The default listen address is loopback. Set `HOST` and `PORT` for your deployment. See [netplay](netplay/README.md).
+For remote players, run the Node server behind HTTPS with same-origin WebSocket upgrades on `/netplay`. Both players need the same reachable origin. The default listen address is loopback. Set `HOST` and `PORT` for your deployment. For NATs that require a relay, set `TURN_URL` and `TURN_SECRET` to your coturn REST configuration. Peers receive credentials valid for two hours. See [netplay](netplay/README.md).
 
 ## Verify
 

@@ -12,6 +12,7 @@ export function makeRuntime({ canvas, onStatus }) {
   let readCount = 0;
   let readBytes = 0;
   let failure = '';
+  const pads = [null, null];
   async function start(source) {
     await verifyTitle(source);
     if (!crossOriginIsolated) throw new Error('Start the game using the included development server.');
@@ -46,6 +47,11 @@ export function makeRuntime({ canvas, onStatus }) {
     };
     module.ccall('initVm', '', [], []);
     module.bootDiscImage('reference.iso');
+    const deadline = performance.now() + 45_000;
+    while (!module._getVblanks()) {
+      if (failure || performance.now() > deadline) throw new Error(failure || 'PS2 boot timed out. Reload to retry.');
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
     booted = true;
     timer = setInterval(() => {
       windowFrames = module.getFrames();
@@ -64,7 +70,13 @@ export function makeRuntime({ canvas, onStatus }) {
       await vm?.resumePlayAudio?.();
       vm?.setPlayAudioMuted?.(muted);
     },
-    setPad(port, { buttons, axes }) { vm?._setPad?.(port - 1, buttons, ...axes); },
+    setPad(port, { buttons, axes }) {
+      if (!vm || (port !== 1 && port !== 2)) return;
+      const last = pads[port - 1];
+      if (last?.buttons === buttons && axes.every((v, i) => v === last.axes[i])) return;
+      vm._setPad(port - 1, buttons, ...axes);
+      pads[port - 1] = { buttons, axes: [...axes] };
+    },
     diagnostics: () => ({ discId: booted ? 'SLUS-21004' : null, coreFrame: totalFrames,
       vblanks: vm?._getVblanks?.() ?? null, readCount, readBytes,
       framesLastSecond: windowFrames, secondController: !!vm?._setPad, error: failure }),

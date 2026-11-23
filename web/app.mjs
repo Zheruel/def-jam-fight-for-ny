@@ -87,6 +87,9 @@ async function startGame(boot) {
       ? "Guests can join with a code. Hosting needs a two-controller build."
       : "Host a match or join with a room code.";
     canvas.focus();
+    // Desktop browsers may defer OpenAL until the next game gesture after boot.
+    canvas.addEventListener('pointerdown', () => void runtime.prepareAudio(), { once: true });
+    canvas.addEventListener('keydown', () => void runtime.prepareAudio(), { once: true });
     void runtime.setMuted(muted).catch(() => {
       muted = true;
       audioButton.textContent = "Unmute";
@@ -221,6 +224,12 @@ function setRoomState(state, error) {
   }
 }
 
+async function peerOptions() {
+  const response = await fetch('/netplay/config', {cache: 'no-store'});
+  if (!response.ok) throw new Error('Room connection settings are unavailable.');
+  return response.json();
+}
+
 function showRoom(code) {
   room.hidden = false;
   roomCode.value = code;
@@ -259,6 +268,7 @@ hostButton.addEventListener("click", async () => {
   try {
     const { hostMatch } = await import("/netplay/client.mjs");
     const hosted = await hostMatch({
+      ...await peerOptions(),
       canvas: captureDisplay(),
       audioStream: runtime.getAudioStream(),
       frameRate: 30,
@@ -307,6 +317,7 @@ joinForm.addEventListener("submit", async (event) => {
   try {
     const { joinMatch } = await import("/netplay/client.mjs");
     const joined = await joinMatch({
+      ...await peerOptions(),
       code,
       video: remote,
       onState(state, error) {

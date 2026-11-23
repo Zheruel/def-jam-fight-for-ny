@@ -3,6 +3,8 @@ import { open, realpath } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { peerConfiguration } from './ice.mjs';
+
 const root = fileURLToPath(new URL('../', import.meta.url));
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.wasm': 'application/wasm', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
 
@@ -24,6 +26,14 @@ export function gameServer(directory = root) {
     let name;
     try { name = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
     catch { return fail(400); }
+    if (name === '/netplay/config') {
+      try {
+        const config = JSON.stringify(peerConfiguration());
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+        res.end(req.method === 'HEAD' ? undefined : config);
+      } catch { fail(503); }
+      return;
+    }
     if (name === '/') name = '/web/index.html';
     if (name === '/disc/reference.iso') name = '/private/ps2/reference.iso';
     else if (!/^\/(web\/|runtime\/play-build\/|netplay\/client\.mjs$)/.test(name)) return fail(404);
@@ -61,6 +71,7 @@ export function gameServer(directory = root) {
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  peerConfiguration(); // Fail before listening if relay configuration is incomplete.
   const server = gameServer();
   const { attachNetplay } = await import('../netplay/server.mjs');
   attachNetplay(server);
