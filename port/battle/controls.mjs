@@ -5,28 +5,28 @@ const keyPads = [
   {axes:[["ArrowLeft","ArrowRight"],["ArrowUp","ArrowDown"],["Numpad4","Numpad6"],["Numpad8","Numpad2"]], buttons:{Escape:8,KeyL:0x1000,KeyK:0x8000,
     BracketLeft:0x4000,BracketRight:0x2000,Comma:0x0400,Period:0x0800,Slash:0x0100,Semicolon:0x0200}},
 ];
+// A guest's keyboard also has Enter and Backspace for cross and circle, the buttons the shared selector uses to confirm and go back.
+const guestPad = {...keyPads[1], buttons:{...keyPads[1].buttons, Enter:0x4000, Backspace:0x2000}};
 const controlled = new Set(keyPads.flatMap(p=>[...p.axes.flat(),...Object.keys(p.buttons)]));
+const guestOnly = new Set(["Enter","Backspace"]);
 // Standard Gamepad order to PS2 pad bits, as read by the retail Battle update.
 const gamepadBits=[0x4000,0x2000,0x8000,0x1000,0x0400,0x0800,0x0100,0x0200,1,8,2,4,0x10,0x40,0x80,0x20];
-// seats: 2 for one-on-one, 4 for Free For All. Seat 0 is the host's; seats 1..seats-1 go to guests, to a local
-// gamepad of the same number, or (seats 0 and 1) to the keyboard. A seat with none of those holds still.
-// cpu: how many of the last seats the retail CPU plays (port/battle/cpu.mjs). Those seats read no keyboard, gamepad or
-// guest, so a controller that is plugged in is never taken over, and only the person seats are offered to guests.
-export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
-  const people=seats-cpu;
-  let remote = {}, room, guest = false, poll=0, lastPacket="";
-  const pads = Array(seats).fill(null);
-  let state = "local";
+const IDLE={buttons:0,x:0,z:0};
+const readDevices=()=>Array.from(navigator.getGamepads?.() ?? []).filter(p => p?.connected);
+
+// One room per page, shared by the match selector and the match: a host that opens it from the selector keeps the same
+// connections, seats and controller channels into the match (its picture and sound are switched with replaceTrack).
+let shared;
+export const roomSession = () => (shared ??= createSession());
+
+function createSession() {
   const button = id => document.getElementById(id);
-  const IDLE={buttons:0,x:0,z:0};
+  let remote = {}, room, guest = false, poll = 0, lastPacket = "", state = "local", bound = false;
+  let seats = 0, cpu = 0, audio = null, canvas = () => document.querySelector("canvas"), redraw = () => {}, slots = [], quiet;
+  const pads = [], listeners = new Set();
+  const people = () => seats - cpu;
   let devices = [];
-  function readDevices() { return Array.from(navigator.getGamepads?.() ?? []).filter(p => p?.connected); }
-  function input(slot) {
-    if (slot>=people) return IDLE;
-    if (pads[slot]) return pads[slot];
-    if (slot >= 1 && remote[slot]) return remote[slot];
-    return read(keyPads[slot], devices[slot]);
-  }
+
   // A guest always plays from its own first controller and the second keyboard map, whichever seat it holds.
   function read(config, controller) {
     let buttons=0;
@@ -39,24 +39,41 @@ export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
     // The native pad record expresses forward as positive. Browser Y increases downwards.
     return {buttons,x,z:-z,rx,rz:-rz};
   }
+  function input(slot) {
+    if (slot>=people()) return IDLE;
+    if (pads[slot]) return pads[slot];
+    if (slot >= 1 && remote[slot]) return remote[slot];
+    return read(keyPads[slot], devices[slot]);
+  }
   function send() {
     if (!guest || !room) return;
-    const p = pads[1] ?? read(keyPads[1], readDevices()[0]);
+    const p = pads[1] ?? read(guestPad, readDevices()[0]);
     const axes = [p.x,p.z,p.rx??0,p.rz??0];
     const packet=[p.buttons,...axes].join(",");
     if(packet!==lastPacket) room.setInput({buttons:p.buttons,axes});
     lastPacket=packet;
   }
   function press(event) {
-    if (!controlled.has(event.code) || event.target.tagName === "INPUT") return;
+    if ((!controlled.has(event.code) && !(guest && guestOnly.has(event.code))) || event.target.tagName === "INPUT") return;
     event.preventDefault();
     if (event.type === "keydown") keys.add(event.code);
     else keys.delete(event.code);
     send();
   }
-  window.addEventListener("keydown",press);
-  window.addEventListener("keyup",press);
-  window.addEventListener("blur",() => { keys.clear(); send(); });
+
+  // The seat labels in the footer: the host's seat, each guest seat's state, then the CPU seats.
+  function showSeats() {
+    const out = button("seats");
+    if (out && room) out.textContent = [...slots.map(s=>"P"+(s.slot+1)+" "+s.state),...Array.from({length:cpu},(_,i)=>"P"+(people()+i+1)+" CPU")].join(" · ");
+  }
+  const silence = () => (quiet ??= new AudioContext().createMediaStreamDestination().stream);
+  const media = () => ({canvas:canvas(), audioStream:audio?.stream() ?? silence()});
+  const hostable = () => state === "local" && seats > 0 && !guest;
+  function refresh() {
+    const host = button("host");
+    if (host && !room) host.disabled = !hostable();
+  }
+
   async function connect(join) {
     const published = location.hostname.endsWith(".github.io");
     const transport = await import(published ? "../../netplay/peerjs.mjs" : "../../netplay/client.mjs");
@@ -79,13 +96,18 @@ export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
       if (audio) { button("sound").hidden=true; button("remote").controls=true; }
       document.querySelector("canvas").hidden = true;
     } else {
-      if (people < 2) throw new Error("Every other seat is a CPU opponent, so there is no seat for a guest.");
-      room = await transport.hostMatch({...options,canvas:document.querySelector("canvas"),audioStream:audio?.stream(),onState,
-        players:people,
-        onInput(p,slot){remote[slot]={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};},
+      if (people() < 2) throw new Error("Every other seat is a CPU opponent, so there is no seat for a guest.");
+      room = await transport.hostMatch({...options,...media(),onState,
+        players:people(),
+        onInput(p,slot){
+          remote[slot]={buttons:p.buttons,x:p.axes[0],z:p.axes[1],rx:p.axes[2],rz:p.axes[3]};
+          listeners.forEach(listener=>listener(slot,remote[slot]));
+        },
         // A seat whose guest left goes back to the local controls instead of holding the last remote state.
-        onPeer({slot,state}){ if(state==="open") delete remote[slot]; },
-        onSlots(list){ const out=button("seats"); if(out) out.textContent=[...list.map(s=>"P"+(s.slot+1)+" "+s.state),...Array.from({length:cpu},(_,i)=>"P"+(people+i+1)+" CPU")].join(" · "); }});
+        onPeer({slot,state}){ if(state==="open") { delete remote[slot]; listeners.forEach(listener=>listener(slot,null)); } },
+        onSlots(list){ slots=list; showSeats(); redraw(); }});
+      slots = room.slots();
+      showSeats();
       button("code").value = room.code;
       const invite=new URL(location.href);
       invite.searchParams.set("room",room.code);
@@ -95,32 +117,83 @@ export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
     button("host").disabled = true; button("join").disabled = true;
     button("leave").hidden = false;
   }
-  for (const [id,join] of [["host",false],["join",true]]) {
-    button(id).onclick = async () => {
-      button("host").disabled = button("join").disabled = true;
-      try { await connect(join); }
-      catch (error) {
-        button("network").textContent = error.message;
-        button("host").disabled = button("join").disabled = false;
-        guest = false; audio?.setActive(true);
-      }
-    };
-  }
-  button("leave").onclick = () => {
-    cancelAnimationFrame(poll); room?.close(); guest=false; remote={}; room=undefined; state="local";
-    button("host").disabled=button("join").disabled=false;
+  function leave() {
+    cancelAnimationFrame(poll); room?.close(); guest=false; remote={}; room=undefined; state="local"; slots=[];
     button("leave").hidden=true; button("remote").hidden=true; document.querySelector("canvas").hidden=false;
+    button("join").disabled=false; refresh();
     button("network").textContent=""; if(button("seats")) button("seats").textContent=""; button("code").value=""; button("invite").hidden=true;
     button("sound").hidden=false; audio?.setActive(true); redraw();
-  };
-  return { inputs() { devices = readDevices(); return Array.from({length:seats},(_,slot)=>input(slot)); },
+  }
+  // The page's buttons and the keyboard drive the session; battleControls and the selector can both call this.
+  function bind() {
+    for (const [id,join] of [["host",false],["join",true]]) {
+      button(id).onclick = async () => {
+        button("host").disabled = button("join").disabled = true;
+        try { await connect(join); }
+        catch (error) {
+          button("network").textContent = error.message;
+          button("join").disabled = false; refresh();
+          guest = false; audio?.setActive(true);
+        }
+      };
+    }
+    button("leave").onclick = leave;
+    if (bound) return;
+    bound = true;
+    window.addEventListener("keydown",press);
+    window.addEventListener("keyup",press);
+    window.addEventListener("blur",() => { keys.clear(); send(); });
+  }
+
+  return {
+    bind, refresh,
+    // Declare what the page shows and plays: how many seats (and how many of the last ones are CPU), the sound bus and the
+    // canvas guests should see. A room that is already open follows: its seat count, and its picture and sound (replaceTrack).
+    use({seats:count=seats, cpu:cpus=cpu, audio:sound=audio, canvas:source=canvas, redraw:draw=redraw}={}) {
+      const next = typeof source === "function" ? source : () => source;
+      const changed = count !== seats || cpus !== cpu, viewing = next() !== canvas() || sound !== audio;
+      seats = count; cpu = cpus; audio = sound; canvas = next; redraw = draw;
+      if (room && !guest) {
+        if (changed && people() >= 2) { room.setPlayers(people()); showSeats(); }
+        if (viewing) room.setMedia(media()).catch(error => { button("network").textContent = error.message; });
+      }
+      refresh();
+    },
+    // Remote controller states (slot, pad) for the selector; pad is null when that guest's seat went back to open.
+    onPad(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    // Whether a guest holds the seat (a person, not the host's keyboard), and whether the host may take back seats for the CPU.
+    occupied(seat) { return seat >= 1 && slots.some(s => s.slot === seat && s.state !== "open"); },
+    hosted: () => Boolean(room) && !guest,
+    // The CPU takes the last `count` seats: refused while a guest holds one of them or when no seat would stay open to a guest.
+    setCpu(count) {
+      if (!room || guest) { cpu = count; refresh(); return true; }
+      const next = seats - count;
+      if (next < 2 || slots.some(s => s.slot >= next && s.state !== "open")) return false;
+      cpu = count; room.setPlayers(next); showSeats();
+      return true;
+    },
+    pad: slot => remote[slot],
+    inputs() { devices = readDevices(); return Array.from({length:seats},(_,slot)=>input(slot)); },
     impact(slot,strength) {
-      if (slot >= people || remote[slot]) return;
+      if (slot >= people() || remote[slot]) return;
       const actuator = devices[slot]?.vibrationActuator;
       if (actuator?.playEffect) actuator.playEffect("dual-rumble", {
         duration:80, strongMagnitude:strength, weakMagnitude:strength/2,
       }).catch(()=>{});
-    }, isGuest:()=>guest, connection:()=>state,
+    },
+    isGuest:()=>guest, connection:()=>state,
     setInput(slot,value) { pads[slot]=value; if (guest) send(); },
-    release() { keys.clear(); pads.fill(null); if (guest) send(); } };
+    release() { keys.clear(); pads.fill(null); if (guest) send(); },
+  };
+}
+
+// seats: 2 for one-on-one, 3 or 4 for Free For All and Team. Seat 0 is the host's; seats 1..seats-1 go to guests, to a local
+// gamepad of the same number, or (seats 0 and 1) to the keyboard. A seat with none of those holds still.
+// cpu: how many of the last seats the retail CPU plays (port/battle/cpu.mjs). Those seats read no keyboard, gamepad or
+// guest, so a controller that is plugged in is never taken over, and only the person seats are offered to guests.
+export function battleControls(redraw,audio,{seats=2,cpu=0}={}) {
+  const session = roomSession();
+  session.bind();
+  session.use({seats,cpu,audio,redraw,canvas:()=>document.querySelector("canvas")});
+  return session;
 }

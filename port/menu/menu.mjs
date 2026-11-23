@@ -53,6 +53,16 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
     if (session && selection.state.cpu !== before && !session.setCpu(selection.state.cpu)) selection.setCpu(before);
     return used;
   };
+  // The CPU key steps through the counts the room allows (it skips one that would take a guest's seat).
+  const cpuCycle = () => {
+    const { seats } = selection.state, before = selection.state.cpu;
+    for (let n = 1; n < seats.length; n++) {
+      const count = (before + n) % seats.length;
+      if (session && !session.setCpu(count)) continue;
+      return selection.setCpu(count);
+    }
+    return false;
+  };
   Object.defineProperty(window, "nativeMenu", { configurable: true, get: () => ({
     screen: screen(), cpu: selection?.state.cpu ?? 0,
     seats: selection?.state.seats.map((s, i) => ({ handle: roster[s.cursor].handle, ready: s.ready, remote: remote(i) })) ?? [],
@@ -97,7 +107,7 @@ export async function runMenu({ mount, types = ["1v1"], picks = [], venue = null
       } else if (action === "back" && screen() === "fighters" && !selection.state.seats.some(s => s.ready) && types.length > 1) {
         // back to the match type, unless a guest holds a seat the other types may not have
         if (!selection.state.seats.some((_, i) => remote(i))) { selection = null; used = true; }
-      } else used = action === "cpu" ? cpuChange(() => selection.press(seat, action)) : selection.press(seat, action);
+      } else used = action === "cpu" && screen() === "fighters" ? cpuCycle() : selection.press(seat, action);
       if (used) { redraw(); if (screen() === "done") { stopped = true; cleanup(); resolve(selection.result()); } }
       return used;
     };

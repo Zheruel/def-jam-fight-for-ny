@@ -6,7 +6,7 @@ if(!code) {
   await import("../viewer/viewer.mjs");
 } else {
   const {battleControls}=await import("./controls.mjs");
-  document.querySelector("#status").textContent="Arrow keys to move · K to kick";
+  document.querySelector("#status").textContent="Online guest · arrow keys move, Enter confirms your fighter in the selector · K to kick in the match";
   document.querySelector("#code").value=code;
   for(const id of ["venue","mode","player1","player2","player3","player4"]) document.getElementById(id).hidden=true;
   document.querySelector("header span").hidden=true;

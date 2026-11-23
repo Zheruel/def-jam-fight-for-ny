@@ -225,7 +225,8 @@ class PeerSignaling extends EventTarget {
       this.#register();
     } else if (this.#role === 'host' && message.type === 'players') {
       const players = Number(message.players);
-      if (!Number.isInteger(players) || players < Math.max(DEFAULT_PLAYERS, this.#guests.size + 1) || players > MAX_PLAYERS) {
+      if (!Number.isInteger(players) || players < Math.max(DEFAULT_PLAYERS, this.#guests.size + 1) || players > MAX_PLAYERS
+        || [...this.#guests.values()].some((guest) => guest.slot >= players)) {
         return this.#fail('That seat count does not fit the guests already in the room.');
       }
       this.#players = players;

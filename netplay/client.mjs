@@ -294,6 +294,16 @@ function openRoom(role, {
     activePeer.localIce.splice(0).forEach(send);
   }
 
+  // Host: switch every seat's existing senders to new tracks (a different canvas or audio bus) without renegotiating,
+  // so slots, connections and input channels survive the change (menu -> venue -> match).
+  async function replaceTracks(stream) {
+    const tracks = stream.getTracks();
+    await Promise.all([...peers.values()].flatMap((entry) => entry.connection.getSenders().map((sender) => {
+      const next = tracks.find((track) => track.kind === sender.track?.kind);
+      return next && sender.track !== next ? sender.replaceTrack(next) : null;
+    }).filter(Boolean)));
+  }
+
   function setSeats(next) {
     if (seats === next) return;
     seats = next;
@@ -317,7 +327,7 @@ function openRoom(role, {
         clearTimeout(roomDeadline);
         resolveRoom(role === 'host'
           ? { code: roomCode, players: seats, close: closePage,
-            setPlayers: (count) => send({ type: 'players', players: count }), slots: slotList }
+            setPlayers: (count) => send({ type: 'players', players: count }), slots: slotList, replaceTracks }
           : { code: roomCode, slot: message.slot ?? 1, players: seats, close: closePage, setInput });
         return;
       case 'players':
@@ -390,17 +400,32 @@ export async function hostMatch({ canvas, audioStream, frameRate = 60, seatMedia
     return captures.get(source);
   };
   const stopCapture = () => captures.forEach((tracks) => tracks.forEach((track) => track.stop()));
+  // What new seats receive, and what setMedia switches every seat to.
+  let current = { canvas, audioStream };
   try {
     capture(canvas);
     // seatMedia(slot) may return { canvas, audioStream } to give that guest its own video and audio.
     const media = (slot) => {
       const own = seatMedia?.(slot) ?? {};
-      const picture = capture(own.canvas ?? canvas);
-      const sound = own.audioStream ?? audioStream;
+      const picture = capture(own.canvas ?? current.canvas);
+      const sound = own.audioStream ?? current.audioStream;
       return new MediaStream([...picture, ...(sound?.getAudioTracks() || [])]);
     };
     const room = await openRoom('host', { ...options, media, onClose: stopCapture });
-    return room;
+    // setMedia({ canvas, audioStream }) moves the room from one picture and sound to another (RTCRtpSender.replaceTrack):
+    // the connections, seats and controller channels stay. Each seat must already carry a track of each kind it will
+    // receive, so a host that will have sound later starts with a silent audio stream.
+    async function setMedia({ canvas: nextCanvas = current.canvas, audioStream: nextAudio = current.audioStream } = {}) {
+      const previous = current.canvas;
+      const picture = capture(nextCanvas);
+      current = { canvas: nextCanvas, audioStream: nextAudio };
+      await room.replaceTracks(new MediaStream([...picture, ...(nextAudio?.getAudioTracks() || [])]));
+      if (previous !== nextCanvas && !seatMedia) {
+        captures.get(previous)?.forEach((track) => track.stop());
+        captures.delete(previous);
+      }
+    }
+    return { ...room, setMedia };
   } catch (error) {
     stopCapture();
     throw error;

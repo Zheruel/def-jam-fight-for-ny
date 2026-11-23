@@ -195,3 +195,68 @@ async function run(t, usePeerJS) {
 
 test('host and three isolated guests: capacity, per-seat media and input, reconnect (WebSocket signaling)', { timeout: 90_000 }, (t) => run(t, false));
 test('host and three isolated guests over PeerJS signaling', { timeout: 90_000 }, (t) => run(t, true));
+
+// The room outlives the screen it was opened on: the selector's picture and sound are replaced by the match's with
+// RTCRtpSender.replaceTrack, so the guest keeps its seat, its connection and its input channel.
+async function mediaSwitch(t, usePeerJS) {
+  const base = await startServer(t, !usePeerJS);
+  const entry = usePeerJS ? '/peerjs.mjs' : '/client.mjs';
+  const signalingUrl = usePeerJS ? await startPeerServer(t) : undefined;
+  const browser = await chromium.launch({
+    executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+    args: ['--autoplay-policy=no-user-gesture-required', '--use-fake-ui-for-media-stream'],
+  });
+  t.after(() => browser.close());
+  const [host, guest] = await Promise.all([1, 2].map(() => page(browser, base)));
+  const hosted = await host.evaluate(async ({ entry, signalingUrl }) => {
+    const { hostMatch } = await import(entry);
+    const audio = new AudioContext();
+    const screen = (color, tone) => {
+      const canvas = Object.assign(document.createElement('canvas'), { width: 64, height: 48 });
+      const drawing = canvas.getContext('2d');
+      setInterval(() => { drawing.fillStyle = color; drawing.fillRect(0, 0, 64, 48); }, 30);
+      const oscillator = audio.createOscillator();
+      const destination = audio.createMediaStreamDestination();
+      oscillator.frequency.value = tone;
+      oscillator.connect(destination);
+      oscillator.start();
+      return { canvas, audioStream: destination.stream };
+    };
+    window.screens = { menu: screen('rgb(230,30,30)', 440), match: screen('rgb(30,60,230)', 1320) };
+    window.log = { inputs: [], states: [] };
+    window.room = await hostMatch({
+      ...window.screens.menu, signalingUrl,
+      onInput: (input, slot) => window.log.inputs.push({ slot, buttons: input.buttons }),
+      onState: (state) => window.log.states.push(state),
+    });
+    return window.room.code;
+  }, { entry, signalingUrl });
+  const joined = await guestSide(guest, { entry, signalingUrl, code: hosted });
+  assert.deepEqual(joined, { slot: 1, players: 2 });
+  await waitFor(host, () => window.log.states.at(-1) === 'connected');
+  const before = await observe(guest);
+  [230, 30, 30].forEach((channel, index) => assert.ok(Math.abs(before.pixel[index] - channel) < 40, `menu picture ${before.pixel}`));
+  assert.ok(Math.abs(before.hertz - 440) < 40, `menu tone ${before.hertz}`);
+
+  await host.evaluate(() => window.room.setMedia(window.screens.match));
+  await guest.waitForFunction(() => {
+    const video = document.querySelector('video');
+    const scratch = Object.assign(document.createElement('canvas'), { width: 8, height: 8 });
+    const drawing = scratch.getContext('2d');
+    drawing.drawImage(video, 0, 0, 8, 8);
+    return drawing.getImageData(4, 4, 1, 1).data[2] > 150;
+  }, undefined, { timeout: 12_000 });
+  const after = await observe(guest);
+  [30, 60, 230].forEach((channel, index) => assert.ok(Math.abs(after.pixel[index] - channel) < 40, `match picture ${after.pixel}`));
+  assert.ok(Math.abs(after.hertz - 1320) < 60, `match tone ${after.hertz}`);
+
+  // Same guest object, same seat, same input channel, no state change on the host.
+  assert.equal(await guest.evaluate(() => window.guest.slot), 1);
+  await guest.evaluate(() => window.guest.setInput({ buttons: 0x4000, axes: [0.5, 0, 0, 0] }));
+  await waitFor(host, () => window.log.inputs.some((i) => i.slot === 1 && i.buttons === 0x4000));
+  assert.deepEqual(await host.evaluate(() => window.log.states), ['waiting', 'connecting', 'connected']);
+  assert.deepEqual(await host.evaluate(() => window.room.slots().map((s) => s.state)), ['host', 'connected']);
+}
+
+test('setMedia switches a connected guest to a new picture and sound without rejoining (WebSocket signaling)', { timeout: 60_000 }, (t) => mediaSwitch(t, false));
+test('setMedia switches a connected guest to a new picture and sound without rejoining (PeerJS signaling)', { timeout: 60_000 }, (t) => mediaSwitch(t, true));

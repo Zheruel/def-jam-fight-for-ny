@@ -156,7 +156,7 @@ export function attachNetplay(server, { path = '/netplay', allowedOrigins = [], 
       if (role === 'host' && message.type === 'players') {
         // The host decides how many seats are advertised; it cannot seat fewer than the guests already present.
         const players = playerCount(message.players);
-        if (!players || players < room.guests.size + 1) return;
+        if (!players || players < room.guests.size + 1 || [...room.guests.keys()].some((slot) => slot >= players)) return;
         room.players = players;
         send(socket, { type: 'players', players, open: players - 1 - room.guests.size });
         return;
