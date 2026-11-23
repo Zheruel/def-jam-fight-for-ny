@@ -24,10 +24,10 @@ try {
     const actors = ["Doc","Blaze","Crow","Magic"].map(name=>({name,health:100,maxHealth:100,score:0,momentum:0}));
     const clock = {minutes:0,seconds:15};
     const running = {displayClock:clock,clock,over:false};
-    const draw = (extra = {}) => {
+    const draw = (extra = {}, ticks=15) => {
       gl.clearColor(0,0,0,1);
       gl.clear(gl.COLOR_BUFFER_BIT);
-      hud({actors,ticks:15,outcome:{...running,...extra}});
+      hud({actors,ticks,outcome:{...running,...extra}});
     };
     function row(x,y,width) {
       const data = new Uint8Array(width*4);
@@ -82,12 +82,27 @@ try {
     const gaugeChange=differences(hold,partial);
     actors[0].health=100; actors[0].hold=actors[3].hold=null;
     draw();
-    return {titleScores,warning,upperGauge,lowerGauge,gaugeChange,afterRelease:differences(hold,normalHold),glError:gl.getError()};
+    const afterRelease=differences(hold,normalHold);
+    actors[0].health=40; actors[0].recoverableHealth=75;
+    draw();
+    const healthColours=[30,133,215].map(x => Array.from(row(x,45,1).slice(0,3)));
+    actors[1].blazin=1;
+    draw({},12);
+    const flame=[408,51,100,21], firstFrame=snapshot(flame);
+    draw({},14);
+    const withinFrame=differences(flame,firstFrame);
+    draw({},15);
+    const nextFrame=differences(flame,firstFrame);
+    return {titleScores,healthColours,withinFrame,nextFrame,warning,upperGauge,lowerGauge,gaugeChange,afterRelease,glError:gl.getError()};
   });
   for(const [word,{agreement,bright}] of Object.entries(result.titleScores)) {
     assert.ok(bright>500 && agreement>0.98,word+" "+JSON.stringify(result));
   }
   for(const key of ["warning","upperGauge","lowerGauge","gaugeChange"]) assert.ok(result[key]>30,key+" "+JSON.stringify(result));
+  assert.deepEqual(result.healthColours.slice(0,2),[[81,157,83],[60,97,61]]);
+  assert.notDeepEqual(result.healthColours[2],result.healthColours[1]);
+  assert.equal(result.withinFrame,0);
+  assert.ok(result.nextFrame>10,JSON.stringify(result));
   assert.equal(result.afterRelease,0);
   assert.equal(result.glError,0);
   console.log(JSON.stringify(result));

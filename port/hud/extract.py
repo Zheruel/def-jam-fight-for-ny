@@ -13,7 +13,8 @@ from battle_patch import Disc
 from refpack import decompress
 from ssh import textures
 
-SPRITES = ("healthBar","momentumBar","mainBarContainer_1","blazin","danger","tapBarContainer_1","tapBarMeter","tapHealthMeter")
+SPRITES = ("healthBar","momentumBar","mainBarContainer_1","blazin","danger","tapBarContainer_1","tapBarMeter","tapHealthMeter",
+           *(f"blazinFire0{i}" for i in range(1,5)))
 
 def extract(iso, output):
     disc = Disc(iso)
