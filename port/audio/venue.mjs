@@ -18,6 +18,7 @@ function json(path, fetcher) {
 export const venueManifest = (fetcher = globalThis.fetch) => json("venues.json", fetcher);
 export const cueManifest = (fetcher = globalThis.fetch) => json("cues.json", fetcher);
 export const mixLevels = (fetcher = globalThis.fetch) => json("mix.json", fetcher);
+export const combatManifest = (fetcher = globalThis.fetch) => json("combat.json", fetcher);
 
 // Retail per-animation audio tags (ANIMTAGS.DAT): {anims:[[name,[[frame,n,...words]]]]}.
 export async function loadAnimTags(fetcher = globalThis.fetch) {
@@ -29,7 +30,7 @@ export async function loadAnimTags(fetcher = globalThis.fetch) {
 
 // Every runtime file one venue needs, for publication lists and cold-boot audits.
 export const venueFiles = (venue) => [venue.bed].filter(Boolean);
-export const sharedFiles = ["venue.mjs", "venues.json", "cues.json", "mix.json", "animtags.json.gz"];
+export const sharedFiles = ["venue.mjs", "venues.json", "cues.json", "mix.json", "combat.json", "match.mjs", "animtags.json.gz"];
 
 export function venueAudio(file, {
   fetcher = globalThis.fetch, Context = globalThis.AudioContext, doc = globalThis.document,

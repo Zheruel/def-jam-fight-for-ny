@@ -6,8 +6,8 @@ const read = name => JSON.parse(readFileSync(new URL(name, import.meta.url)));
 const venues = read("venues.json");
 const cues = read("cues.json");
 
-export const audioCore = ["venue.mjs", "venues.json", "mix.json"].map(name => "port/audio/" + name);
+export const audioCore = ["venue.mjs", "match.mjs", "venues.json", "mix.json"].map(name => "port/audio/" + name);
 export const audioBeds = [...new Set(venues.venues.map(venue => venue.bed))].map(file => "port/audio/" + file);
-export const audioCues = ["cues.json", "animtags.json.gz",
+export const audioCues = ["cues.json", "combat.json", "animtags.json.gz",
   ...Object.values(cues.banks).filter(bank => bank.file).map(bank => bank.file)].map(name => name.startsWith("port/") ? name : "port/audio/" + name);
 export const audioFiles = [...audioCore, ...audioBeds, ...audioCues];

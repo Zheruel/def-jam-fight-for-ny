@@ -17,6 +17,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
+import combat  # noqa: E402
 import extract  # noqa: E402
 import retail  # noqa: E402
 
@@ -83,6 +84,11 @@ def main():
         stored = json.loads(gzip.decompress((HERE / "animtags.json.gz").read_bytes()))["anims"]
         if [[t["name"], t["tags"]] for t in tags] != stored:
             failures.append("animtags.json.gz differs from ANIMTAGS.DAT")
+        shipped_combat = json.loads((HERE / "combat.json").read_text())
+        if shipped_combat["classes"] != json.loads(json.dumps(combat.classes(elf, [[t["name"], t["tags"]] for t in tags]))):
+            failures.append("combat.json tag classes differ from the executable and ANIMTAGS.DAT")
+        if shipped_combat["venueOut"] != sorted(v["coreID"] for v in venues if v["flag"]):
+            failures.append("combat.json outdoor venues differ from the venue table")
         events = json.loads((HERE / "events.json").read_text())
         if events["dispatch"] != json.loads(json.dumps(retail.packed_events(elf))):
             failures.append("events.json dispatch differs from the executable")

@@ -1,7 +1,7 @@
 """Decode the retail PS2 audio the native port plays: venue ambience, combat/crowd/voice cue
 banks, mix levels, animation audio tags and event dispatch tables.
 
-    python3 port/audio/extract.py private/ps2/reference.iso [--only venues cues data music speech]
+    python3 port/audio/extract.py private/ps2/reference.iso [--only venues cues data combat music speech]
     python3 port/audio/extract.py private/ps2/reference.iso --music asiandragon --out tune.ogg
     python3 port/audio/extract.py private/ps2/reference.iso --speech ANN_Climb_Object_E1 --out lines.ogg
 
@@ -21,6 +21,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[1] / "ps2/battle"))
 sys.path.insert(0, str(HERE))
 from battle_patch import Disc  # noqa: E402
+import combat  # noqa: E402
 import retail  # noqa: E402
 
 RATE = 48000
@@ -287,6 +288,46 @@ def build_data(disc):
         "dispatch": retail.packed_events(elf)}, indent=1) + "\n")
 
 
+GRUNT_SETS = ["AsianGuy", "BBGuy", "BGirl", "Girl1", "Girl2", "Girl3_girly", "LatinoGuy", "SBGuy", "WGuy"]
+HIT_SIZES = {1: "Small", 2: "Med", 3: "Big"}
+
+
+def build_combat(disc):
+    """combat.json: which tag classes fire which events, and where each event lives in the banks."""
+    elf = disc.read("/SLUS_210.04", 0, disc.iso.entry("/SLUS_210.04").size)
+    retail.check_elf(elf)
+    gains = json.loads((HERE / "mix.json").read_text())["gain"]
+    cues = json.loads((HERE / "cues.json").read_text())["banks"]
+    tags = [[t["name"], t["tags"]] for t in retail.animtags(disc.read("/AUDIO/ANIMTAGS.DAT", 0, disc.iso.entry("/AUDIO/ANIMTAGS.DAT").size))]
+    banks = {}
+    with tempfile.TemporaryDirectory() as temp:
+        for name, info in cues.items():
+            if info["group"] == "crowd" or "error" in info:
+                continue
+            root = Path(temp)
+            stage_ci(disc, root, name)
+            found = combat.bank((root / f"{name}.abk").read_bytes(), gains)
+            for ext in ("abk", "ast"):
+                (root / f"{name}.{ext}").unlink(missing_ok=True)
+            packed_cues = {c["i"] for c in info["cues"]}  # the Inferno's fire loop bed is a stream, not a cue
+            for module in found["modules"]:
+                module["players"] = [[c for c in player if c in packed_cues] for player in module["players"]]
+            banks[name] = {"group": info["group"], "modules": found["modules"]}
+    fighters = {}
+    for core, (speech, flags) in enumerate(retail.sound_class_table(elf)):
+        if flags:
+            fighters[str(core)] = {"speechID": speech, "hit": HIT_SIZES.get(flags & 0xff), "voice": (flags >> 8) & 0xff,
+                                   "grunts": GRUNT_SETS[(flags >> 16) & 0xff] if (flags >> 16) & 0xff < len(GRUNT_SETS) else None,
+                                   "flags": flags}
+    (HERE / "combat.json").write_text(json.dumps({
+        "format": "def-jam-combat-audio/1",
+        "classes": combat.classes(elf, tags),
+        "banks": banks,
+        "fighters": fighters,
+        "venueOut": sorted(v["coreID"] for v in venue_records(disc)[0] if v["flag"]),
+    }, separators=(",", ":")) + "\n")
+
+
 def tune_names(disc):
     return sorted({n.split("\\")[1] for v in ("MUSIC0", "MUSIC1", "MUSIC2", "MUSIC3", "MUSIC4")
                    for n in archive_names(disc, f"/AUDIO/{v}.VIV") if n.startswith("music\\") and n.endswith("tune.mpf")})
@@ -408,8 +449,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("iso")
     parser.add_argument("--decoder", default="vgmstream-cli")
-    parser.add_argument("--only", nargs="*", choices=["venues", "cues", "data", "music", "speech"],
-                        default=["venues", "cues", "data", "speech"])
+    parser.add_argument("--only", nargs="*", choices=["venues", "cues", "data", "combat", "music", "speech"],
+                        default=["venues", "cues", "data", "combat", "speech"])
     parser.add_argument("--shots", action="store_true", help="also export each ambient bank's mono one-shots (~15 MB)")
     parser.add_argument("--music")
     parser.add_argument("--speech")
@@ -428,6 +469,8 @@ def main():
             build_cues(disc, args.decoder, venues)
         if "data" in args.only:
             build_data(disc)
+        if "combat" in args.only:
+            build_combat(disc)
         if "music" in args.only:
             build_music(disc, args.decoder)
         if "speech" in args.only:

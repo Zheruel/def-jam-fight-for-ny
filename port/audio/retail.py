@@ -105,8 +105,8 @@ def csi_names(csi):
 
 
 def animtags(data):
-    """ANIMTAGS.DAT: 'TAGS', count, offsets[count]; entry = 8-byte right-aligned animation
-    name, u32 tag count, then tags of u16 frame, u16 n, (n + 1) u16 words, i.e. 2n + 6 bytes."""
+    """ANIMTAGS.DAT: 'TAGS', count, offsets[count]; entry = 8-byte byte-reversed engine clip
+    name (read backwards, NUL padded), u32 tag count, then tags of u16 frame, u16 n, (n + 1) u16 words, i.e. 2n + 6 bytes."""
     if data[:4] != b"TAGS":
         raise ValueError("not ANIMTAGS.DAT")
     count = struct.unpack_from("<I", data, 4)[0]
@@ -114,7 +114,7 @@ def animtags(data):
     out = []
     for i in range(count):
         entry = data[offsets[i]:offsets[i + 1]]
-        name = entry[:8].lstrip(b"\0").decode("latin1")
+        name = entry[:8][::-1].rstrip(b"\0").decode("latin1")
         n = struct.unpack_from("<I", entry, 8)[0]
         at, tags = 12, []
         for _ in range(n):
@@ -200,3 +200,54 @@ def sound_class_table(elf):
         value, flags = _u32(elf, at), _u32(elf, at + 4)
         rows.append([None if value == 0xffffffff else value, flags])
     return rows
+
+
+# ANIMTAGS runtime. The per-frame walker 0x12c9f0 queues each fired tag; the queue consumer 0x12dbb8
+# jumps through CLASS_JUMP_TABLE by the tag's first payload word (the class) and each handler posts a
+# named event (handles registered at 0x11fb48..0x11ffd4 through 0x257340) with the remaining words
+# clamped into the event's argument array by 0x257ca0.
+CLASS_JUMP_TABLE = 0x3b2880
+CLASS_COUNT = 0x4a
+CLASS_UNUSED = 0x130088  # handler of classes that do nothing
+CLASS_CODE_END = 0x130100
+HANDLE_REGISTRATIONS = (0x11fb44, 0x11ffe0)
+REGISTER_EVENT = 0x257340
+
+
+def tag_classes(elf):
+    """Animation tag class -> {handler, events}: the named audio events its consumer handler posts."""
+    delta = ELF_LOAD_DELTA
+    words = struct.unpack_from(f"<{len(elf) // 4}I", elf)
+    sign = lambda v: v - 0x10000 if v & 0x8000 else v
+    names = {}
+    for i in range((HANDLE_REGISTRATIONS[0] - delta) // 4, (HANDLE_REGISTRATIONS[1] - delta) // 4):
+        x = words[i]
+        if x >> 26 == 3 and (x & 0x3ffffff) << 2 == REGISTER_EVENT:
+            handle = text = None
+            for j in range(i - 6, i + 2):
+                y = words[j]
+                if y >> 26 == 9 and y >> 16 & 31 == 4 and y >> 21 & 31 == 4:
+                    handle = 0x440000 + sign(y & 0xffff)
+                if y >> 26 == 9 and y >> 16 & 31 == 5 and y >> 21 & 31 == 5:
+                    text = 0x380000 + sign(y & 0xffff)
+            if handle is not None and text is not None:
+                names[handle] = _cstr(elf, _u32(elf, text))
+    uses = {}
+    for i, x in enumerate(words):
+        pc = i * 4 + delta
+        if 0x12dbb8 <= pc < CLASS_CODE_END and x >> 26 == 0xf and x & 0xffff == 0x44:
+            rt = x >> 16 & 31
+            for j in range(i + 1, min(i + 12, len(words))):
+                y = words[j]
+                if y >> 21 & 31 == rt and y >> 26 == 9 and 0x440000 + sign(y & 0xffff) in names:
+                    uses.setdefault(pc, []).append(names[0x440000 + sign(y & 0xffff)])
+    table = [_u32(elf, CLASS_JUMP_TABLE + 4 * i) for i in range(CLASS_COUNT)]
+    ends = sorted(set(table) | {CLASS_CODE_END})
+    out = {}
+    for cls, handler in enumerate(table):
+        if handler == CLASS_UNUSED:
+            continue
+        end = min(e for e in ends if e > handler)
+        events = [n for pc, found in sorted(uses.items()) if handler <= pc < end for n in found]
+        out[cls] = {"handler": handler, "events": list(dict.fromkeys(events))}
+    return out
