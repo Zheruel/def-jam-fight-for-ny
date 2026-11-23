@@ -1,8 +1,10 @@
 // Every file the menu can request, for the static-host allowlist (tools/port-files.mjs).
+import { loadingFiles } from "./loading-files.mjs";
 import roster from "./art/roster.json" with { type: "json" };
 import venues from "./art/venues.json" with { type: "json" };
 
 export const menuFiles = [
+  ...loadingFiles,
   ...["choose-match-type", "choose-fighter", "choose-teams", "choose-venue", "select", "back"].map(name => "port/menu/art/header/" + name + ".png"),
   "port/menu/match-types.mjs",
   ...["layout.json", "wall.webp", "lock.png", "highlight.png", "size-paper.png", "size-highlight.png",
