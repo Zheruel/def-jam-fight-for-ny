@@ -71,6 +71,32 @@ Check against retail frame 21 (mean grayscale, same camera, fighters posed from 
 
 The crowd mesh has no normals, so each figure is shaded once by the irradiance toward where it faces. Fighter shading uses the same sampler with their skinned normals; `compare.mjs` renders both. The scales are fitted to this one frame.
 
+## Environment events (pillars, speakers, bottles)
+
+`environment.mjs` turns retail's stage-environment events into renderer inputs for a native match.
+
+How retail does it (recovered from the SLUS-21004 disassembly):
+
+- Fighter code (recompiled in the native kernel) decides that a move reached a stage object (`0x307250`) and queues the event with `0x192068(id, attacker, target, flag)`. The queue is two 16-byte records at `0x476e28`; `0xffffffff` is a free record.
+- `id` indexes the 468-name table at `0x379f70` (`events.json`, extracted from the executable): `02A_1A`..`02A_10C` are 25..44. A pillar is three events (`1A` break1, `1B` break2, `1C` break3 plus its hidden weapon); the fighter code picks which. Bottle smash in hand is `02A_3` (right) and `02A_6` (left); speaker breaks are `02A_2A/2B/5A/5B`.
+- The stage manager (vtable `0x191a00`) starts each queued event in one of two slots at `0x472014` and `0x192b28` steps it at 60 units per second; `0x1922b0` runs the `<environmentattack>` commands of that name from the stage XML (`geometry`, `particle`, `venueweapon`, `sound`, `weaponsound`, ...). A command's first field is its start frame, `-1` meaning now. The manager is not in the kernel, so the adapter plays its part.
+
+```js
+import { createEnvironment } from "./environment.mjs";
+const names = (await (await fetch("port/scenery/events.json")).json()).names;
+const env = createEnvironment(scenery.manifest, names);
+// each frame, after match.tick(inputs):
+env.update(match.memory);             // drain the retail queue (frees the records) and advance one frame
+scenery.render({ viewProjection, ...env.state() });   // { props, weapons, hiddenWeapons }
+for (const fx of env.effects()) play(fx);              // sounds, particles, light changes with frame and position
+```
+
+`env.trigger(nameOrId)` starts an event without the queue, `env.reset()` on rematch. `weapons[name]` is `false` (gone) or `{translate, rotate}` (moved); `hiddenWeapons` lists revealed pillar weapons; `render` accepts both.
+
+Verified: `environment.test.mjs` plays the native match with a fixed pad script. At tick 3389 the retail code queues `02A_3` and the right bottle goes; at tick 7701 it queues `02A_1A` and the pillar shows `break1`, after `02A_6` at tick 5755.
+
+Not recovered: the bottle's tumble (`V2WA_029_11_02A`, an EAGL animation bank) and the pillar weapon's drop are a plain fall (state marks `approximate`); the choice of 1A/1B/1C inside the fighter code is not read, only observed.
+
 ## Near crowd (not done)
 
 `nearCrowd` slots (`crowd_act1/act2/stand1_*`) are full V2CM spectators. Recovered so far: the models decode with `port/fighters/retail.py` once its parent table knows the 13-bone crowd rig (`root, L_Leg1, L_Leg2, eff5, R_Leg1, R_Leg2, eff4, Chest, Head, R_Arm1, R_Arm2, L_Arm1, L_Arm2`); a person is several parts (`M1` upper body, `M2` legs, `M3`, `M4_nn` hair/hats) textured by one `cm_m`/`cm_f` skin atlas with clothing layers (`V2CM_M1_02..08.ssh`, one 8-bit layer plus eight `plNN` palettes) stomped onto it. The `animcr*.o` banks hold two objects per clip (`_s`, `_t`) and load into the offline sampler with `port/animation/extract.py`'s packer, but the channel-to-bone mapping is unresolved, so sampled poses do not fit the crowd skeleton.

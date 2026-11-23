@@ -111,7 +111,8 @@ def environment_attacks(stage_xml: str) -> list[dict]:
         attack = {"name": values(body, "name")[0]}
         for tag, key in (("geometry", "geometry"), ("particle", "particles"),
                          ("movparticle", "movingParticles"), ("delparticle", "deleteParticles"),
-                         ("venueweapon", "weapons"), ("light", "light"), ("sound", "sounds")):
+                         ("venueweapon", "weapons"), ("light", "light"), ("sound", "sounds"),
+                         ("weaponsound", "weaponSounds"), ("animation", "animations"), ("weapon", "spawnWeapons")):
             entries = [[part.strip() for part in v.split(",")] for v in values(body, tag)]
             if entries:
                 attack[key] = entries
@@ -555,6 +556,20 @@ def build_weapons(iso: Path) -> dict[str, bytes]:
 
 # ---------------------------------------------------------------- build
 
+EVENT_TABLE = 0x379f70   # retail table of environment-event names, indexed by the id in the event queue
+EVENT_COUNT = 468        # 0x191be8 rejects ids >= 468
+
+
+def event_names(disc: Disc) -> list[str]:
+    """Names of the retail environment events ("02A_1A"...). Fighter code queues them by index."""
+    delta = 0x100000 - 0x1000
+    exe = lambda vaddr, size: disc.read("/SLUS_210.04", vaddr - delta, size)
+    names = []
+    for pointer, in struct.iter_unpack("<I", exe(EVENT_TABLE, EVENT_COUNT * 4)):
+        names.append(exe(pointer, 16).split(b"\0")[0].decode("ascii"))
+    return names
+
+
 def optional(fn, *args, default):
     try:
         return fn(*args)
@@ -764,6 +779,18 @@ def main(argv: list[str] | None = None) -> int:
                     bad.append("weapons/" + name)
             else:
                 path.write_bytes(blob)
+        disc = Disc(str(args.iso))
+        try:
+            events = {"format": "def-jam-ps2-environment-events/1", "queue": 0x476e28, "names": event_names(disc)}
+        finally:
+            disc.close()
+        blob = (json.dumps(events, indent=1) + "\n").encode()
+        path = OUTPUT.parent / "events.json"
+        if args.check:
+            if not path.exists() or path.read_bytes() != blob:
+                bad.append("events.json")
+        else:
+            path.write_bytes(blob)
         blob = (json.dumps(index, indent=1) + "\n").encode()
         path = OUTPUT.parent / "index.json"
         if args.check:

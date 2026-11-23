@@ -310,15 +310,21 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     }
     if (state.weapons) {
       const { prog, models } = state.weapons;
+      // hiddenWeapons: true reveals every hidden weapon at its placement; an array of names reveals only those.
       const hidden = new Set((manifest.hiddenWeapons ?? []).map(n => "weapon_" + n));
+      const revealed = new Set(Array.isArray(hiddenWeapons) ? hiddenWeapons.map(n => n.startsWith("weapon_") ? n : "weapon_" + n) : []);
       gl.useProgram(prog);
       gl.uniformMatrix4fv(gl.getUniformLocation(prog, "viewProjection"), false, viewProjection);
       gl.uniform1i(gl.getUniformLocation(prog, "lit"), lighting ? 1 : 0);
       gl.uniform1f(gl.getUniformLocation(prog, "lightScale"), lightScale);
       gl.uniform1i(gl.getUniformLocation(prog, "diffuse"), 0);
       gl.activeTexture(gl.TEXTURE0);
-      for (const w of manifest.weapons ?? []) {
-        if (shown[w.name] === false || (hidden.has(w.name) && !hiddenWeapons)) continue;
+      for (const base of manifest.weapons ?? []) {
+        const choice = shown[base.name];
+        // A weapon entry is false (gone), or { translate, rotate } to show it somewhere else, such as a dropped bottle.
+        const over = choice && typeof choice === "object" ? choice : null;
+        if (choice === false || (!over && hidden.has(base.name) && hiddenWeapons !== true && !revealed.has(base.name))) continue;
+        const w = over ? { ...base, ...over } : base;
         const model = models.get(w.model);
         if (!model) continue;
         if (lighting) gl.uniform3fv(gl.getUniformLocation(prog, "irradianceCoefficients"), sampleIrradiance(lighting, w.translate));
