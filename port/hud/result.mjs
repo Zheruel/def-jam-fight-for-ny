@@ -14,6 +14,8 @@ export function winnerText(outcome, names) {
 export function resultLines(outcome, names) {
   if (!outcome?.over) return null;
   const title = outcome.method === "time" ? "TIME OVER"
+    : outcome.finishFlags & 0x7800 ? "RING OUT"
+    : outcome.finishFlags & 0x400 ? "TOTALED"
     : outcome.method === "submission" ? "SUBMIT" : outcome.draw ? "DOUBLE KO" : "KO";
   const lines = [{ text: title, x: 320, y: 4, size: 64, family: "names", align: "center" }];
   if (outcome.result && outcome.ticksSinceOver >= REMATCH_DELAY) {
@@ -27,8 +29,11 @@ export function resultLines(outcome, names) {
 
 // The PS2 end-of-fight words are individual regions in hud.ssh's Overlays texture.
 // Each pair of UV markers bounds a word. Its position marker is in the 640×448 playfield.
+const words = {
+  "TIME OVER": ["time", "over"], SUBMIT: ["submit"], "DOUBLE KO": ["double", "dko"],
+  "RING OUT": ["ring", "out"], TOTALED: ["totalled"], KO: ["ko"], FIGHT: ["fight"],
+};
 export function drawResultTitle(context, atlas, markers, title) {
-  const words = {"TIME OVER": ["time", "over"], SUBMIT: ["submit"], "DOUBLE KO": ["double", "dko"], KO: ["ko"]};
   for (const word of words[title]) {
     const [left, top] = markers["uv_over_" + word + "1"];
     const [right, bottom] = markers["uv_over_" + word + "2"];

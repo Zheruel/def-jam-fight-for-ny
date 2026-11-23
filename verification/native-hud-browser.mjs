@@ -45,10 +45,11 @@ try {
     }
     function snapshot([x,y,w,h]) { return Array.from({length:h},(_,dy)=>row(x,y+dy,w)); }
     const titleScores = {};
-    for (const [method,drawn,words] of [
-      ["ko",false,["ko"]],["submission",false,["submit"]],["time",true,["time","over"]],["ko",true,["double","dko"]]
+    for (const [method,drawn,words,finishFlags] of [
+      ["ko",false,["ko"]],["submission",false,["submit"]],["time",true,["time","over"]],["ko",true,["double","dko"]],
+      ["ko",false,["totalled"],0x401],["ko",false,["ring","out"],0x801],["opening",false,["fight"]]
     ]) {
-      draw({over:true,result:true,ticksSinceOver:2,draw:drawn,method});
+      draw(method === "opening" ? {openingFrame:68} : {over:true,result:true,ticksSinceOver:2,draw:drawn,method,finishFlags});
       for(const word of words) {
         const [u,v] = overlays["uv_over_"+word+"1"], [u2,v2] = overlays["uv_over_"+word+"2"];
         const [x,y] = overlays["pos_over_"+word], w=u2-u, h=v2-v;

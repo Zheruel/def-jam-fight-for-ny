@@ -221,14 +221,20 @@ export async function createHud(gl) {
     if (!outcome.over && actors.some(actor=>actor.hold)) drawHolds(actors);
     const cardShown=Boolean(rematch?.shown);
     const lines=resultLines(outcome,actors.map(a=>a.name))?.filter(l=>!cardShown||l.text!=="ENTER  REMATCH");
-    if(lines) {
+    // Widget 8 holds FIGHT! through tick 100 (0x1b9948). Its exit uses the
+    // 15-tick colour ramp at 0x37aa48. The clock starts at the captured match frame.
+    const opening = !outcome.over && outcome.openingFrame < 118;
+    if(lines || opening) {
       gl.bindTexture(gl.TEXTURE_2D,bannerTexture);
-      const bannerKey=JSON.stringify(lines);
+      const opacity = opening ? Math.max(0,Math.min(1,(118-outcome.openingFrame)/15)) : 1;
+      const bannerKey=opening ? "opening" + opacity : JSON.stringify(lines);
       if(bannerKey!==lastBanner) {
         lastBanner=bannerKey;
         bannerCtx.clearRect(0,0,BANNER.width,BANNER.height);
-        drawResultTitle(bannerCtx,overlays,layout.overlays,lines[0].text);
-        lines.slice(1).forEach(l=>label(l.text,l.x,l.y,l.size,l.family,l.align,bannerCtx));
+        bannerCtx.globalAlpha=opacity;
+        drawResultTitle(bannerCtx,overlays,layout.overlays,opening ? "FIGHT" : lines[0].text);
+        bannerCtx.globalAlpha=1;
+        lines?.slice(1).forEach(l=>label(l.text,l.x,l.y,l.size,l.family,l.align,bannerCtx));
         gl.texSubImage2D(gl.TEXTURE_2D,0,0,0,gl.RGBA,gl.UNSIGNED_BYTE,banner);
       }
       gl.uniform2f(band,1-2*BANNER.top/448,BANNER.height/224);

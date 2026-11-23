@@ -37,10 +37,13 @@ export function createOutcome(kernel, actors) {
 
   // Each call to retail 0x2e67c8 appends a 16-byte referee event; +14 records the reason.
   // An earlier elimination may have a different cause in a team match or Free For All.
-  function finishMethod() {
+  function lastReport() {
     const count = word(0x4c1c50);
-    if (!count) return null;
-    const flags = half(0x4c1c58 + (count - 1) * 16 + 14);
+    return count ? half(0x4c1c58 + (count - 1) * 16 + 14) : 0;
+  }
+
+  function finishMethod(flags) {
+    if (!flags) return null;
     if (flags & 0x40) return "time";
     if (flags & 0x08) return "submission";
     if ((flags & 0x100) && (word(G + 448) & TRAIN)) return "hazard";
@@ -69,11 +72,13 @@ export function createOutcome(kernel, actors) {
         - word(G + 0x198) * 60 - word(G + 0x19c));
       displayClock = {minutes: Math.floor(left/60), seconds: left%60};
     }
+    const finishFlags = over ? lastReport() : 0;
     return {
       phase, over, result: phase >= PHASE.result, winner, loser, draw: over && winner === null,
       // The teams, and the slots of the winning and losing team (empty for a draw): [2, 3] wins when slot 3 is flagged.
       teams: groups, winners: teamOf(winner), losers: teamOf(loser),
-      method: over ? finishMethod() : null,
+      method: finishMethod(finishFlags), finishFlags,
+      openingFrame: Math.round(memory.getFloat32(G + 0x1a4, true) / 1.2),
       // Retail match clock (G+0x1a8 minutes, G+0x1ac seconds); it advances while the referee runs.
       clock, displayClock,
       ticksSinceOver: overFor,

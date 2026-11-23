@@ -22,7 +22,7 @@ export const MODES = Object.freeze({
   "1v1": Object.freeze({ formation: "SINGLE", fighters: 2, start: "foundation-start.gz", label: "One on one" }),
   ffa3: Object.freeze({ formation: "FREE FOR ALL 3", fighters: 3, start: "three-start.gz", label: "Free For All · 3 fighters" }),
   ffa: Object.freeze({ formation: "FREE FOR ALL 4", fighters: 4, start: "four-start.gz", label: "Free For All · 4 fighters" }),
-  ...Object.fromEntries(["subway", "cage", "inferno"].map(mode => [mode, Object.freeze({
+  ...Object.fromEntries(["subway", "cage", "inferno", "window", "demolition"].map(mode => [mode, Object.freeze({
     formation: "SINGLE", fighters: 2, start: "foundation-start.gz",
     label: SPECIAL[mode].name + " Match", venues: [SPECIAL[mode].file],
   })])),
