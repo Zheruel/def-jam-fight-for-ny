@@ -10,7 +10,7 @@
 // A time limit (timer setting 0x4bbd30, table 0x392db8) ends the match through 0x2e5e88 -> 0x2e5ff8 the same way.
 const G = 0x4bbf90;
 const PHASE = Object.freeze({ intro: 0, fight: 1, ending: 2, result: 3 });
-const WINNER = 0x100, LOSER = 0x200;
+const WINNER = 0x100, LOSER = 0x200, TRAIN = 0x20;
 
 export function createOutcome(kernel, actors) {
   const { memory } = kernel;
@@ -41,7 +41,9 @@ export function createOutcome(kernel, actors) {
     }
     return {
       phase, over, result: phase >= PHASE.result, winner, loser, draw: over && winner === null,
-      method: !over ? null : loser !== null && scalar(actors[loser] + 0x350) <= 0 ? "ko" : "time",
+      // "hazard": the round ended with the loser's health left and the subway train bit (0x20) set in the match flags G+448.
+      method: !over ? null : loser !== null && scalar(actors[loser] + 0x350) <= 0 ? "ko"
+        : loser !== null && word(G + 448) & TRAIN ? "hazard" : "time",
       // Retail match clock (G+0x1a8 minutes, G+0x1ac seconds); it advances while the referee runs.
       clock: { minutes: word(G + 0x1a8), seconds: word(G + 0x1ac) },
       ticksSinceOver: overFor,

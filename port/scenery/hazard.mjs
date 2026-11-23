@@ -6,10 +6,14 @@
 //    loser's flags (+0x932 half, decimal 2354) with 0x10 (subway), 0x4 (Red Hook) or 0x20 (Crow's Office) and the match
 //    flags at G+448 with 8, 4 or 0x10. The referee 0x2e6260 maps that flag to the result type 0x100 / 0x80 / 0x200 and
 //    ends the round at once. Everywhere else it does nothing.
-//  * The subway's train is a stage object outside the kernel. It talks to the match through the word 0x4c2178:
-//      bit 0 the train hazard is live (set at venue setup), bit 1 the train is coming, bit 2 the train hits.
+//  * The subway's train is the retail frame update 0x2e75e8 (setup 0x2e74e8), which runs by itself in the native kernel. It
+//    talks to the match through the word 0x4c2178:
+//      bit 0 live (set at venue setup), bit 1 coming, bit 2 hits, bit 3 siren, bit 4 a KO asked for the train.
+//    The first train comes at tick ~975 (siren, bit 1) and hits at tick 1000; later ones at ~4702 and ~8079.
 //    0x2e78d0 (called every frame from 0x2dbdd0) reads them. While bits 0 and 1 are set it marks each fighter that is in a
-//    hazard state (action state 12, 13, 19, 86, 90, 91) or has the word at actor+932 below -1 with 0x1000 in +2344. When
+//    hazard state (action state 12, 13, 19, 86, 90, 91) or has the word at actor+932 below -1 with 0x1000 in +2344. +932 is the floor height under the fighter (set each
+//    frame from the ground query 0x2e1548 at 0x300748): the track pit is -11, the platform 0, so "in the pit" is retail's test.
+//    The ring edge stops pad walking at |z| ~43; the pit lies beyond it (z < ~-55), reached by being thrown over the edge. When
 //    bit 2 arrives it clears bits 1 and 2, puts every marked fighter into state 19 and sets 8 in their +2354 flags. The
 //    referee 0x2e6260 then ends the round: the marked fighter loses and the unmarked one wins, health untouched.
 //  * 0x30b928, the under-10% knockdown rule, defers the KO in the subway while the train scalar (0x4c2174) is inside
@@ -29,24 +33,17 @@ export function createTrain(kernel) {
   const { memory } = kernel;
   const word = () => memory.getUint32(TRAIN_WORD, true);
   const set = value => memory.setUint32(TRAIN_WORD, value >>> 0, true);
-  let hit = false;
   return {
-    // The train is coming. The retail consumer marks fighters in a hazard state on the next frame, and a fighter in the
+    // Isolation aids (the kernel runs the train itself). The train is coming. The retail consumer marks fighters in a hazard state on the next frame, and a fighter in the
     // pit (the word at +932 below -1) at once: call() runs the consumer now so both are marked before the hit.
     warn() { set(word() | COMING); kernel.call(0x2e78d0, 0, 0, 0, 0); },
     // The train arrives: marked fighters are hit.
-    strike() { set(word() | HIT); kernel.call(0x2e78d0, 0, 0, 0, 0); hit = true; },
+    strike() { set(word() | HIT); kernel.call(0x2e78d0, 0, 0, 0, 0); },
     // What the next frame will see.
     marked: () => ACTORS.map(a => (memory.getUint16(a + ZONE, true) & ZONE_BIT) !== 0),
     hitBy: () => ACTORS.map(a => (memory.getUint16(a + FLAGS, true) & HIT_FLAG) !== 0),
     requested: () => (word() & REQUESTED) !== 0,
-    get struck() { return hit; },
-    reset() { hit = false; },
   };
 }
 
-// The way a finished round ended: 'hazard' when the train ended it, otherwise the referee's own method.
-export function finishKind(outcome, actors, train) {
-  if (!outcome.over || outcome.loser === null) return outcome.method;
-  return train?.struck && actors[outcome.loser].health > 0 ? "hazard" : outcome.method;
-}
+// The round result ('hazard' for the train) is classified in port/battle/outcome.mjs from the loser's +0x932 flag 0x8.

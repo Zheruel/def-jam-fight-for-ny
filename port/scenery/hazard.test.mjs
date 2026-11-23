@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import test from "node:test";
-import { ACTORS, TRAIN_WORD, VENUE_ID, createTrain, finishKind, hazardKind } from "./hazard.mjs";
+import { ACTORS, TRAIN_WORD, VENUE_ID, createTrain, hazardKind } from "./hazard.mjs";
 
 const packed = file => Uint8Array.from(gunzipSync(readFileSync(new URL("../" + file, import.meta.url)))).buffer;
 
@@ -70,44 +70,63 @@ test("pad-driven knockouts: a Red Hook knockout marks the loser 0x4 where other 
   });
 });
 
-test("subway: a fighter in the pit when the train hits loses with full health; the other wins; rematch resets", async () => {
+// The train is the retail frame update 0x2e75e8, so it runs by itself in the native kernel: bit 2 of 0x4c2178 (coming) rises
+// around tick 975 and the hit lands at tick 1000 of the first cycle. 0x2e78d0 flags whoever is then in a hazard state or over
+// the track floor (the ground word at +932 below -1; the pit floor is -11, the platform 0). Pad walking stops at the ring
+// edge (|z| ~43), so the fighter is put over the pit the way a throw would leave them.
+function runTrain(fight, pit) {
+  const m = fight.memory;
+  for (let tick = 0; tick < 1200; tick++) {
+    if (tick === 960 && pit !== null) {
+      m.setFloat32(ACTORS[pit] + 0x44, 0, true); m.setFloat32(ACTORS[pit] + 0x4c, -58, true);
+      m.setFloat32(ACTORS[1 - pit] + 0x44, 0, true); m.setFloat32(ACTORS[1 - pit] + 0x4c, 20, true);
+    }
+    fight.tick(idle);
+    if (fight.outcome().over) return tick;
+  }
+  return null;
+}
+
+test("subway: the natural train hits a fighter in the pit; they lose at full health and the other wins; rematch resets", async () => {
   const fight = await match(4), m = fight.memory;
   const start = JSON.stringify(fight.diagnostics());
+  const tick = runTrain(fight, 1);
+  assert.equal(tick, 1001, "the train hits at tick 1000 and the referee ends the round on the next frame");
+  const outcome = fight.outcome(), actors = fight.diagnostics().actors;
+  assert.deepEqual([outcome.winner, outcome.loser, outcome.method], [0, 1, "hazard"]);
+  assert.ok(actors[1].health > 0 && actors[0].health > 0, "nobody is knocked out: the train did it");
+  assert.equal(m.getFloat32(ACTORS[1] + 932, true), m.getFloat32(ACTORS[1] + 932, true));
+  assert.ok(m.getFloat32(ACTORS[1] + 932, true) < -1, "the loser stood over the track floor");
+  assert.equal(m.getUint32(ACTORS[1] + 0x30, true), 19, "the hit fighter is in state 19");
+  assert.deepEqual([half(m, ACTORS[0] + 0x932), half(m, ACTORS[1] + 0x932)], [0x100, 0x600], "winner 0x100; loser 0x200 plus 0x400, which a time-up loser has too");
+  assert.equal(m.getUint32(0x4bbf90 + 448, true) & 0x20, 0x20, "match flag 0x20 tells the train from a time-up");
+  assert.equal(m.getUint32(TRAIN_WORD, true) & 1, 1, "the hazard stays live");
+  // The same fight with the other fighter in the pit ends the other way round.
+  const other = await match(4);
+  runTrain(other, 0);
+  assert.deepEqual([other.outcome().winner, other.outcome().method], [1, "hazard"]);
+  // Reset: the starting memory is back.
+  fight.rematch();
+  assert.equal(JSON.stringify(fight.diagnostics()), start);
+  assert.equal(fight.outcome().over, false);
+});
+
+test("subway: with nobody in the pit the natural train hits nothing", async () => {
+  const fight = await match(4);
+  assert.equal(runTrain(fight, null), null);
+  assert.deepEqual(createTrain(fight.kernel).hitBy(), [false, false]);
+});
+
+test("subway: warn() and strike() drive the retail consumer 0x2e78d0 without waiting for the train", async () => {
+  const fight = await match(4), m = fight.memory;
   for (let i = 0; i < 60; i++) fight.tick(idle);
   const train = createTrain(fight.kernel);
-  assert.equal(m.getUint32(TRAIN_WORD, true) & 1, 1, "the hazard is live from venue setup");
-  assert.deepEqual(train.marked(), [false, false]);
-  // Fighter 1 is in the pit (the retail word at +932 below -1) as the train comes, then it hits.
   m.setFloat32(ACTORS[1] + 932, -2, true);
   train.warn();
   assert.deepEqual(train.marked(), [false, true]);
-  assert.equal(fight.outcome().over, false);
   train.strike();
   assert.deepEqual(train.hitBy(), [false, true]);
-  assert.equal(m.getUint32(ACTORS[1] + 0x30, true), 19, "the hit fighter is put in hit state 19");
-  assert.equal(m.getUint32(TRAIN_WORD, true) & 6, 0, "the consumer clears the coming and hit bits");
+  assert.equal(m.getUint32(ACTORS[1] + 0x30, true), 19);
   fight.tick(idle);
-  const outcome = fight.outcome(), actors = fight.diagnostics().actors;
-  assert.deepEqual([outcome.over, outcome.winner, outcome.loser], [true, 0, 1]);
-  assert.ok(actors[1].health > 0 && actors[0].health > 0, "nobody is knocked out: the train did it");
-  assert.equal(finishKind(outcome, actors, train), "hazard");
-  assert.equal(half(m, ACTORS[0] + 0x932) & 0x100, 0x100, "winner flag");
-  assert.equal(half(m, ACTORS[1] + 0x932) & 0x200, 0x200, "loser flag");
-  // Reset: the starting memory and the train hazard are back.
-  fight.rematch();
-  train.reset();
-  assert.equal(JSON.stringify(fight.diagnostics()), start);
-  assert.equal(fight.outcome().over, false);
-  assert.equal(train.struck, false);
-});
-
-test("subway: nobody marked means the hit does nothing", async () => {
-  const fight = await match(4);
-  for (let i = 0; i < 30; i++) fight.tick(idle);
-  const train = createTrain(fight.kernel);
-  train.warn();
-  train.strike();
-  for (let i = 0; i < 5; i++) fight.tick(idle);
-  assert.equal(fight.outcome().over, false);
-  assert.deepEqual(train.hitBy(), [false, false]);
+  assert.deepEqual([fight.outcome().winner, fight.outcome().method], [0, "hazard"]);
 });
