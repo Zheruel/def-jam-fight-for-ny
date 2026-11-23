@@ -4,6 +4,7 @@ import { irradianceGLSL, loadLighting, sampleIrradiance } from "../scenery/irrad
 import { loadPoseBank, capturedIdles, poseIndex } from "../motion/pose-bank.mjs";
 import { createBattleLineup } from "../battle/setup.mjs";
 import { MODES, freeForAllAvailable, parseBattleQuery, venueSupports } from "../battle/modes.mjs";
+import { closeMatchLoading, showMatchLoading } from "../menu/loading.mjs";
 import { rematchChoice } from "../hud/rematch.mjs";
 import { REMATCH_DELAY } from "../hud/result.mjs";
 import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
@@ -125,6 +126,8 @@ async function display(leave) {
   const ffaAllowed = battle && freeForAllAvailable();
   const query = battle ? parseBattleQuery(params,{fighters:inventory.fighters,venues:inventory.venues,ffa:ffaAllowed}) : null;
   const mode = query?.mode ?? "1v1", count = MODES[mode].fighters;
+  // The loading poster follows the parsed selection (the viewer repairs a query's missing or repeated fighters).
+  if (battle) showMatchLoading(new URLSearchParams([["mode",mode],...query.handles.map((h,i)=>["p"+(i+1),h]),["venue",query.venue]]));
   const selectors = [1,2,3,4].slice(0,count).map(n=>document.querySelector("#player"+n));
   const modeSelect = document.querySelector("#mode");
   if(modeSelect) {
@@ -549,6 +552,7 @@ async function display(leave) {
     }, {capture:true, signal});
     window.nativeBattle = Object.freeze({ setInput:controls.setInput, diagnostics:() => ({
       ...fight.diagnostics(), renderedFrames, paused:paused || pause.open, pause:pause.open ? {row:pause.row,levels:[...pause.levels],vibration:pause.vibration,confirming:pause.confirming} : null, network:controls.connection(), environment:environment?.state(), music:music?.tune }) });
+    closeMatchLoading();
     draw();
   }
   return {
@@ -557,6 +561,7 @@ async function display(leave) {
     dispose() {
       if (disposed) return;
       disposed = true;
+      closeMatchLoading();
       lifetime.abort();
       cancelAnimationFrame(scheduled);
       scheduled = 0;
@@ -595,4 +600,4 @@ async function start() {
     await start();
   });
 }
-start().catch(error => { status.textContent = error.message; });
+start().catch(error => { closeMatchLoading(); status.textContent = error.message; });

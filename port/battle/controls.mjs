@@ -22,7 +22,7 @@ export const roomSession = () => (shared ??= createSession());
 function createSession() {
   const button = id => document.getElementById(id);
   let remote = {}, room, guest = false, poll = 0, lastPacket = "", state = "local", bound = false;
-  let seats = 0, cpu = 0, audio = null, canvas = () => document.querySelector("canvas"), redraw = () => {}, slots = [], quiet;
+  let seats = 0, cpu = 0, audio = null, cover = null, canvas = () => document.querySelector("canvas"), redraw = () => {}, slots = [], quiet;
   const pads = [], listeners = new Set();
   const people = () => seats - cpu;
   let devices = [];
@@ -67,7 +67,7 @@ function createSession() {
     if (out && room) out.textContent = [...slots.map(s=>"P"+(s.slot+1)+" "+s.state),...Array.from({length:cpu},(_,i)=>"P"+(people()+i+1)+" CPU")].join(" · ");
   }
   const silence = () => (quiet ??= new AudioContext().createMediaStreamDestination().stream);
-  const media = () => ({canvas:canvas(), audioStream:audio?.stream() ?? silence()});
+  const media = () => ({canvas:cover ?? canvas(), audioStream:audio?.stream() ?? silence()});
   const hostable = () => state === "local" && seats > 0 && !guest;
   function refresh() {
     const host = button("host");
@@ -153,13 +153,19 @@ function createSession() {
     // canvas guests should see. A room that is already open follows: its seat count, and its picture and sound (replaceTrack).
     use({seats:count=seats, cpu:cpus=cpu, audio:sound=audio, canvas:source=canvas, redraw:draw=redraw}={}) {
       const next = typeof source === "function" ? source : () => source;
-      const changed = count !== seats || cpus !== cpu, viewing = next() !== canvas() || sound !== audio;
+      const changed = count !== seats || cpus !== cpu, viewing = !cover && (next() !== canvas() || sound !== audio);
       seats = count; cpu = cpus; audio = sound; canvas = next; redraw = draw;
       if (room && !guest) {
         if (changed && people() >= 2) { room.setPlayers(people()); showSeats(); }
         if (viewing) room.setMedia(media()).catch(error => { button("network").textContent = error.message; });
       }
       refresh();
+    },
+    // While a picture covers the match (the loading poster), a hosted room sends it instead of the page's canvas; null hands
+    // the canvas back.
+    cover(element) {
+      cover = element;
+      if (room && !guest) room.setMedia(media()).catch(error => { button("network").textContent = error.message; });
     },
     // Remote controller states (slot, pad) for the selector; pad is null when that guest's seat went back to open.
     onPad(listener) { listeners.add(listener); return () => listeners.delete(listener); },

@@ -3,6 +3,8 @@ const params=new URLSearchParams(location.search),code=params.get("room");
 const direct=!params.has("menu")&&["p1","p2","p3","p4","venue","mode"].some(key=>params.has(key));
 if(!code) {
   if(!direct) await (await import("../menu/launch.mjs")).chooseMatch(params);
+  // The retail loading poster covers the page from the moment the match is known until it is ready.
+  (await import("../menu/loading.mjs")).showMatchLoading();
   await import("../viewer/viewer.mjs");
 } else {
   const {battleControls}=await import("./controls.mjs");
