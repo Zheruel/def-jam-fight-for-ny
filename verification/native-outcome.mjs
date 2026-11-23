@@ -2,9 +2,10 @@
 import {readFileSync} from "node:fs";
 import {gunzipSync} from "node:zlib";
 import assert from "node:assert/strict";
+import {createHash} from "node:crypto";
 import {createFoundationFight} from "../port/battle/fight.mjs";
 import {createMatchAnimation} from "../port/animation/match.mjs";
-import {resultLines, REMATCH_DELAY} from "../port/hud/result.mjs";
+import {resultLines, REMATCH_DELAY, BANNER} from "../port/hud/result.mjs";
 import inventory from "../ps2/content/inventory.json" with {type:"json"};
 
 const packed=file=>Uint8Array.from(gunzipSync(readFileSync(new URL("../port/"+file,import.meta.url)))).buffer;
@@ -18,7 +19,7 @@ const fighters=ids.map(id=>{
   return {model:record.model,body,record};
 });
 const animation=await createMatchAnimation(sampler,shared,ids.map(id=>packed(`animation/banks/wres${String(id).padStart(3,"0")}.gz`)));
-const match=await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),null,packed("kernel/match-rules.gz"),animation);
+let match=await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),null,packed("kernel/match-rules.gz"),animation);
 
 const ACTOR=[0x4bc170,0x4bd468], buttons=[0x1000,0x4000,0x2000,0x8000,0x1100,0x1400,0x1800,0x1200,0x4400,0x8100,0x400,0x800];
 const word=a=>match.memory.getUint32(a,true), scalar=a=>match.memory.getFloat32(a,true);
@@ -71,6 +72,11 @@ function timeUp(scores,ranked) {
   assert.fail("the ten second limit never ended the match");
 }
 
+// A rematch must restore the exact starting RAM, whatever the previous match did to it.
+const ram=()=>createHash("sha256").update(new Uint8Array(match.memory.buffer,match.memory.byteOffset,match.memory.byteLength)).digest("hex");
+match.rematch();
+const startingRam=ram(), startingState=JSON.stringify(match.diagnostics());
+
 const rounds=[];
 for(const [victim,seed,options] of [[1,17],[0,17],[1,9],[1,17,{spent:false,limit:16000}]]) {
   const r=play(victim,seed,options), winner=1-victim, {outcome}=r;
@@ -89,6 +95,7 @@ for(const [victim,seed,options] of [[1,17],[0,17],[1,9],[1,17,{spent:false,limit
   assert.equal(lines[0].text,"K.O.");
   assert.ok(lines.some(l=>l.text===`${r.actors[winner].name.toUpperCase()} WINS`));
   assert.ok(lines.some(l=>l.text==="ENTER  REMATCH"),"rematch offered after the hold");
+  lines.forEach(l=>assert.ok(l.y>=0&&l.y+l.size<=BANNER.height&&l.x>=0&&l.x<=BANNER.width,`banner line ${l.text} inside the ${BANNER.width}x${BANNER.height} surface`));
   rounds.push(r);
 }
 
@@ -110,8 +117,26 @@ const timed=[[[300,100],true,0],[[100,300],true,1],[[100,300],false,null]].map((
   return {...r,winner,ranked};
 });
 
+// Venue rules: 0x30b928 applies the same under-10% knockdown rule on most venues but has its own branches for 125th Street
+// Station (4), Red Hook (7) and Crow's Office (17); run the real arena and collision for a spread of venues.
+const foundation=match, venues=[];
+for(const id of [1,4,17,11]) {
+  const venue=inventory.venues.find(v=>v.coreID===id);
+  const collision=Uint8Array.from(readFileSync(new URL(`../port/collision/venues/${venue.file}.cli`,import.meta.url))).buffer;
+  match=await createFoundationFight(fighters,packed("kernel/battle.wasm.gz"),packed("kernel/foundation-start.gz"),{venue,collision},packed("kernel/match-rules.gz"),animation);
+  const r=play(1,17,{limit:4000});
+  assert.deepEqual(r.phases,[1,2,3],venue.name);
+  assert.equal(r.outcome.winner,0,venue.name);
+  assert.equal(r.outcome.method,"ko",venue.name);
+  assert.equal(r.actors[1].health,0,venue.name);
+  venues.push({venue:venue.name,finishTick:r.finishTick});
+}
+match=foundation;
+
 // Rematch restores a clean match.
 match.rematch();
+assert.equal(ram(),startingRam,"rematch restores the starting RAM byte for byte");
+assert.equal(JSON.stringify(match.diagnostics()),startingState,"rematch restores the starting diagnostics");
 const fresh=match.diagnostics();
 assert.equal(fresh.ticks,0);
 assert.equal(fresh.outcome.phase,1);
@@ -123,3 +148,4 @@ assert.equal(resultLines(fresh.outcome,[]),null);
 console.log(`${rounds.length+1} consecutive native matches ended in a retail KO and rematched cleanly (the last of them from full health):`);
 rounds.forEach(r=>console.log(`  victim slot ${r.victim}: finish at tick ${r.finishTick}, phases ${r.phases.join(">")}, winner ${r.outcome.winner}, clock ${r.outcome.clock.minutes}:${String(r.outcome.clock.seconds).padStart(2,"0")}`));
 timed.forEach(r=>console.log(`  ten second limit, ${r.ranked?"scored":"unscored"}: ${r.winner===null?"draw":"winner slot "+r.winner} at tick ${r.tick}`));
+venues.forEach(v=>console.log(`  ${v.venue}: KO at tick ${v.finishTick}`));
