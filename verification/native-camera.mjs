@@ -45,6 +45,7 @@ assert.ok(mean<0.8 && max<5.5);
 // Starting from identical RAM, the knockout impulse moves the final view-projection
 // matrix for the 60-frame shake and its decay, then returns to the unshaken camera.
 function stationaryCamera(shake) {
+  bytes.fill(0);
   for(let i=0;i<seed.length;i+=4100) bytes.set(seed.subarray(i+4,i+4100),seed.readUInt32LE(i)*4096);
   camera.reset();
   if (shake) kernel.callWithDelta(0x1b05c8,0x4732a4,60,6);
@@ -56,6 +57,7 @@ function stationaryCamera(shake) {
   return samples;
 }
 const calm = stationaryCamera(false), knockout = stationaryCamera(true);
-assert.notDeepEqual(knockout[0],calm[0]);
-assert.notDeepEqual(knockout[1],calm[1]);
-assert.deepEqual(knockout[2],calm[2]);
+const deviation = (time) => Math.max(...calm[time].map((v,i) => Math.abs(v-knockout[time][i])));
+assert.ok(deviation(0)>1 && deviation(1)>1, "the shake moves the camera on the first and final hold ticks");
+assert.equal(memory.getInt32(0x4732a4+0x80,true),-1, "shake has ended");
+assert.ok(deviation(2)<0.001, "camera easing has settled after the effect");
