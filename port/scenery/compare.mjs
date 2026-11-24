@@ -2,19 +2,23 @@
 // the saved original frame for comparison. Uses existing captures only; no emulator is run.
 //
 //   node port/scenery/compare.mjs [--run private/verification/ps2-match/run-BjNMn0]
-//        [--blank 4863] [--out private/verification/scenery]
+//        [--frame 23-host-movement-host.png --blank 4863] [--out private/verification/scenery]
 import { once } from "node:events";
 import { createServer } from "node:http";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "../../netplay/node_modules/playwright/index.mjs";
-import { foundationCamera } from "../battle/camera.mjs";
+import { battleCamera, foundationCamera } from "../battle/camera.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const arg = (name, fallback) => { const i = process.argv.indexOf("--" + name); return i < 0 ? fallback : process.argv[i + 1]; };
 const run = path.resolve(root, arg("run", "private/verification/ps2-match/run-BjNMn0"));
-const blank = Number(arg("blank", 4863));
+const frame = arg("frame", "21-fight-ready-host.png");
+const report = JSON.parse(await readFile(path.join(run, "report.json"), "utf8"));
+const capture = report.captures.find(c => c.file === frame);
+const range = capture?.emulatedVblankRange;
+const blank = Number(arg("blank", range ? Math.round((range[0] + range[1]) / 2) : 4863));
 const venue = arg("venue", "V2BG_02A");   // other venues: render only, no retail frame to compare
 const out = path.resolve(root, arg("out", "private/verification/scenery"));
 const types = { ".html": "text/html", ".mjs": "text/javascript", ".json": "application/json", ".gz": "application/octet-stream" };
@@ -26,10 +30,16 @@ for (const sample of trace.samples) {
   if (sample.blank > blank) break;
   camera.step(sample.actors.map(a => ({ position: a.renderedPosition })));
 }
-const matrix = [...camera.matrix()];
+// The ready screenshot precedes the first pose sample by about twenty VBlanks.
+let matrix = [...camera.matrix()];
+if (blank <= trace.samples[0].blank) {
+  const bytes = await readFile(path.join(run, "fighter-ram-0.bin"));
+  const memory = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  matrix = [...battleCamera({memory}).matrix()];
+}
 // The retail frame is 848x636 with letterbox bars; --viewport x,y,w,h (GL origin bottom-left) maps the 4:3 camera into it.
 const viewport = arg("viewport", "2,16,840,588").split(",").map(Number);
-const sample = trace.samples.findLast(s => s.blank <= blank);
+const sample = trace.samples.findLast(s => s.blank <= blank) ?? trace.samples[0];
 const fighters = sample.actors.map(a => a.renderedPosition);
 // Host Blaze (slot 0) and guest Doc (slot 1) in the saved runs.
 const models = ["V2IP_113A", "V2IP_109A"];
@@ -67,7 +77,8 @@ for (const [k, s] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) { const
 gl.linkProgram(p);
 window.draw = async (matrix, options) => {
   const base = uploadScene(gl, p, await loadScene(window.venue, new AbortController().signal));
-  const lit = options.lit ? { lighting: (await loadLighting(window.venue)).settings[options.lit.setting ?? 0].sets[options.lit.set ?? 0], lightScale: options.lit.scale ?? 1 } : {};
+  const sets = options.lit && (await loadLighting(window.venue)).settings[options.lit.setting ?? 0].sets;
+  const lit = sets ? { lighting: sets[options.lit.set ?? 0], crowdLighting: sets[1], lightScale: options.lit.scale ?? 1 } : {};
   const scenery = await createSceneryRenderer(gl, await loadScenery(window.venue), lit);
   gl.viewport(...(options.viewport ?? [0, 0, c.width, c.height]));
   gl.enable(gl.DEPTH_TEST);
@@ -124,22 +135,22 @@ window.sideBySide = async (retailUrl, ourUrl) => {
 const fvs = \`#version 300 es
 in vec3 position; in vec3 normal; in vec2 uv; in vec4 joints; in vec4 weights;
 uniform mat4 skin[94]; uniform mat4 viewProjection; uniform vec3 origin; uniform float heading;
-out vec2 t; out vec3 n;
+out vec2 t; out vec3 shade; uniform bool lit;
+\` + irradianceGLSL + \`
 void main() {
   mat4 m = skin[int(joints.x)] * weights.x + skin[int(joints.y)] * weights.y + skin[int(joints.z)] * weights.z + skin[int(joints.w)] * weights.w;
   vec3 p = (m * vec4(position, 1.0)).xyz, nn = mat3(m) * normal;
   mat2 turn = mat2(cos(heading), -sin(heading), sin(heading), cos(heading));
   p.xz = turn * p.xz; nn.xz = turn * nn.xz;
-  t = uv; n = normalize(nn);
+  t = uv;
   gl_Position = viewProjection * vec4(p + origin, 1.0);
+  shade = (lit ? vertexIrradiance(nn) : vec3(0.80 + 0.20 * dot(normalize(nn), normalize(vec3(0.3,1.0,0.7))))) * gl_Position.w;
 }\`;
 const ffs = \`#version 300 es
-precision highp float; in vec2 t; in vec3 n; uniform sampler2D d; uniform float scale; uniform bool lit; out vec4 o;
-\` + irradianceGLSL + \`
+precision highp float; in vec2 t; in vec3 shade; uniform sampler2D d; out vec4 o;
 void main() {
   vec4 x = texture(d, t); if (x.a < 0.01) discard;
-  vec3 k = lit ? clamp(irradiance(normalize(n)) * scale, 0.0, 1.5) : vec3(0.80 + 0.20 * dot(normalize(n), normalize(vec3(0.3, 1.0, 0.7))));
-  o = vec4(x.rgb * k, 1.0);
+  o = vec4(x.rgb * shade * gl_FragCoord.w, 1.0);
 }\`;
 const fp = gl.createProgram();
 for (const [k, s] of [[gl.VERTEX_SHADER, fvs], [gl.FRAGMENT_SHADER, ffs]]) { const h = gl.createShader(k); gl.shaderSource(h, s); gl.compileShader(h); if (!gl.getShaderParameter(h, gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(h)); gl.attachShader(fp, h); }
@@ -149,26 +160,17 @@ window.drawFighters = async (matrix, fighters, light) => {
   gl.useProgram(fp);
   gl.uniformMatrix4fv(gl.getUniformLocation(fp, "viewProjection"), false, new Float32Array(matrix));
   gl.uniform1i(gl.getUniformLocation(fp, "lit"), light ? 1 : 0);
-  gl.uniform1f(gl.getUniformLocation(fp, "scale"), light?.scale ?? 1);
   for (const f of fighters) {
     const data = await loadFighter(f.model, new AbortController().signal);
     const flat = new Float32Array(new Uint8Array(Array.from(atob(f.pose), c => c.charCodeAt(0))).buffer);
     const { skin } = composePose({ bones: data.mesh.bones }, flat);
-    const vao = gl.createVertexArray(); gl.bindVertexArray(vao);
-    const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, data.vertices, gl.STATIC_DRAW);
-    for (const [key, size, type, offset] of [["position", 3, gl.FLOAT, 0], ["normal", 3, gl.FLOAT, 12], ["uv", 2, gl.FLOAT, 24], ["joints", 4, gl.UNSIGNED_BYTE, 32], ["weights", 4, gl.FLOAT, 36]]) {
-      const a = gl.getAttribLocation(fp, key); gl.enableVertexAttribArray(a); gl.vertexAttribPointer(a, size, type, false, 52, offset);
-    }
-    const ib = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.indices, gl.STATIC_DRAW);
-    const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
-    const image = data.images.values().next().value;
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, image); gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    const body = uploadScene(gl, fp, data);
     gl.uniformMatrix4fv(gl.getUniformLocation(fp, "skin"), false, skin);
     gl.uniform3fv(gl.getUniformLocation(fp, "origin"), f.position);
     gl.uniform1f(gl.getUniformLocation(fp, "heading"), f.yaw * Math.PI / 180);
     if (lighting) gl.uniform3fv(gl.getUniformLocation(fp, "irradianceCoefficients"), sampleIrradiance(lighting, f.position));
-    gl.drawElements(gl.TRIANGLES, data.mesh.indices, gl.UNSIGNED_SHORT, 0);
+    body.draw();
+    body.dispose();
   }
   gl.bindVertexArray(null);
   return c.toDataURL("image/png");
@@ -203,7 +205,6 @@ try {
       const url = await tab.evaluate(([m, o]) => draw(m, o), [matrix, { ...options, viewport }]);
       await writeFile(path.join(out, `foundation-${name}.png`), Buffer.from(url.split(",")[1], "base64"));
     }
-    const frame = arg("frame", "21-fight-ready-host.png");
     // Static, unoccluded landmarks in the retail frame: both speaker stacks and the work light.
     const regions = JSON.parse(arg("regions", JSON.stringify({ speakerLeft: [240, 225, 302, 345],
       speakerRight: [546, 225, 606, 345], light: [462, 300, 506, 345] })));
@@ -224,7 +225,7 @@ try {
     // Fighters under the same camera: the viewer's flat stand-in shading vs the retail irradiance.
     const withFighters = async lit => {
       await tab.evaluate(([m, o]) => draw(m, o), [matrix, { base: true, viewport, lit: { scale: 1 }, scenery: { tick: 30, excited: true } }]);
-      return tab.evaluate(([m, f, l]) => drawFighters(m, f, l), [matrix, posed, lit ? { scale: 1.2 } : null]);
+      return tab.evaluate(([m, f, l]) => drawFighters(m, f, l), [matrix, posed, lit]);
     };
     const fighterShots = { flat: await withFighters(false), lit: await withFighters(true) };
     for (const [k, v] of Object.entries(fighterShots)) await writeFile(path.join(out, `foundation-fighters-${k}.png`), Buffer.from(v.split(",")[1], "base64"));

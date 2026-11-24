@@ -38,7 +38,8 @@ uniform mat4 viewProjection;
 out float height;
 out vec3 world;
 out vec3 vertexColor;
-out vec3 worldNormal;
+uniform bool lightFighters;
+${irradianceGLSL}
 void main() {
   texcoord = uv;
   vec3 p = position;
@@ -55,15 +56,14 @@ void main() {
     }
     vec3 n = mat3(pose) * normal;
     n.xz = turn * n.xz;
-    worldNormal = n;
-    vertexColor = vec3(0.80 + 0.20 * dot(normalize(n), normalize(vec3(0.3,1.0,0.7))));
+    vertexColor = lightFighters ? vertexIrradiance(n) : vec3(0.80 + 0.20 * dot(normalize(n), normalize(vec3(0.3,1.0,0.7))));
   } else {
-    worldNormal = vec3(0.0,1.0,0.0);
     vertexColor = rgba.rgb * (255.0 / 128.0);
   }
   height = p.y;
   world = p - center;
   gl_Position = matchView ? viewProjection * vec4(p,1.0) : vec4(vec3(dot(world,right), dot(world,up), dot(world,forward)) * scale, 1.0);
+  if (skinned) vertexColor *= gl_Position.w;
 }`;
 const fragment = `#version 300 es
 precision highp float;
@@ -73,19 +73,16 @@ in vec3 world;
 in vec2 texcoord;
 uniform sampler2D diffuse;
 in vec3 vertexColor;
-in vec3 worldNormal;
 uniform bool skinned;
-uniform bool lightFighters;
 uniform bool shadowPass;
 uniform vec4 shadowColour;
-${irradianceGLSL}
 out vec4 color;
 void main() {
   if(shadowPass) {color=shadowColour;return;}
   if (height > ceiling) discard;
   vec4 texel = texture(diffuse, texcoord);
   if (texel.a < 0.01) discard;
-  vec3 tint = skinned && lightFighters ? clamp(1.2 * irradiance(normalize(worldNormal)), 0.0, 1.5) : vertexColor;
+  vec3 tint = skinned ? vertexColor * gl_FragCoord.w : vertexColor;
   color = vec4(texel.rgb * tint, 1.0);
 }`;
 
@@ -472,7 +469,7 @@ async function display(leave) {
     const {createSceneryRenderer,loadScenery} = await import("../scenery/scenery.mjs");
     const [stage, lights] = await Promise.all([loadScenery(arena.file),loadLighting(arena.file)]);
     lighting = lights.settings[0]?.sets[0];
-    scenery = await createSceneryRenderer(gl,stage,{lighting});
+    scenery = await createSceneryRenderer(gl,stage,{lighting, crowdLighting: lights.settings[0]?.sets[1]});
     const [{createEnvironment},events] = await Promise.all([import("../scenery/environment.mjs"),
       fetch(new URL("../scenery/events.json",import.meta.url)).then(r=>r.json())]);
     environment = createEnvironment(stage.manifest,events.names,{weaponModels:events.weaponModels});

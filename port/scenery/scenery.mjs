@@ -9,7 +9,7 @@
 // Coverage: props are static meshes with discrete break states (pick one state per prop);
 // the instanced crowd is vertex-animated (383 retail frames, idle and excited loops).
 import { fetchPacked } from "../viewer/scene.mjs";
-import { irradiance, irradianceGLSL, sampleIrradiance } from "./irradiance.mjs";
+import { irradianceGLSL, sampleIrradiance } from "./irradiance.mjs";
 import { bankPose, loadPeople, skinPalette, POSE_FLOATS } from "./people.mjs";
 import { createParticles, trainLights } from "./particles.mjs";
 import { createFader, eyeOf } from "./occlusion.mjs";
@@ -150,21 +150,24 @@ void main() {
 const WEAPON_VERTEX = `#version 300 es
 in vec3 position; in vec3 normal; in vec2 uv;
 uniform mat4 viewProjection; uniform mat4 model;
-out vec2 texcoord; out vec3 world;
+out vec2 texcoord; out vec3 shade;
+uniform bool lit; uniform float lightScale;
+` + irradianceGLSL + `
 void main() {
-  texcoord = uv; world = mat3(model) * normal;
+  texcoord = uv;
+  vec3 n = mat3(model) * normal;
   gl_Position = viewProjection * model * vec4(position, 1.0);
+  shade = (lit ? vertexIrradiance(n) * lightScale : vec3(1.0)) * gl_Position.w;
 }`;
 const WEAPON_FRAGMENT = `#version 300 es
 precision highp float;
-in vec2 texcoord; in vec3 world;
-uniform sampler2D diffuse; uniform bool lit; uniform float lightScale;
+in vec2 texcoord; in vec3 shade;
+uniform sampler2D diffuse;
 out vec4 color;
-` + irradianceGLSL + `
 void main() {
   vec4 texel = texture(diffuse, texcoord);
   if (texel.a < 0.01) discard;
-  vec3 k = lit ? clamp(irradiance(normalize(world)) * lightScale, 0.0, 1.5) : vec3(1.0);
+  vec3 k = shade * gl_FragCoord.w;
   color = vec4(texel.rgb * k, 1.0);
 }`;
 // Screen-door fade (occlusion.mjs): a 4 x 4 ordered dither against the figure's visibility, no blending or sorting.
@@ -190,11 +193,15 @@ const PEOPLE_FRAGMENT = WEAPON_FRAGMENT.replace("uniform sampler2D diffuse;", "u
 const PEOPLE_VERTEX = `#version 300 es
 in vec3 position; in vec3 normal; in vec2 uv; in uvec4 joints; in vec4 weights;
 uniform mat4 viewProjection; uniform mat4 model; uniform mat4 bones[13];
-out vec2 texcoord; out vec3 world;
+out vec2 texcoord; out vec3 shade;
+uniform bool lit; uniform float lightScale;
+` + irradianceGLSL + `
 void main() {
   mat4 skin = bones[joints.x] * weights.x + bones[joints.y] * weights.y + bones[joints.z] * weights.z + bones[joints.w] * weights.w;
-  texcoord = uv; world = mat3(model) * mat3(skin) * normal;
+  texcoord = uv;
+  vec3 n = mat3(model) * mat3(skin) * normal;
   gl_Position = viewProjection * model * skin * vec4(position, 1.0);
+  shade = (lit ? vertexIrradiance(n) * lightScale : vec3(1.0)) * gl_Position.w;
 }`;
 const FRAGMENT = `#version 300 es
 precision highp float;
@@ -242,7 +249,7 @@ async function texture(gl, png) {
  *                   false hides it (e.g. after the retail break animation removes it)
  *   crowd           false hides the instanced crowd; otherwise tick/excited drive its frame
  */
-export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null, particles = null, texanim = null }, { lighting = null, lightScale = 1 } = {}) {
+export async function createSceneryRenderer(gl, { manifest, props, crowd, weapons = new Map(), people = null, particles = null, texanim = null }, { lighting = null, crowdLighting = lighting, lightScale = 1 } = {}) {
   const state = { props: null, crowd: null, weapons: null, people: null };
   const stageTexAnim = texanim ? await createTexAnim(gl, texanim.manifest, texanim.png) : null;
   const stageParticles = particles ? await createParticles(gl, particles.manifest, particles.png) : null;
@@ -290,9 +297,9 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     const list = crowd.mesh.instances;
     const data = new Float32Array(list.flatMap((i, n) => {
       const yaw = i.yawDegrees * Math.PI / 180;
-      // The crowd mesh has no normals: shade each figure once, by the irradiance toward where it faces.
-      const light = lighting ? irradiance(sampleIrradiance(lighting, i.translate), [Math.sin(yaw), 0, Math.cos(yaw)]) : [1, 1, 1];
-      return [...i.translate, yaw, i.variant, instancePhase(n), ...(lighting ? light.map(v => Math.min(1.5, Math.max(0, v * lightScale))) : light)];
+      // 0x1e9a28 uses light set 1. Its basis at 0x3daea0 selects only the constant coefficient.
+      const light = crowdLighting ? sampleIrradiance(crowdLighting, i.translate).slice(0, 3).map(c => c * lightScale) : [1, 1, 1];
+      return [...i.translate, yaw, i.variant, instancePhase(n), ...light];
     }));
     gl.bindBuffer(gl.ARRAY_BUFFER, instances);
     gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
@@ -390,11 +397,11 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
     for (const [key, png] of people.outfits) outfits.set(key, await texture(gl, png));
     const uniform = uniforms(prog, ["viewProjection","model","bones","irradianceCoefficients","lit","lightScale","diffuse","fade"]);
     gl.useProgram(prog);
-    gl.uniform1i(uniform.lit, lighting ? 1 : 0);
+    gl.uniform1i(uniform.lit, crowdLighting ? 1 : 0);
     gl.uniform1f(uniform.lightScale, lightScale);
     gl.uniform1i(uniform.diffuse, 0);
     const spectators = people.manifest.spectators.map(s => ({
-      ...s, matrix: placementMatrix(s), light: lighting ? sampleIrradiance(lighting, s.translate) : null }));
+      ...s, matrix: placementMatrix(s), light: crowdLighting ? sampleIrradiance(crowdLighting, s.translate) : null }));
     state.people = { prog, classes, outfits, uniform, spectators, bank: people.bank, pose: new Float32Array(POSE_FLOATS), palette: new Float32Array(13 * 16),
       fader: createFader(spectators.map(s => s.translate)) };
   }
@@ -449,7 +456,7 @@ export async function createSceneryRenderer(gl, { manifest, props, crowd, weapon
         const model = classes[spectator.class];
         // Each spectator plays its track from its own offset (`phase`, game ticks) so rows do not move in lockstep.
         skinPalette(bankPose(bank, spectator.trackIndex, tick + spectator.phase, pose), model.bones, palette);
-        if (lighting) gl.uniform3fv(uniform.irradianceCoefficients, spectator.light);
+        if (crowdLighting) gl.uniform3fv(uniform.irradianceCoefficients, spectator.light);
         gl.uniformMatrix4fv(uniform.model, false, spectator.matrix);
         gl.uniformMatrix4fv(uniform.bones, false, palette);
         gl.bindVertexArray(model.vao);

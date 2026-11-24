@@ -58,18 +58,11 @@ Not rendered: the `nearCrowd` characters (modular V2CM people; the rig and live 
 
 ## Irradiance lighting
 
-`<VENUE>/lighting.json` holds every retail `.irr` setting for the venue (88 across the 24 venues; names and order from `ENTITY.XML`, e.g. `V2BG02A0..3` and `_nis`). Each setting has two light sets of probe spheres. `irradiance.mjs` ports the engine's CPU step (SLUS-21004 `0x16ae00`: inverse-distance blend of the probes, times `intensityMultiplier`) and evaluates the ten (r, g, b) coefficients as a symmetric 4x4 irradiance matrix, `[M33, M00, M11, M22, M01, M02, M12, M03, M13, M23]`: `sampleIrradiance(set, position)`, `irradiance(coefficients, normal)`, and `irradianceGLSL`. The VU1 microcode that consumes the coefficients is not disassembled, so the coefficient order and the final scale are inferred. Set 0 of the first setting lights the Foundation fight; the scenery renderer takes `{ lighting: set, lightScale }`.
+Each venue ships the two probe sets for each of its original lighting settings. Across 24 venues these total 88 settings. The PS2 CPU blends the ten RGB coefficients by inverse squared distance from the rendered object to each probe and applies the intensity multiplier (SLUS-21004 routines `0x16ad18` and `0x32eb58`).
 
-Check against retail frame 21 (mean grayscale, same camera, fighters posed from the saved trace):
+Fighters and weapons use set 0. The fighter VU1 program `IrradTexture_Skin0` evaluates the ten terms in the order `1, xx, yy, zz, xy, xz, yz, x, y, z` on the skinned normal. WebGL computes the colour per vertex and interpolates it in screen space. The Foundation capture reproduces both fighters’ uploaded probe arrays within 0.000001 per coefficient. The base material calculation covers diffuse light. Additional material passes and stage post-processing affect the final image.
 
-| Region | Retail | Unlit / flat | Irradiance |
-| --- | --- | --- | --- |
-| Foreground spectator A | 16 | 48 | 18 (scale 1) |
-| Foreground spectator B | 21 | 53 | 22 (scale 1) |
-| Blaze's jersey | 96 | 132 | 97 (scale 1.2) |
-| Doc's jersey | 69 | 109 | 69 (scale 1.2) |
-
-The crowd mesh has no normals, so each figure is shaded once by the irradiance toward where it faces. Fighter shading uses the same sampler with their skinned normals; `compare.mjs` renders both. The scales are fitted to this one frame.
+Both crowd groups use set 1. The skinned spectators receive directional lighting. For the instanced crowd, routine `0x1e9a28` uses the constant term for the entire figure. The colours of all 60 background figures agree with the original RAM within 0.000001 in normalized RGB. Run `node --test port/scenery/scenery.test.mjs` for captured fighter and crowd samples. The comparison harness uses the screenshot's recorded VBlank and the nearest available pose. The opening screenshot precedes the first recorded pose by about twenty VBlanks.
 
 ## Environment events (pillars, speakers, bottles)
 

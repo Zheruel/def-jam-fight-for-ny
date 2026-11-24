@@ -132,6 +132,29 @@ test("irradiance lighting: every venue setting has two coherent light sets and t
   assert.ok(up[0] > down[0], "the Foundation is lit from above");
 });
 
+test("Foundation lighting reproduces the PS2 fighter packet and both crowd buffers", () => {
+  const {settings} = JSON.parse(readFileSync(new URL("./foundation/lighting.json", import.meta.url)));
+  const [fighters, crowd] = settings[0].sets;
+  const close = (actual, expected) => expected.forEach((v, i) => assert.ok(Math.abs(actual[i] - v) < 2e-6));
+  // SLUS-21004 run-BjNMn0/fighter-ram-0.bin. The two lighting objects point to the
+  // first ten RGB vectors of each skin draw. Positions here are rendered actor origins.
+  close(sampleIrradiance(fighters, [-24.366699, -0.00006323, 0]), [
+    0.70446235, 0.69087267, 0.63228393, -0.17388125, -0.17102504, -0.16355084,
+    0.17388125, 0.17102504, 0.16355084, -0.07638632, -0.07557455, -0.07163086,
+    0.06401064, 0.06332372, 0.06250730, -0.12139462, -0.11958776, -0.11262725,
+    -0.16364406, -0.16225070, -0.15960634, 0.02079609, 0.02038597, 0.01933645,
+    0.32993788, 0.33748198, 0.36021411, -0.09487660, -0.09473836, -0.08803099,
+  ]);
+  close(sampleIrradiance(fighters, [22.717928, -0.00006323, -0.190831]), [0.68521219, 0.67285323, 0.61541998]);
+  close(sampleIrradiance(crowd, [-63.7, 0, 11.42]), [0.53163880, 0.51472604, 0.41682392]);
+  // First background figure at 0x571950: the stored RGB at *(object+0x12c) is in GS units.
+  close(sampleIrradiance(crowd, [-72.809853, 0, -34.899090]), [65.346779, 63.237507, 51.608067].map(v => v / 128));
+  // VU1 inputs 0x113..0x118 each contribute once to xy, xz, yz, x, y, z.
+  const coefficients = new Float32Array(30);
+  [1, 2, 3, 4, 5, 6].forEach((v, i) => coefficients[(i+4)*3] = v);
+  close(irradiance(coefficients, [0.2, -0.4, 0.5]), [1.32, 0, 0]);
+});
+
 test("weapon models: all 55 V2WP meshes parse and every venue placement names one", () => {
   const dir = new URL("./", import.meta.url);
   const { models } = JSON.parse(readFileSync(new URL("weapons/index.json", dir), "utf8"));

@@ -1,16 +1,4 @@
-// Retail EAGL irradiance lighting (.irr), decoded by extract.py into <venue>/lighting.json.
-//
-// A light set is a handful of probe spheres. The engine (SLUS-21004 0x16ae00) blends the probes by
-// inverse distance to the character, weights normalised to 1, scales by intensityMultiplier, and hands
-// ten (r, g, b) coefficients to the skin microcode. They are read as a symmetric 4x4 irradiance
-// matrix; the order below makes the matrix pair M00 = -M11 that the data shows and gives the
-// expected strong upward term:  [M33, M00, M11, M22, M01, M02, M12, M03, M13, M23].
-// The microcode itself (VU1) is not disassembled, so that order and the final scale are inferred.
-//
-//   const { settings } = await loadLighting("V2BG_02A");
-//   const set = settings[0].sets[0];                 // set 0 lights the fight; set 1 is another rig
-//   const coefficients = sampleIrradiance(set, [x, y, z]);
-//   const rgb = irradiance(coefficients, [nx, ny, nz]);
+// SLUS-21004 0x16ad18 blends the ten RGB vectors uploaded to VU1.
 import { fetchPacked } from "../viewer/scene.mjs";
 
 export async function loadLighting(venue, { signal, base = new URL("./", import.meta.url) } = {}) {
@@ -18,37 +6,47 @@ export async function loadLighting(venue, { signal, base = new URL("./", import.
   return JSON.parse(new TextDecoder().decode(await fetchPacked(new URL("lighting.json", dir), signal)));
 }
 
-/** Inverse-distance blend of a light set's probe matrices at `position`: Float32Array(30) = 10 x rgb. */
+// 0x32eb58 returns the dot product of the displacement with itself.
 export function sampleIrradiance(set, position, out = new Float32Array(30)) {
-  const weights = set.spheres.map(s => 1 / Math.max(1e-3, Math.hypot(position[0] - s[0], position[1] - s[1], position[2] - s[2])));
-  const total = weights.reduce((a, b) => a + b, 0);
   out.fill(0);
-  weights.forEach((w, i) => {
-    const scale = w / total * set.intensityMultiplier;
-    for (let k = 0; k < 10; k++) for (let c = 0; c < 3; c++) out[3 * k + c] += scale * set.matrices[i][k][c];
-  });
-  return out;
-}
-
-/** Irradiance n^T M n with n = (x, y, z, 1), per channel. Unclamped: callers clamp to taste. */
-export function irradiance(k, normal, out = [0, 0, 0]) {
-  const [x, y, z] = normal;
-  for (let c = 0; c < 3; c++) {
-    const [m33, m00, m11, m22, m01, m02, m12, m03, m13, m23] = Array.from({ length: 10 }, (_, i) => k[3 * i + c]);
-    out[c] = m00 * x * x + m11 * y * y + m22 * z * z + m33
-      + 2 * (m01 * x * y + m02 * x * z + m12 * y * z + m03 * x + m13 * y + m23 * z);
+  let total = 0;
+  for (let i = 0; i < set.spheres.length; i++) {
+    const [x, y, z] = set.spheres[i];
+    const dx = x - position[0], dy = y - position[1], dz = z - position[2];
+    const weight = 1 / Math.max(1e-10, dx*dx + dy*dy + dz*dz);
+    const probe = set.matrices[i];
+    total += weight;
+    for (let k = 0; k < 10; k++) {
+      for (let c = 0; c < 3; c++) out[3*k+c] += weight * probe[k][c];
+    }
+  }
+  if (total) {
+    const scale = set.intensityMultiplier / total;
+    for (let i = 0; i < out.length; i++) out[i] *= scale;
   }
   return out;
 }
 
-/** GLSL for the same evaluation: `uniform vec3 irradianceCoefficients[10]; vec3 irradiance(vec3 n)`. */
+// IrradTexture_Skin0 reads VU memory 0x10f..0x118. Cross and linear terms
+// each occur once. The shader uses the skinned normal without renormalizing it.
+export function irradiance(k, [x, y, z], out = [0, 0, 0]) {
+  for (let c = 0; c < 3; c++) {
+    out[c] = k[c] + k[3+c]*x*x + k[6+c]*y*y + k[9+c]*z*z
+      + k[12+c]*x*y + k[15+c]*x*z + k[18+c]*y*z
+      + k[21+c]*x + k[24+c]*y + k[27+c]*z;
+  }
+  return out;
+}
+
 export const irradianceGLSL = `
 uniform vec3 irradianceCoefficients[10];
 vec3 irradiance(vec3 n) {
-  vec3 c0 = irradianceCoefficients[0], m00 = irradianceCoefficients[1], m11 = irradianceCoefficients[2],
-       m22 = irradianceCoefficients[3], m01 = irradianceCoefficients[4], m02 = irradianceCoefficients[5],
-       m12 = irradianceCoefficients[6], m03 = irradianceCoefficients[7], m13 = irradianceCoefficients[8],
-       m23 = irradianceCoefficients[9];
-  return m00 * n.x * n.x + m11 * n.y * n.y + m22 * n.z * n.z + c0
-    + 2.0 * (m01 * n.x * n.y + m02 * n.x * n.z + m12 * n.y * n.z + m03 * n.x + m13 * n.y + m23 * n.z);
+  return irradianceCoefficients[0]
+    + irradianceCoefficients[1]*n.x*n.x + irradianceCoefficients[2]*n.y*n.y + irradianceCoefficients[3]*n.z*n.z
+    + irradianceCoefficients[4]*n.x*n.y + irradianceCoefficients[5]*n.x*n.z + irradianceCoefficients[6]*n.y*n.z
+    + irradianceCoefficients[7]*n.x + irradianceCoefficients[8]*n.y + irradianceCoefficients[9]*n.z;
+}
+vec3 vertexIrradiance(vec3 n) {
+  // The skin packet supplies GS neutral grey 0x80. The VU packs unsigned bytes.
+  return clamp(roundEven(128.0 * irradiance(n)), 0.0, 255.0) / 128.0;
 }`;
