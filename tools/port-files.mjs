@@ -4,6 +4,7 @@ import scenery from "../port/scenery/index.json" with { type: "json" };
 import { readFileSync } from "node:fs";
 import { audioFiles } from "../port/audio/files.mjs";
 import damage from "../port/render/damage/tiles.json" with {type:"json"};
+import { postmatchFiles } from "../port/hud/postmatch-files.mjs";
 import { menuFiles } from "../port/menu/files.mjs";
 import inventory from "../ps2/content/inventory.json" with { type: "json" };
 
@@ -29,7 +30,7 @@ function peopleFiles() {
 
 // Runtime files shared by the local native port and the Pages deployment.
 export const portFiles = [
-  ...menuFiles,
+  ...menuFiles, ...postmatchFiles,
   "port/scenery/scenery.mjs", "port/scenery/people.mjs", "port/scenery/particles.mjs", "port/scenery/occlusion.mjs", "port/scenery/texanim.mjs", "port/scenery/irradiance.mjs", "port/scenery/environment.mjs", "port/scenery/train.mjs", "port/scenery/events.json", "port/scenery/index.json",
   "port/scenery/weapons/index.json",
   ...Object.values(weapons.models).map(({file}) => "port/scenery/weapons/" + file),
