@@ -100,6 +100,11 @@ try {
   assert.equal(outcome.method,"ko",JSON.stringify(outcome));
   assert.equal(outcome.winner,0);
   await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.ticksSinceOver>=130);
+  // The retail score sheet (port/hud/postmatch.mjs) comes first; Enter hands over to the REMATCH? card.
+  await host.waitForFunction(()=>window.nativePostmatch?.().state==="shown",undefined,{timeout:30000});
+  await host.keyboard.press("Enter");
+  await host.waitForFunction(()=>window.nativePostmatch?.().state==="done");
+  await host.waitForTimeout(500);
   const after = await view("2-result");
   assert.ok(after.host>before.host+400,`result banner lettering on the host (${before.host} -> ${after.host})`);
   assert.ok(after.guest>before.guest+150,`result banner reaches the guest's video (${before.guest} -> ${after.guest})`);
@@ -119,6 +124,11 @@ try {
   assert.ok(cleared.card<before.card+1500&&cleared.guestCard<before.guestCard+1500,"card gone after the rematch");
   await playToResult();
   await host.waitForFunction(()=>nativeBattle.diagnostics().outcome.ticksSinceOver>=130);
+  // The retail score sheet (port/hud/postmatch.mjs) comes first; Enter hands over to the REMATCH? card.
+  await host.waitForFunction(()=>window.nativePostmatch?.().state==="shown",undefined,{timeout:30000});
+  await host.keyboard.press("Enter");
+  await host.waitForFunction(()=>window.nativePostmatch?.().state==="done");
+  await host.waitForTimeout(500);
   await host.keyboard.press("ArrowRight");
   await host.keyboard.press("Enter");
   await host.waitForURL(u=>!u.search);

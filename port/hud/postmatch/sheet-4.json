@@ -1,0 +1,1056 @@
+{
+ "movie": "screens/battle/matchSm4.big",
+ "size": [
+  640,
+  480
+ ],
+ "panels": 4,
+ "anchors": {
+  "logoLoader0": [
+   47.0,
+   71.0
+  ],
+  "logoLoader1": [
+   183.0,
+   76.0
+  ],
+  "logoLoader2": [
+   320.0,
+   68.0
+  ],
+  "logoLoader3": [
+   454.0,
+   70.0
+  ],
+  "playerPhoto0": [
+   50.0,
+   80.0
+  ],
+  "playerPhoto1": [
+   187.0,
+   85.0
+  ],
+  "playerPhoto2": [
+   324.0,
+   76.0
+  ],
+  "playerPhoto3": [
+   459.0,
+   81.0
+  ]
+ },
+ "elements": [
+  {
+   "kind": "image",
+   "file": "picture-338816539a.webp",
+   "rect": [
+    44.0,
+    66.0,
+    596.0,
+    439.0
+   ],
+   "panel": null,
+   "path": "/17"
+  },
+  {
+   "kind": "image",
+   "file": "picture-c4a30eee45.webp",
+   "rect": [
+    57.6,
+    373.98,
+    178.59,
+    420.98
+   ],
+   "panel": 1,
+   "path": "/playerContent1/panelColor/19"
+  },
+  {
+   "kind": "image",
+   "file": "picture-18a9870125.webp",
+   "rect": [
+    58.0,
+    374.0,
+    179.0,
+    421.0
+   ],
+   "panel": 1,
+   "path": "/playerContent1/25"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 1,
+   "rect": [
+    55.9,
+    373.9,
+    180.29,
+    407.5
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~MTCH_TOTEARN",
+   "path": "/playerContent1/26"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 1,
+   "rect": [
+    59.0,
+    322.0,
+    122.8,
+    360.0
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_PTS",
+   "path": "/playerContent1/27"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 1,
+   "rect": [
+    59.0,
+    349.0,
+    112.5,
+    387.0
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_CASH",
+   "path": "/playerContent1/28"
+  },
+  {
+   "kind": "text",
+   "role": "score",
+   "panel": 1,
+   "rect": [
+    88.3,
+    122.0,
+    175.4,
+    147.6
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent1/scoreText"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 1,
+   "rect": [
+    59.0,
+    122.0,
+    152.6,
+    167.2
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4294305222,
+   "text": "~MTCH_SCRE",
+   "path": "/playerContent1/30"
+  },
+  {
+   "kind": "text",
+   "role": "value-points",
+   "panel": 1,
+   "rect": [
+    14.38,
+    318.99,
+    176.02,
+    349.71
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent1/points/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-cash",
+   "panel": 1,
+   "rect": [
+    14.38,
+    345.54,
+    176.02,
+    376.26
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent1/cash/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-earnings",
+   "panel": 1,
+   "rect": [
+    15.27,
+    385.92,
+    224.19,
+    425.28
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 24.0,
+   "color": 4294305222,
+   "text": "0",
+   "path": "/playerContent1/earnings/textClip/textContent"
+  },
+  {
+   "kind": "image",
+   "file": "picture-8bc0a3a3f4.webp",
+   "rect": [
+    73.6,
+    61.45,
+    122.63,
+    97.01
+   ],
+   "panel": 1,
+   "path": "/playerContent1/playerSticker/38"
+  },
+  {
+   "kind": "text",
+   "role": "sticker1",
+   "panel": 1,
+   "rect": [
+    83.41,
+    56.79,
+    127.04,
+    92.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "P",
+   "path": "/playerContent1/playerSticker/40"
+  },
+  {
+   "kind": "text",
+   "role": "sticker2",
+   "panel": 1,
+   "rect": [
+    99.34,
+    56.79,
+    142.97,
+    92.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent1/playerSticker/41"
+  },
+  {
+   "kind": "text",
+   "role": "sticker3",
+   "panel": 1,
+   "rect": [
+    110.37,
+    56.79,
+    154.0,
+    92.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent1/playerSticker/42"
+  },
+  {
+   "kind": "list",
+   "panel": 1,
+   "rect": [
+    55.0,
+    152.0,
+    181.0,
+    314.0
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "name",
+   "panel": 1,
+   "rect": [
+    90.4,
+    92.39,
+    203.0,
+    120.5
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 20.0,
+   "color": 4278190080,
+   "text": " ",
+   "path": "/playerContent1/szFighterNameMov"
+  },
+  {
+   "kind": "image",
+   "file": "picture-cebbacd8db.webp",
+   "rect": [
+    193.56,
+    379.18,
+    314.52,
+    426.18
+   ],
+   "panel": 2,
+   "path": "/playerContent2/panelColor/20"
+  },
+  {
+   "kind": "image",
+   "file": "picture-18a9870125.webp",
+   "rect": [
+    193.95,
+    379.2,
+    314.92,
+    426.2
+   ],
+   "panel": 2,
+   "path": "/playerContent2/25"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 2,
+   "rect": [
+    191.85,
+    379.1,
+    316.2,
+    412.7
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~MTCH_TOTEARN",
+   "path": "/playerContent2/26"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 2,
+   "rect": [
+    194.95,
+    327.2,
+    258.73,
+    365.2
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_PTS",
+   "path": "/playerContent2/27"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 2,
+   "rect": [
+    194.95,
+    354.2,
+    248.44,
+    392.2
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_CASH",
+   "path": "/playerContent2/28"
+  },
+  {
+   "kind": "text",
+   "role": "score",
+   "panel": 2,
+   "rect": [
+    224.24,
+    127.2,
+    311.32,
+    152.8
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent2/scoreText"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 2,
+   "rect": [
+    194.95,
+    127.2,
+    288.52,
+    172.4
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4294305222,
+   "text": "~MTCH_SCRE",
+   "path": "/playerContent2/30"
+  },
+  {
+   "kind": "text",
+   "role": "value-points",
+   "panel": 2,
+   "rect": [
+    150.34,
+    324.19,
+    311.94,
+    354.91
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent2/points/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-cash",
+   "panel": 2,
+   "rect": [
+    150.34,
+    350.74,
+    311.94,
+    381.46
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent2/cash/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-earnings",
+   "panel": 2,
+   "rect": [
+    151.23,
+    391.12,
+    360.1,
+    430.48
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 24.0,
+   "color": 4294305222,
+   "text": "0",
+   "path": "/playerContent2/earnings/textClip/textContent"
+  },
+  {
+   "kind": "image",
+   "file": "picture-cbfe890719.webp",
+   "rect": [
+    209.54,
+    66.65,
+    258.56,
+    102.21
+   ],
+   "panel": 2,
+   "path": "/playerContent2/playerSticker/44"
+  },
+  {
+   "kind": "text",
+   "role": "sticker1",
+   "panel": 2,
+   "rect": [
+    219.35,
+    61.99,
+    262.97,
+    97.67
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "P",
+   "path": "/playerContent2/playerSticker/40"
+  },
+  {
+   "kind": "text",
+   "role": "sticker2",
+   "panel": 2,
+   "rect": [
+    235.28,
+    61.99,
+    278.9,
+    97.67
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent2/playerSticker/41"
+  },
+  {
+   "kind": "text",
+   "role": "sticker3",
+   "panel": 2,
+   "rect": [
+    246.3,
+    61.99,
+    289.93,
+    97.67
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent2/playerSticker/42"
+  },
+  {
+   "kind": "list",
+   "panel": 2,
+   "rect": [
+    190.95,
+    157.2,
+    316.92,
+    319.2
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "name",
+   "panel": 2,
+   "rect": [
+    226.34,
+    97.59,
+    338.91,
+    125.7
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 20.0,
+   "color": 4278190080,
+   "text": " ",
+   "path": "/playerContent2/szFighterNameMov"
+  },
+  {
+   "kind": "image",
+   "file": "picture-f4451692c4.webp",
+   "rect": [
+    328.55,
+    368.98,
+    449.51,
+    415.98
+   ],
+   "panel": 3,
+   "path": "/playerContent3/panelColor/21"
+  },
+  {
+   "kind": "image",
+   "file": "picture-18a9870125.webp",
+   "rect": [
+    328.95,
+    369.0,
+    449.92,
+    416.0
+   ],
+   "panel": 3,
+   "path": "/playerContent3/25"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 3,
+   "rect": [
+    326.85,
+    368.9,
+    451.2,
+    402.5
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~MTCH_TOTEARN",
+   "path": "/playerContent3/26"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 3,
+   "rect": [
+    329.95,
+    317.0,
+    393.73,
+    355.0
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_PTS",
+   "path": "/playerContent3/27"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 3,
+   "rect": [
+    329.95,
+    344.0,
+    383.44,
+    382.0
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_CASH",
+   "path": "/playerContent3/28"
+  },
+  {
+   "kind": "text",
+   "role": "score",
+   "panel": 3,
+   "rect": [
+    359.24,
+    117.0,
+    446.32,
+    142.6
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent3/scoreText"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 3,
+   "rect": [
+    329.95,
+    117.0,
+    423.52,
+    162.2
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4294305222,
+   "text": "~MTCH_SCRE",
+   "path": "/playerContent3/30"
+  },
+  {
+   "kind": "text",
+   "role": "value-points",
+   "panel": 3,
+   "rect": [
+    285.34,
+    313.99,
+    446.94,
+    344.71
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent3/points/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-cash",
+   "panel": 3,
+   "rect": [
+    285.34,
+    340.54,
+    446.94,
+    371.26
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent3/cash/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-earnings",
+   "panel": 3,
+   "rect": [
+    286.23,
+    380.92,
+    495.1,
+    420.28
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 24.0,
+   "color": 4294305222,
+   "text": "0",
+   "path": "/playerContent3/earnings/textClip/textContent"
+  },
+  {
+   "kind": "image",
+   "file": "picture-e42dbc8eb1.webp",
+   "rect": [
+    344.54,
+    57.06,
+    393.56,
+    92.62
+   ],
+   "panel": 3,
+   "path": "/playerContent3/playerSticker/46"
+  },
+  {
+   "kind": "text",
+   "role": "sticker1",
+   "panel": 3,
+   "rect": [
+    354.35,
+    51.79,
+    397.97,
+    87.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "P",
+   "path": "/playerContent3/playerSticker/40"
+  },
+  {
+   "kind": "text",
+   "role": "sticker2",
+   "panel": 3,
+   "rect": [
+    370.28,
+    51.79,
+    413.9,
+    87.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent3/playerSticker/41"
+  },
+  {
+   "kind": "text",
+   "role": "sticker3",
+   "panel": 3,
+   "rect": [
+    381.3,
+    51.79,
+    424.93,
+    87.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent3/playerSticker/42"
+  },
+  {
+   "kind": "list",
+   "panel": 3,
+   "rect": [
+    325.95,
+    147.0,
+    451.92,
+    309.0
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "name",
+   "panel": 3,
+   "rect": [
+    361.34,
+    87.39,
+    473.91,
+    115.5
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 20.0,
+   "color": 4278190080,
+   "text": " ",
+   "path": "/playerContent3/szFighterNameMov"
+  },
+  {
+   "kind": "image",
+   "file": "picture-796e96a469.webp",
+   "rect": [
+    520.91,
+    386.8,
+    523.86,
+    540.9
+   ],
+   "panel": 4,
+   "path": "/playerContent4/panelColor/22"
+  },
+  {
+   "kind": "image",
+   "file": "picture-18a9870125.webp",
+   "rect": [
+    463.05,
+    374.0,
+    584.02,
+    421.0
+   ],
+   "panel": 4,
+   "path": "/playerContent4/25"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 4,
+   "rect": [
+    460.95,
+    373.9,
+    585.3,
+    407.5
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~MTCH_TOTEARN",
+   "path": "/playerContent4/26"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 4,
+   "rect": [
+    464.05,
+    322.0,
+    527.83,
+    360.0
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_PTS",
+   "path": "/playerContent4/27"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 4,
+   "rect": [
+    464.05,
+    349.0,
+    517.54,
+    387.0
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 15.0,
+   "color": 4294305222,
+   "text": "~USR_CASH",
+   "path": "/playerContent4/28"
+  },
+  {
+   "kind": "text",
+   "role": "score",
+   "panel": 4,
+   "rect": [
+    493.34,
+    122.0,
+    580.42,
+    147.6
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent4/scoreText"
+  },
+  {
+   "kind": "text",
+   "role": "label",
+   "panel": 4,
+   "rect": [
+    464.05,
+    122.0,
+    557.62,
+    167.2
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 18.0,
+   "color": 4294305222,
+   "text": "~MTCH_SCRE",
+   "path": "/playerContent4/30"
+  },
+  {
+   "kind": "text",
+   "role": "value-points",
+   "panel": 4,
+   "rect": [
+    419.44,
+    318.99,
+    581.04,
+    349.71
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent4/points/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-cash",
+   "panel": 4,
+   "rect": [
+    419.44,
+    345.54,
+    581.04,
+    376.26
+   ],
+   "align": 1,
+   "face": "TradeCon",
+   "size": 16.0,
+   "color": 4278190080,
+   "text": "0",
+   "path": "/playerContent4/cash/textClip/textContent"
+  },
+  {
+   "kind": "text",
+   "role": "value-earnings",
+   "panel": 4,
+   "rect": [
+    420.33,
+    385.92,
+    629.2,
+    425.28
+   ],
+   "align": 2,
+   "face": "TradeCon",
+   "size": 24.0,
+   "color": 4294305222,
+   "text": "0",
+   "path": "/playerContent4/earnings/textClip/textContent"
+  },
+  {
+   "kind": "image",
+   "file": "picture-bcb31ddba9.webp",
+   "rect": [
+    479.5,
+    62.19,
+    528.51,
+    97.74
+   ],
+   "panel": 4,
+   "path": "/playerContent4/playerSticker/48"
+  },
+  {
+   "kind": "text",
+   "role": "sticker1",
+   "panel": 4,
+   "rect": [
+    488.45,
+    56.79,
+    532.07,
+    92.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "P",
+   "path": "/playerContent4/playerSticker/40"
+  },
+  {
+   "kind": "text",
+   "role": "sticker2",
+   "panel": 4,
+   "rect": [
+    504.38,
+    56.79,
+    548.0,
+    92.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent4/playerSticker/41"
+  },
+  {
+   "kind": "text",
+   "role": "sticker3",
+   "panel": 4,
+   "rect": [
+    515.4,
+    56.79,
+    559.03,
+    92.47
+   ],
+   "align": 0,
+   "face": "Schwartz_Hand_Bold2",
+   "size": 18.0,
+   "color": 4294967295,
+   "text": "1",
+   "path": "/playerContent4/playerSticker/42"
+  },
+  {
+   "kind": "list",
+   "panel": 4,
+   "rect": [
+    460.05,
+    152.0,
+    586.02,
+    314.0
+   ]
+  },
+  {
+   "kind": "text",
+   "role": "name",
+   "panel": 4,
+   "rect": [
+    495.44,
+    92.39,
+    608.01,
+    120.5
+   ],
+   "align": 0,
+   "face": "TradeCon",
+   "size": 20.0,
+   "color": 4278190080,
+   "text": " ",
+   "path": "/playerContent4/szFighterNameMov"
+  }
+ ]
+}

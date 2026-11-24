@@ -27,7 +27,10 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from extract import Source, fighter_art_id
+from extract import Source
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "geometry"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "ps2" / "battle"))
+from ssh import textures, fighter_art_id
 from match_type_art import movie_shapes
 
 TITLES = {"1v1": "oneOnOne", "team": "team", "ffa": "ffa", "window": "window", "subway": "subway", "demolition": "demolition",
@@ -52,6 +55,9 @@ LAYOUTS = {
 }
 # The titles' art starts at the frame's left; the poster draws it at (53, 47) (one row lower for the two flame-edged ones).
 TITLE_ANCHOR = {"default": [53, 47], "demolition": [53, 48], "inferno": [53, 48]}
+# The retail loading badge: bootLoad.big's 128 x 128 crest on its opaque black square, drawn at 95 px and faintly (offset and strength fitted to the capture) with the word LOADING
+# over it (measured from the captures' black square at frame position (256, 266), i.e. design row 268).
+CREST = {"at": [256, 268], "crest": [16, 0, 95], "alpha": 0.25, "label": {"x": 320, "y": 313, "size": 11}}
 FRONT = [45, 237]           # the chevron overlay's position (its own rect in oldMLoad.big)
 VIGNETTE_ALPHA = 0.43      # how strongly the 256x256 vignette tile darkens the frame
 # Each portrait is clipped to its panel of the paper (between the paper's dark dividers, x ranges [from, to)); in Team the
@@ -115,6 +121,11 @@ def export(source, output, roster, venues):
     chevron = [e for e in movie.flatten() if e["kind"] == "image" and e["character"] == 58][0]
     assert [round(v) for v in chevron["rect"][:2]] == FRONT
     save(shape(58), output / "front.webp", lossy=True)
+    boot = source.read("screens/intMain/bootLoad.big")
+    crest = Image.open(io.BytesIO({k.strip(): v for k, v in textures(boot["bootLoad.ssh"]).items()}["1"])).convert("RGBA")
+    assert crest.size == (128, 128)
+    save(crest, output / "crest.webp")
+    layout["crest"] = CREST
     tile = Image.open(io.BytesIO(source.pictures("screens/battle/oldMLoad.big")["60"])).convert("RGBA")
     assert tile.size == (256, 256)
     alpha = tile.getchannel("A").resize((64, 64), Image.Resampling.LANCZOS)

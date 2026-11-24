@@ -7,6 +7,8 @@ import { MODES, freeForAllAvailable, parseBattleQuery, venueSupports } from "../
 import { closeMatchLoading, showMatchLoading } from "../menu/loading.mjs";
 import { rematchChoice } from "../hud/rematch.mjs";
 import { REMATCH_DELAY } from "../hud/result.mjs";
+import { createPostmatch } from "../hud/postmatch.mjs";
+import { roomSession } from "../battle/controls.mjs";
 import { loadFighter, loadScene, uploadScene } from "./scene.mjs";
 import inventory from "../../ps2/content/inventory.json" with { type: "json" };
 
@@ -118,7 +120,7 @@ async function display(leave) {
 
   const battle = document.body.hasAttribute("data-battle");
   const stepMs = 1000/60;
-  let fight, controls, camera, hud, rematch, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
+  let fight, controls, camera, hud, rematch, postmatch, paused = false, previousFrame, carry = stepMs/2, renderedFrames = 0;
   let scenery, lighting, combatAudio, environment, trainAudio, vibration;
   const coefficients = new Float32Array(30);
   let scene, request, skinRequest, selected = [];
@@ -198,9 +200,9 @@ async function display(leave) {
       const pressed = bits & ~menuHeld[seat];
       menuHeld[seat] = bits;
       if (!pause || !pressed) return;
-      if (!pause.open && rematch?.shown) {
+      if (!pause.open && (postmatch?.holding(fight?.outcome()) || rematch?.shown)) {
         const key = pressed & 0x4000 ? "Enter" : pressed & 0x80 ? "ArrowLeft" : pressed & 0x20 ? "ArrowRight" : null;
-        if (key) changed = rematch.key({key}) || changed;
+        if (key) changed = (postmatch.key({key}) || rematch.key({key})) || changed;
         return;
       }
       if (!pause.open && (pressed & 8) && !fight.outcome().over) {
@@ -351,6 +353,7 @@ async function display(leave) {
       });
       if (matchState) {
         hud({...matchState,rematch,pause});
+        postmatch?.snapshot(gl.canvas,matchState.outcome);
       }
       const animate = battle ? fight && !paused && !controls.isGuest() : !reducedMotion.matches && selected.some(s=>s.bank);
       if (animate && !document.hidden && !scheduled) scheduled = requestAnimationFrame(frame);
@@ -537,14 +540,18 @@ async function display(leave) {
     status.textContent = hint;
     document.getElementById("restart").onclick = () => {
       if (pause.open) pause.close();
-      vibration.stop(); rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
+      vibration.stop(); postmatch.reset(); rematch.reset(); controls.release(); fight.restart(); camera.reset(); combatAudio?.reset(); environment?.reset(); trainAudio?.reset(); audio?.restart(); paused=false; previousFrame=undefined; carry=stepMs/2; draw();
       status.textContent = hint;
     };
     // Once the result hold is over the retail REMATCH? card takes left/right (or A/D) and Enter: YES restarts the match.
-    rematch = rematchChoice(() => { const result = fight.outcome(); return result.result && result.ticksSinceOver >= REMATCH_DELAY; },
+    // The retail score sheet (port/hud/postmatch.mjs) stands between the result hold and that card.
+    postmatch = createPostmatch({ session: roomSession(), scores: () => fight.diagnostics().actors.map(a => a.score),
+      fighters: () => selected.map((f, slot) => ({ handle: f.handle, name: f.record?.name, cpu: Boolean(f.cpu), seat: query.teamOrder?.[slot] ?? slot })) });
+    cleanups.push(() => postmatch.dispose());
+    rematch = rematchChoice(() => { const result = fight.outcome(); return result.result && result.ticksSinceOver >= REMATCH_DELAY && !postmatch.holding(result); },
       () => document.getElementById("restart").click(), returnToMatchSelection);
     addEventListener("keydown", event => {
-      if (!event.repeat && !controls.isGuest() && rematch.key(event)) {
+      if (!event.repeat && !controls.isGuest() && (postmatch.key(event) || rematch.key(event))) {
         event.preventDefault(); event.stopImmediatePropagation(); draw();
       }
     }, {capture:true, signal});

@@ -2,7 +2,7 @@
 import art from "./art/loading/layout.json" with { type: "json" };
 
 const folder = "port/menu/art/loading/";
-const names = ["layout.json", "front.webp", "vignette.webp",
+const names = ["layout.json", "front.webp", "vignette.webp", "crest.webp",
   ...new Set(Object.values(art.formations).map(f => `paper-${f.paper}.webp`)),
   ...Object.keys(art.titles).map(mode => `title-${mode}.webp`),
   ...Object.keys(art.venues).map(number => `venue-${number}.webp`),

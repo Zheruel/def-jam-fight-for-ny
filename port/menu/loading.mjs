@@ -33,6 +33,12 @@ const load = url => new Promise((resolve, reject) => {
   image.src = url;
 });
 const fetchImage = name => load(new URL(name, ART).href);
+// The badge's word is set in the battle HUD's font; a failed load only changes the face.
+let fontRequest;
+const badgeFont = () => fontRequest ??= (async () => {
+  const face = new FontFace("LoadingNames", `url(${new URL("../hud/names.ttf", import.meta.url)})`);
+  document.fonts.add(await face.load());
+})().catch(error => console.warn("loading font:", error.message));
 
 // Places one piece: `rect` is the art's [left, top, right] around its anchor; a mirrored slot flips it about the anchor.
 function place(context, image, [x, y], rect, flip = false) {
@@ -45,11 +51,12 @@ function place(context, image, [x, y], rect, flip = false) {
 async function fetchPieces(selection, art) {
   const { formation, title, ids, venue } = selection;
   const slots = art.formations[formation], count = slots.count;
-  const wanted = { paper: `paper-${slots.paper}.webp`, front: "front.webp", vignette: "vignette.webp", title: `title-${title}.webp`, venue: `venue-${venue}.webp` };
+  const wanted = { paper: `paper-${slots.paper}.webp`, front: "front.webp", vignette: "vignette.webp", crest: "crest.webp", title: `title-${title}.webp`, venue: `venue-${venue}.webp` };
   ids.forEach((id, i) => {
     if (art.portraits[id]?.[count]) wanted["portrait" + i] = `portrait-${id}-${count}p.webp`;
     if (art.logos[id]?.[count]) wanted["logo" + i] = `logo-${id}-${count}p.webp`;
   });
+  await badgeFont();
   const entries = await Promise.all(Object.entries(wanted).map(async ([key, name]) => [key, await fetchImage(name).catch(error => { console.warn(error.message); return null; })]));
   return Object.fromEntries(entries);
 }
@@ -78,7 +85,16 @@ function draw(canvas, selection, art, pieces) {
   if (pieces.title) context.drawImage(pieces.title, ...(art.title[title] ?? art.title.default));
   if (pieces.venue) place(context, pieces.venue, slots.venue, art.venues[venue]);
   ids.forEach((id, i) => { if (pieces["logo" + i]) place(context, pieces["logo" + i], slots.logos[i], art.logos[id][count]); });
-  if (pieces.vignette) { context.globalAlpha = art.vignette; context.drawImage(pieces.vignette, 0, 0, 640, 480); }
+  if (pieces.vignette) { context.globalAlpha = art.vignette; context.drawImage(pieces.vignette, 0, 0, 640, 480); context.globalAlpha = 1; }
+  // The retail "LOADING" badge: the crest's opaque black square with the crest faint on it and the word across its middle.
+  if (pieces.crest) {
+    const { at, crest, alpha, label } = art.crest;
+    context.fillStyle = "#000"; context.fillRect(at[0], at[1], 128, 128);
+    context.globalAlpha = alpha; context.drawImage(pieces.crest, at[0] + crest[0], at[1] + crest[1], crest[2], crest[2]); context.globalAlpha = 1;
+    context.font = `${label.size}px LoadingNames`; context.textAlign = "center"; context.textBaseline = "middle";
+    context.lineJoin = "round"; context.lineWidth = 2; context.strokeStyle = "#2a1c0e"; context.strokeText("LOADING", label.x, label.y);
+    context.fillStyle = "#f0dcb8"; context.fillText("LOADING", label.x, label.y);
+  }
   context.restore();
 }
 
