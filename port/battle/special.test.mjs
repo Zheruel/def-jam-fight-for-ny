@@ -240,7 +240,7 @@ test("demolition (Gun Hill Garage): a car with two of its five key panels destro
 });
 
 // Replays a recorded controller trace (verification/special-traces.mjs): pokes and pad frames only, no logic. Returns what happened.
-async function replay(name) {
+async function replay(name, until) {
   const trace = JSON.parse(readFileSync(new URL("./special-traces.json", import.meta.url), "utf8"))[name];
   const { createEnvironment } = await import("../scenery/environment.mjs");
   const events = JSON.parse(readFileSync(new URL("../scenery/events.json", import.meta.url), "utf8"));
@@ -250,7 +250,7 @@ async function replay(name) {
   for (let t = 0; t < trace.base; t++) fight.tick([idle, idle]);
   const held = [0, 0], seen = [];
   let finish = null;
-  for (let t = 0; t < trace.ticks; t++) {
+  for (let t = 0; t < (until ?? trace.ticks); t++) {
     for (const [at, slot, x, z] of trace.pokes) {
       if (at !== t) continue;
       if (x === "hp") m.setFloat32(A[slot] + 0x350, z, true);
@@ -299,5 +299,35 @@ test("ringout: the referee turns mark 0x80 into the RING OUT result (0x800, G+0x
   assert.equal(m.getUint16(0x3f1088 + 26, true), 0x800, "table entry 7: mark 0x80 -> result 0x800");
 });
 
-test.todo("ringout: the natural throw that carries a fighter out of the ring (state 19 with mark 0x80) is not found; retail forced mark 0x80 shows RING OUT");
+test("ringout: a broken rail carries the destroyed flags of the health table, and thrown-out state 19 there is a ring out (mark 0x80); at an intact rail it is not", async () => {
+  // The destroyed flags are data: the health entry of the rail type holds them at +0x20 (retail table, identical in the native start).
+  const railDef = fight => { const m = fight.memory; for (let i = 0; i < m.getUint32(0x4c1adc, true); i++) { const o = m.getUint32(0x4c1ae0, true) + i * 0x48, d = m.getUint32(o + 0x44, true); if (m.getUint32(d + 0x10, true) === 0x9d) return [o, d]; } };
+  const entry = type => 0x3994e0 + type * 0x38;
+  const { fight: broken } = await replay("ringout-rail-break", 1436);
+  const [obj, def] = railDef(broken), m = broken.memory;
+  assert.equal(m.getUint32(entry(0x9d) + 0x20, true), 0x40040008, "the health entry's destroyed flags");
+  assert.equal(m.getUint32(def, true), 0x40040008, "the kernel wrote them into the rail's definition when its health reached 0");
+  // No definition of the Dragon House carries 0x200000, the flag the thrown-body handler (0x3194xx) needs to enter state 19 by itself,
+  // so rails alone never put a fighter into it: the state has to be entered with a broken rail as the object (see below).
+  const intact = await nativeMatch(5);
+  for (let i = 0; i < intact.memory.getUint32(0x4c1adc, true); i++) assert.equal(intact.memory.getUint32(intact.memory.getUint32(intact.memory.getUint32(0x4c1ae0, true) + i * 0x48 + 0x44, true), true) & 0x200000, 0);
+  const thrownOut = async (fight, object) => {
+    const mm = fight.memory;
+    for (let i = 0; i < 900 && !(mm.getUint32(A[0] + 0x30, true) === 1 && mm.getUint32(A[1] + 0x30, true) === 1); i++) fight.tick([idle, { buttons: i % 8 < 4 ? 0x4000 : 0, x: 0, z: 0 }]);
+    for (const [slot, z] of [[0, -30], [1, -39]]) for (const o of [0x44, 0xc4]) { mm.setFloat32(A[slot] + o, 10, true); mm.setFloat32(A[slot] + o + 8, z, true); }
+    mm.setUint32(A[1] + 0x30, 19, true); mm.setUint32(A[1] + 0x34, 0, true); mm.setUint32(A[1] + 0xac0, object, true);
+    const flags = [];
+    for (let i = 0; i < 3; i++) { fight.tick([idle, idle]); flags.push(mm.getUint16(A[1] + 0x932, true)); }
+    return { flags, outcome: fight.outcome() };
+  };
+  const out = await thrownOut(broken, obj);
+  assert.ok(out.flags.some(f => f & 0x80), "mark 0x80 on the thrown fighter");
+  assert.deepEqual([out.outcome.over, out.outcome.winner, out.outcome.loser, out.outcome.finishFlags & 0x800], [true, 0, 1, 0x800], "the round ends with the RING OUT result bit");
+  const fresh = await nativeMatch(5);
+  const o2 = fresh.memory.getUint32(0x4c1ae0, true) + 10 * 0x48;
+  const calm = await thrownOut(fresh, o2);
+  assert.ok(calm.flags.every(f => !(f & 0x80)) && !calm.outcome.over, "an intact rail leaves the thrown fighter alive");
+});
+
+test.todo("ringout: the natural pad throw that puts a fighter into state 19 at a broken rail is not found (retail 0x3194xx needs def flag 0x200000 as well; no Dragon House definition has it)");
 test.todo("end to end car totalling by pad-driven throws at the Gun Hill cars");
